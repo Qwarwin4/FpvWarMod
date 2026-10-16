@@ -84,7 +84,7 @@ public class AssemblyContainer extends Container {
     }
 
     public boolean hasIron() {
-        return ironSlot.getItem().getItem() instanceof SolderingIronItem;
+        return ironSlot.getItem(0).getItem() instanceof SolderingIronItem;
     }
 
     public Optional<AssemblyRecipe> findRecipe(World world) {
@@ -204,7 +204,7 @@ public class AssemblyContainer extends Container {
                 }
             }
             if (soldered && !player.level.isClientSide) {
-                ItemStack iron = ironSlot.getItem();
+                ItemStack iron = ironSlot.getItem(0);
                 if (iron.hurt(1, player.getRandom(), player instanceof ServerPlayerEntity ? (ServerPlayerEntity) player : null)) {
                     iron.shrink(1);
                 }

@@ -48,7 +48,7 @@
 gradlew build
 ```
 
-Jar будет в `build/libs/`. В GitHub Actions собирается сам на каждый пуш.
+Jar будет в `build/libs/`.
 
 Модели, текстуры и звуки генерирует `tools/gen_assets.py` (Pillow, для звуков numpy + ffmpeg):
 
