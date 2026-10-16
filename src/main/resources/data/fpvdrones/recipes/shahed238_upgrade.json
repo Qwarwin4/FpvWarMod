@@ -1,0 +1,18 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "SJ"
+  ],
+  "key": {
+    "S": {
+      "item": "fpvdrones:shahed136"
+    },
+    "J": {
+      "item": "fpvdrones:small_jet_engine"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:shahed238",
+    "count": 1
+  }
+}

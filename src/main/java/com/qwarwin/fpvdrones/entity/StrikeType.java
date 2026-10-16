@@ -12,7 +12,8 @@ public enum StrikeType {
     // modelOffset: shift (in model px) that puts the middle of the fuselage on the origin
     SHAHED_136("shahed136", 14F, -3.0F, true),
     GERAN_2("geran2", 16F, -3.0F, true),
-    GERAN_5("geran5", 22F, -1.8F, false);
+    GERAN_5("geran5", 22F, -1.8F, false),
+    SHAHED_238("shahed238", 14F, -3.0F, false);
 
     private final String name;
     private final float health;
@@ -69,6 +70,9 @@ public enum StrikeType {
         if (this == GERAN_5) {
             return Config.GERAN5_SPEED.get();
         }
+        if (this == SHAHED_238) {
+            return Config.SHAHED238_SPEED.get();
+        }
         return Config.SHAHED_SPEED.get();
     }
 
@@ -78,6 +82,8 @@ public enum StrikeType {
                 return ModItems.GERAN2.get();
             case GERAN_5:
                 return ModItems.GERAN5.get();
+            case SHAHED_238:
+                return ModItems.SHAHED238.get();
             default:
                 return ModItems.SHAHED.get();
         }

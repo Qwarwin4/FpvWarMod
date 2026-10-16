@@ -44,6 +44,8 @@ public final class ModItems {
 
     public static final RegistryObject<Item> SHAHED = ITEMS.register("shahed136",
             () -> new StrikeDroneItem(StrikeType.SHAHED_136, props().stacksTo(5).rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> SHAHED238 = ITEMS.register("shahed238",
+            () -> new StrikeDroneItem(StrikeType.SHAHED_238, props().stacksTo(5).rarity(Rarity.EPIC)));
     public static final RegistryObject<Item> GERAN2 = ITEMS.register("geran2",
             () -> new StrikeDroneItem(StrikeType.GERAN_2, props().stacksTo(5).rarity(Rarity.RARE)));
     public static final RegistryObject<Item> GERAN5 = ITEMS.register("geran5",

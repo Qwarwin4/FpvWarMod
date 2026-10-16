@@ -29,6 +29,7 @@ public final class Config {
     public static final ForgeConfigSpec.BooleanValue STRIKE_FIRE;
     public static final ForgeConfigSpec.DoubleValue SHAHED_SPEED;
     public static final ForgeConfigSpec.DoubleValue GERAN5_SPEED;
+    public static final ForgeConfigSpec.DoubleValue SHAHED238_SPEED;
     public static final ForgeConfigSpec.DoubleValue STRIKE_MAX_RANGE;
     public static final ForgeConfigSpec.IntValue CRUISE_ALTITUDE;
 
@@ -69,6 +70,7 @@ public final class Config {
         STRIKE_FIRE = b.define("fire", true);
         SHAHED_SPEED = b.comment("Blocks per tick, 1.5 = 108 km/h").defineInRange("shahedSpeed", 1.5, 0.3, 5.0);
         GERAN5_SPEED = b.defineInRange("geran5Speed", 3.2, 0.3, 8.0);
+        SHAHED238_SPEED = b.defineInRange("shahed238Speed", 2.8, 0.3, 8.0);
         STRIKE_MAX_RANGE = b.defineInRange("maxRange", 25000.0, 50.0, 200000.0);
         CRUISE_ALTITUDE = b.comment("Cruise height above launch point").defineInRange("cruiseAltitude", 45, 10, 200);
         b.pop();

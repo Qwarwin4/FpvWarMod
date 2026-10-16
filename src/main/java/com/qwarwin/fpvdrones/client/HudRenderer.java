@@ -357,7 +357,7 @@ public final class HudRenderer {
         for (int i = 0; i < LaunchTruckEntity.CAPACITY; i++) {
             StrikeType t = truck.getLoaded(i);
             int sx = x + i * 14;
-            fill(ms, sx, y + 12, sx + 11, y + 21, t == null ? 0xFF3A3A3A : (t == StrikeType.GERAN_5 ? 0xFFE08A2A : 0xFF8FA088));
+            fill(ms, sx, y + 12, sx + 11, y + 21, t == null ? 0xFF3A3A3A : (t.isJet() ? 0xFFE08A2A : 0xFF8FA088));
         }
         String hint = truck.isFiring() ? "ЗАЛП..." : "[" + key(KeyBinds.ACTION) + "] меню";
         font.drawShadow(ms, hint, x + 74, y + 13, truck.isFiring() ? RED : GREY);

@@ -671,6 +671,41 @@ def build_shahed(name, pal):
     return m
 
 
+def build_shahed238():
+    """Shahed airframe, prop swapped for the small turbojet on top"""
+    a = Atlas("shahed238")
+    pal = SHAHED_PALETTES["shahed136"]
+    a.add("hull", p_flat("#4a4e54", 6, light=1.15))
+    a.add("hull_top", p_panel_lines("#50545a", "#2e3034"))
+    a.add("wing", p_panel_lines("#55595f", "#33363a"))
+    a.add("wing_under", p_flat(pal["under"], 5))
+    a.add("nose", p_flat("#232427", 4))
+    a.add("tip", p_flat("#5a5d61", 6))
+    a.add("band", p_stripes("#d0d0d0", "#a8a8a8", 2))
+    a.add("winglet", p_flat("#3a3d42", 5))
+    a.add("stencil", p_label("#4a4e54", "#4a4e54", "#e6e6e6"))
+    a.add("nacelle", p_vent("#9aa0a6", "#5d6268"))
+    a.add("intake", p_motor_top("#2a2c30", "#c9c9c9"))
+    a.add("nozzle", p_flat("#4a4038", 10))
+    a.add("glow", p_flat("#ff8a2a", 20, border=0.9, light=1.4))
+    a.add("gnss", p_flat("#d9d9d4", 6))
+    a.save()
+    m = Model(a)
+    m.box([6.25, 6.5, -6], [9.75, 10, 26], {"all": "hull", "up": "hull_top", "east": "stencil", "west": "stencil"})
+    m.box([6.15, 6.4, 20], [9.85, 10.1, 20.6], "band")
+    m.box([6.75, 7.0, 26], [9.25, 9.5, 28], "nose")
+    m.box([7.4, 7.6, 28], [8.6, 8.9, 29.2], "tip")
+    for z1, z2, x1, x2 in [(-6, -1, -8, 24), (-1, 4, -5, 21), (4, 9, -1.5, 17.5), (9, 13, 2, 14), (13, 16.5, 5, 11)]:
+        m.box([x1, 7.4, z1], [x2, 8.0, z2], {"all": "wing", "down": "wing_under"})
+    m.box([-8.6, 5, -6], [-7.8, 11, -0.5], "winglet")
+    m.box([23.8, 5, -6], [24.6, 11, -0.5], "winglet")
+    m.box([6.6, 10, -7], [9.4, 12.6, 5], {"all": "nacelle", "south": "intake"})
+    m.box([6.9, 10.3, -8.2], [9.1, 12.3, -7], {"all": "nozzle", "north": "glow"})
+    m.box([7.6, 10, 5], [8.4, 10.6, 9], "hull")
+    m.box([7.5, 10, 16], [8.5, 10.5, 19], "gnss")
+    m.save("shahed238")
+
+
 def build_geran5():
     a = Atlas("geran5")
     a.add("hull", p_flat("#2c2f33", 6, light=1.18))
@@ -1196,6 +1231,7 @@ def item_models():
     strike = display(0.42, gui_rot=(30, 150, 0), ground=0.25, hand=0.25, fixed=0.4, gui_tr=(1, 0, 0))
     parented("shahed136", "shahed136", strike)
     parented("geran2", "geran2", strike)
+    parented("shahed238", "shahed238", strike)
     parented("geran5", "geran5", display(0.4, gui_rot=(30, 150, 0), ground=0.25, hand=0.25, fixed=0.4, gui_tr=(1, 0, 0)))
     parented("propeller", "propeller", display(0.9, gui_rot=(45, 30, 0), ground=0.5, hand=0.5))
     parented("pg7vs", "pg7vs", display(1.0, gui_rot=(0, 135, 45), ground=0.5, hand=0.6))
@@ -1570,6 +1606,7 @@ RU = {
     "item.fpvdrones.fpv_drone": "FPV-дрон",
     "item.fpvdrones.mavic3": "Мавик-3",
     "item.fpvdrones.shahed136": "Шахед-136",
+    "item.fpvdrones.shahed238": "Шахед-238",
     "item.fpvdrones.geran2": "Герань-2",
     "item.fpvdrones.geran5": "Герань-5",
     "item.fpvdrones.launch_truck": "Пусковой грузовик",
@@ -1711,6 +1748,7 @@ EN = {
     "item.fpvdrones.fpv_drone": "FPV Drone",
     "item.fpvdrones.mavic3": "Mavic 3",
     "item.fpvdrones.shahed136": "Shahed-136",
+    "item.fpvdrones.shahed238": "Shahed-238",
     "item.fpvdrones.geran2": "Geran-2",
     "item.fpvdrones.geran5": "Geran-5",
     "item.fpvdrones.launch_truck": "Launch Truck",
@@ -1856,13 +1894,14 @@ def recipes():
                    "result": {"item": f"{MODID}:{name}", "count": count}}, DATA, "recipes", name + ".json")
         RECIPE_ROWS.append((name, pattern, key, count, "верстак"))
 
-    def bench(name, pattern, key, count=1, solder=False):
+    def bench(name, pattern, key, count=1, solder=False, result=None):
+        result = result or name
         obj = {"type": f"{MODID}:assembly", "pattern": pattern, "key": key_of(key),
-               "result": {"item": f"{MODID}:{name}", "count": count}}
+               "result": {"item": f"{MODID}:{result}", "count": count}}
         if solder:
             obj["soldering"] = True
         save_json(obj, DATA, "recipes", name + ".json")
-        RECIPE_ROWS.append((name, pattern, key, count, "сборочный + паяльник" if solder else "сборочный"))
+        RECIPE_ROWS.append((result, pattern, key, count, "сборочный + паяльник" if solder else "сборочный"))
 
     # the only two things made on a vanilla crafting table
     crafting("soldering_iron", ["  I", " R ", "S  "], {"I": M + "iron_ingot", "R": M + "redstone", "S": M + "stick"})
@@ -1917,6 +1956,10 @@ def recipes():
     bench("shahed136", ["FN ", "EAH", " B "],
           {"F": "flight_controller", "N": "gnss_module", "E": "piston_engine", "A": "airframe", "H": "warhead",
            "B": "booster"}, solder=True)
+    bench("shahed238", ["FN ", "JAH", " B "],
+          {"F": "flight_controller", "N": "gnss_module", "J": "small_jet_engine", "A": "airframe", "H": "warhead",
+           "B": "booster"}, solder=True)
+    bench("shahed238_upgrade", ["SJ"], {"S": "shahed136", "J": "small_jet_engine"}, result="shahed238")
     bench("geran2", ["FNC", "EAH", " BH"],
           {"F": "flight_controller", "N": "gnss_module", "C": M + "black_dye", "E": "piston_engine", "A": "airframe",
            "H": "warhead", "B": "booster"}, solder=True)
@@ -2099,6 +2142,7 @@ def main():
     for name, pal in SHAHED_PALETTES.items():
         build_shahed(name, pal)
     build_geran5()
+    build_shahed238()
     build_payloads()
     build_truck()
     block_textures()

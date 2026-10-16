@@ -1,0 +1,33 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "FN ",
+    "JAH",
+    " B "
+  ],
+  "key": {
+    "F": {
+      "item": "fpvdrones:flight_controller"
+    },
+    "N": {
+      "item": "fpvdrones:gnss_module"
+    },
+    "J": {
+      "item": "fpvdrones:small_jet_engine"
+    },
+    "A": {
+      "item": "fpvdrones:airframe"
+    },
+    "H": {
+      "item": "fpvdrones:warhead"
+    },
+    "B": {
+      "item": "fpvdrones:booster"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:shahed238",
+    "count": 1
+  },
+  "soldering": true
+}
