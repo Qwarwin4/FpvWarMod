@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RRR",
+    "BFB",
+    "WIW"
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:rail"
+    },
+    "B": {
+      "item": "minecraft:iron_block"
+    },
+    "F": {
+      "item": "fpvdrones:flight_controller"
+    },
+    "W": {
+      "item": "minecraft:black_wool"
+    },
+    "I": {
+      "item": "minecraft:piston"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:launch_truck",
+    "count": 1
+  }
+}

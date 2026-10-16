@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ITI",
+    "WFW",
+    "CPC"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "T": {
+      "item": "minecraft:tnt"
+    },
+    "W": {
+      "item": "minecraft:iron_block"
+    },
+    "F": {
+      "item": "fpvdrones:flight_controller"
+    },
+    "P": {
+      "item": "fpvdrones:propeller"
+    },
+    "C": {
+      "item": "minecraft:coal_block"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:geran2",
+    "count": 1
+  }
+}

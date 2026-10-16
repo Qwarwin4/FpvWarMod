@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "TBT",
+    "WFW",
+    "IGI"
+  ],
+  "key": {
+    "T": {
+      "item": "minecraft:tnt"
+    },
+    "B": {
+      "item": "minecraft:blaze_rod"
+    },
+    "W": {
+      "item": "minecraft:iron_block"
+    },
+    "F": {
+      "item": "fpvdrones:flight_controller"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:geran5",
+    "count": 1
+  }
+}

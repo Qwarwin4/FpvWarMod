@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "P P",
+    "IFI",
+    "P P"
+  ],
+  "key": {
+    "P": {
+      "item": "fpvdrones:propeller"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "F": {
+      "item": "fpvdrones:flight_controller"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:fpv_drone",
+    "count": 1
+  }
+}

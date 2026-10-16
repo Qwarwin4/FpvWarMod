@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "fpvdrones:block/launch_pad"
+    }
+  }
+}

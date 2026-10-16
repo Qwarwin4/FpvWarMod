@@ -1,0 +1,92 @@
+{
+  "fpv_motor": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.fpv_motor",
+    "sounds": [
+      {
+        "name": "fpvdrones:fpv_motor",
+        "stream": false
+      }
+    ]
+  },
+  "mavic_motor": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.mavic_motor",
+    "sounds": [
+      {
+        "name": "fpvdrones:mavic_motor",
+        "stream": false
+      }
+    ]
+  },
+  "shahed_engine": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.shahed_engine",
+    "sounds": [
+      {
+        "name": "fpvdrones:shahed_engine",
+        "stream": false
+      }
+    ]
+  },
+  "jet_engine": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.jet_engine",
+    "sounds": [
+      {
+        "name": "fpvdrones:jet_engine",
+        "stream": false
+      }
+    ]
+  },
+  "shahed_launch": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.shahed_launch",
+    "sounds": [
+      {
+        "name": "fpvdrones:shahed_launch",
+        "stream": false
+      }
+    ]
+  },
+  "truck_engine": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.truck_engine",
+    "sounds": [
+      {
+        "name": "fpvdrones:truck_engine",
+        "stream": false
+      }
+    ]
+  },
+  "release": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.release",
+    "sounds": [
+      {
+        "name": "fpvdrones:release",
+        "stream": false
+      }
+    ]
+  },
+  "beep": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.beep",
+    "sounds": [
+      {
+        "name": "fpvdrones:beep",
+        "stream": false
+      }
+    ]
+  },
+  "static": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.static",
+    "sounds": [
+      {
+        "name": "fpvdrones:static",
+        "stream": false
+      }
+    ]
+  }
+}

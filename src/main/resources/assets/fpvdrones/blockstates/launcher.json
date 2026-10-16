@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "fpvdrones:block/launcher"
+    },
+    "facing=east": {
+      "model": "fpvdrones:block/launcher",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "fpvdrones:block/launcher",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "fpvdrones:block/launcher",
+      "y": 270
+    }
+  }
+}

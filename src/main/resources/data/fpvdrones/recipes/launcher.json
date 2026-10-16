@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  R",
+    "IRI",
+    "BBB"
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:rail"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "B": {
+      "item": "minecraft:iron_block"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:launcher",
+    "count": 1
+  }
+}

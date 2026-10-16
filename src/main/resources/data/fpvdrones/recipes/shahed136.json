@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ITI",
+    "WFW",
+    "IPI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "T": {
+      "item": "minecraft:tnt"
+    },
+    "W": {
+      "item": "minecraft:iron_block"
+    },
+    "F": {
+      "item": "fpvdrones:flight_controller"
+    },
+    "P": {
+      "item": "fpvdrones:propeller"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:shahed136",
+    "count": 1
+  }
+}
