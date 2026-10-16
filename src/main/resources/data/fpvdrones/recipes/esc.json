@@ -1,0 +1,26 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "RQR",
+    "NCN"
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "Q": {
+      "item": "minecraft:quartz"
+    },
+    "N": {
+      "item": "minecraft:gold_nugget"
+    },
+    "C": {
+      "item": "minecraft:comparator"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:esc",
+    "count": 1
+  },
+  "soldering": true
+}

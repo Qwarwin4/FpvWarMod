@@ -1,0 +1,23 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "IGI",
+    "IGI",
+    "IFI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "G": {
+      "item": "minecraft:gunpowder"
+    },
+    "F": {
+      "item": "minecraft:fire_charge"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:booster",
+    "count": 1
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "A",
+    "C",
+    "Q"
+  ],
+  "key": {
+    "A": {
+      "item": "fpvdrones:antenna"
+    },
+    "C": {
+      "item": "minecraft:compass"
+    },
+    "Q": {
+      "item": "minecraft:quartz"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:gnss_module",
+    "count": 1
+  },
+  "soldering": true
+}

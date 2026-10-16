@@ -1,0 +1,24 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "F",
+    "E",
+    "R"
+  ],
+  "key": {
+    "F": {
+      "item": "fpvdrones:flight_controller"
+    },
+    "E": {
+      "item": "fpvdrones:esc"
+    },
+    "R": {
+      "item": "fpvdrones:receiver"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:flight_stack",
+    "count": 1
+  },
+  "soldering": true
+}

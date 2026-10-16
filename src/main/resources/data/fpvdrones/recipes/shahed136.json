@@ -1,29 +1,33 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "fpvdrones:assembly",
   "pattern": [
-    "ITI",
-    "WFW",
-    "IPI"
+    "FN ",
+    "EAH",
+    " B "
   ],
   "key": {
-    "I": {
-      "item": "minecraft:iron_ingot"
-    },
-    "T": {
-      "item": "minecraft:tnt"
-    },
-    "W": {
-      "item": "minecraft:iron_block"
-    },
     "F": {
       "item": "fpvdrones:flight_controller"
     },
-    "P": {
-      "item": "fpvdrones:propeller"
+    "N": {
+      "item": "fpvdrones:gnss_module"
+    },
+    "E": {
+      "item": "fpvdrones:piston_engine"
+    },
+    "A": {
+      "item": "fpvdrones:airframe"
+    },
+    "H": {
+      "item": "fpvdrones:warhead"
+    },
+    "B": {
+      "item": "fpvdrones:booster"
     }
   },
   "result": {
     "item": "fpvdrones:shahed136",
     "count": 1
-  }
+  },
+  "soldering": true
 }

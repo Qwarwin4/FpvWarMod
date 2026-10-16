@@ -1,0 +1,23 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    " I ",
+    "RGR",
+    " I "
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:motor",
+    "count": 2
+  }
+}

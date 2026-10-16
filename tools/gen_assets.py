@@ -1206,10 +1206,365 @@ def item_models():
 
 
 # ---------------------------------------------------------------------------
+# parts
+
+def draw_icon(name, fn):
+    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    fn(ImageDraw.Draw(im), im)
+    im.save(path(ASSETS, "textures", "item", name + ".png"))
+    save_json({"parent": "item/generated", "textures": {"layer0": f"{MODID}:item/{name}"}},
+              ASSETS, "models", "item", name + ".json")
+
+
+def build_part_icons():
+    K = hexc("#0e0f11")
+
+    def frame(d, im):
+        for a, b in (((2, 2), (13, 13)), ((13, 2), (2, 13))):
+            d.line([a, b], fill=hexc("#1c1d21"), width=3)
+            d.line([a, b], fill=hexc("#34363c"), width=1)
+        d.rectangle([6, 3, 9, 12], fill=hexc("#17181b"), outline=K)
+        d.rectangle([7, 5, 8, 10], fill=hexc("#2a2c31"))
+        for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
+            d.ellipse([x - 2, y - 2, x + 2, y + 2], fill=hexc("#26282c"), outline=K)
+
+    def motor(d, im):
+        d.rectangle([3, 11, 12, 13], fill=hexc("#1b1c1f"), outline=K)
+        d.rectangle([3, 4, 12, 10], fill=hexc("#232428"), outline=K)
+        d.line([4, 8, 11, 8], fill=hexc("#b06a2c"))
+        d.line([4, 9, 11, 9], fill=hexc("#8a4f1f"))
+        d.line([3, 4, 12, 4], fill=hexc("#5c6068"))
+        d.rectangle([7, 1, 8, 3], fill=hexc("#b8bcc2"))
+        d.point((4, 5), fill=hexc("#5c6068"))
+
+    def esc(d, im):
+        d.rectangle([2, 3, 13, 12], fill=hexc("#141815"), outline=K)
+        for x in (4, 9):
+            for y in (5, 9):
+                d.rectangle([x, y, x + 2, y + 1], fill=hexc("#050505"))
+        for x in range(3, 13, 3):
+            d.point((x, 3), fill=hexc("#d8b04a"))
+            d.point((x, 12), fill=hexc("#d8b04a"))
+        d.line([6, 13, 6, 15], fill=hexc("#c4161c"))
+        d.line([9, 13, 9, 15], fill=hexc("#111111"))
+
+    def battery(d, im):
+        d.rectangle([1, 4, 12, 11], fill=hexc("#17181b"), outline=K)
+        d.rectangle([1, 6, 12, 9], fill=hexc("#e6b800"))
+        d.point((4, 7), fill=K)
+        d.point((5, 8), fill=K)
+        d.point((8, 7), fill=K)
+        d.point((9, 8), fill=K)
+        d.line([12, 6, 14, 5], fill=hexc("#c4161c"))
+        d.line([12, 9, 14, 10], fill=hexc("#111111"))
+        d.rectangle([14, 5, 15, 10], fill=hexc("#d6a816"))
+
+    def camera(d, im):
+        d.rectangle([3, 3, 12, 12], fill=hexc("#141416"), outline=K)
+        d.ellipse([4, 4, 11, 11], fill=hexc("#0a0a0c"), outline=hexc("#3a3c42"))
+        d.ellipse([6, 6, 9, 9], fill=hexc("#2a2f7a"))
+        d.point((6, 6), fill=hexc("#a9d4ff"))
+        d.line([2, 5, 2, 10], fill=hexc("#2a2c31"))
+        d.line([13, 5, 13, 10], fill=hexc("#2a2c31"))
+
+    def vtx(d, im):
+        d.rectangle([1, 5, 10, 13], fill=hexc("#141815"), outline=K)
+        for y in range(6, 13, 2):
+            d.line([2, y, 9, y], fill=hexc("#3a3c42"))
+        d.rectangle([4, 8, 7, 10], fill=hexc("#050505"))
+        d.rectangle([10, 8, 13, 10], fill=hexc("#d6a816"))
+        d.rectangle([13, 7, 14, 11], fill=hexc("#b8963a"))
+        d.point((3, 12), fill=hexc("#ff3b3b"))
+
+    def receiver(d, im):
+        d.rectangle([5, 8, 10, 12], fill=hexc("#1f3a8a"), outline=K)
+        d.rectangle([6, 9, 8, 10], fill=hexc("#050505"))
+        d.line([6, 8, 2, 2], fill=hexc("#202020"))
+        d.line([9, 8, 13, 2], fill=hexc("#202020"))
+        d.point((2, 2), fill=hexc("#e8e8e8"))
+        d.point((13, 2), fill=hexc("#e8e8e8"))
+        d.point((9, 11), fill=hexc("#45ff7b"))
+
+    def antenna(d, im):
+        d.rectangle([5, 1, 10, 4], fill=hexc("#1e1f23"), outline=K)
+        d.point((7, 2), fill=hexc("#ff6a00"))
+        d.line([7, 5, 7, 13], fill=hexc("#111113"), width=2)
+        d.rectangle([6, 13, 9, 15], fill=hexc("#b8963a"))
+
+    def gimbal(d, im):
+        d.arc([2, 1, 13, 14], 200, 340, fill=hexc("#8d9196"), width=2)
+        d.rectangle([4, 5, 11, 12], fill=hexc("#2b2c30"), outline=K)
+        d.ellipse([5, 6, 10, 11], fill=hexc("#101012"))
+        d.ellipse([6, 7, 9, 10], fill=hexc("#3b2d6e"))
+        d.point((6, 7), fill=hexc("#d7c2ff"))
+
+    def gnss(d, im):
+        d.ellipse([1, 2, 14, 13], fill=hexc("#2a2b2e"), outline=K)
+        d.ellipse([3, 3, 12, 11], fill=hexc("#3a3b40"))
+        d.rectangle([5, 5, 10, 9], fill=hexc("#c9b98a"), outline=hexc("#8a7b55"))
+        d.point((7, 7), fill=hexc("#b89a42"))
+        d.point((12, 11), fill=hexc("#45ff7b"))
+
+    def display(d, im):
+        d.rectangle([1, 3, 14, 12], fill=hexc("#16171a"), outline=K)
+        d.rectangle([2, 4, 13, 10], fill=hexc("#0b1d2a"))
+        d.line([3, 6, 7, 6], fill=hexc("#45ff7b"))
+        d.line([3, 8, 10, 8], fill=hexc("#45ff7b"))
+        d.point((12, 5), fill=hexc("#ff3b3b"))
+        d.line([6, 11, 9, 11], fill=hexc("#3a3c42"))
+
+    def stack(d, im):
+        d.rectangle([2, 9, 13, 13], fill=hexc("#141815"), outline=K)
+        d.rectangle([2, 3, 13, 7], fill=hexc("#16171a"), outline=K)
+        for x in (3, 12):
+            d.line([x, 7, x, 9], fill=hexc("#b89a42"))
+        d.rectangle([6, 4, 9, 6], fill=hexc("#050505"))
+        d.rectangle([5, 10, 7, 12], fill=hexc("#050505"))
+        d.rectangle([9, 10, 11, 12], fill=hexc("#050505"))
+        d.point((4, 4), fill=hexc("#3b8bff"))
+        d.point((11, 4), fill=hexc("#ff3b3b"))
+
+    def airframe(d, im):
+        d.polygon([(8, 1), (15, 11), (9, 10), (8, 14), (7, 10), (1, 11)], fill=hexc("#3a3d42"), outline=K)
+        d.line([8, 2, 8, 13], fill=hexc("#5a5d61"))
+        d.line([1, 11, 1, 8], fill=hexc("#26282b"))
+        d.line([15, 11, 15, 8], fill=hexc("#26282b"))
+
+    def piston(d, im):
+        d.rectangle([3, 6, 12, 13], fill=hexc("#8d9399"), outline=hexc("#3a3d42"))
+        for y in range(7, 13, 2):
+            d.line([3, y, 12, y], fill=hexc("#5f646a"))
+        d.rectangle([5, 3, 10, 6], fill=hexc("#a9aeb3"), outline=hexc("#3a3d42"))
+        d.rectangle([7, 1, 8, 3], fill=hexc("#c4161c"))
+        d.rectangle([0, 9, 3, 11], fill=hexc("#2a2b2e"))
+        d.rectangle([12, 10, 15, 11], fill=hexc("#5b3a26"))
+
+    def warhead(d, im):
+        d.ellipse([3, 3, 12, 15], fill=hexc("#4f5a2e"), outline=K)
+        d.rectangle([3, 8, 12, 9], fill=hexc("#c9b23f"))
+        d.rectangle([6, 0, 9, 3], fill=hexc("#a9adb2"), outline=K)
+        d.point((5, 6), fill=hexc("#6b7a3e"))
+
+    def booster(d, im):
+        d.rectangle([6, 1, 9, 12], fill=hexc("#7c8288"), outline=K)
+        d.rectangle([6, 4, 9, 5], fill=hexc("#e3b40f"))
+        d.polygon([(5, 12), (10, 12), (11, 15), (4, 15)], fill=hexc("#2b2522"))
+        d.point((7, 14), fill=hexc("#ff8a2a"))
+        d.line([6, 2, 6, 11], fill=hexc("#a9aeb3"))
+
+    def iron(d, im):
+        d.line([1, 14, 3, 12], fill=hexc("#c9c9c9"), width=1)
+        d.line([3, 12, 7, 8], fill=hexc("#8d9399"), width=2)
+        d.line([7, 8, 12, 3], fill=hexc("#c4161c"), width=3)
+        d.line([8, 8, 12, 4], fill=hexc("#7a0f12"), width=1)
+        d.line([12, 3, 15, 1], fill=hexc("#111111"))
+        d.point((1, 14), fill=hexc("#ff8a2a"))
+
+    for name, fn in [("frame", frame), ("motor", motor), ("esc", esc), ("battery", battery), ("fpv_camera", camera),
+                     ("vtx", vtx), ("receiver", receiver), ("antenna", antenna), ("gimbal_camera", gimbal),
+                     ("gnss_module", gnss), ("display", display), ("flight_stack", stack), ("airframe", airframe),
+                     ("piston_engine", piston), ("warhead", warhead), ("booster", booster),
+                     ("soldering_iron", iron)]:
+        draw_icon(name, fn)
+
+
+def build_jet_engine():
+    a = Atlas("small_jet_engine")
+    a.add("metal", p_flat("#9aa0a6", 6, light=1.25))
+    a.add("metal_dark", p_flat("#5d6268", 5))
+    a.add("intake", p_motor_top("#2a2c30", "#c9c9c9"))
+    a.add("nozzle", p_flat("#4a4038", 10))
+    a.add("glow", p_flat("#ff8a2a", 20, border=0.9, light=1.4))
+    a.add("band", p_stripes("#e3b40f", "#1c1c1c", 2))
+    a.add("mount", p_flat("#2b2d31", 4))
+    a.save()
+    m = Model(a)
+    r = 3.2
+    for rot in (None, ([8, 8, 8], "z", 45)):
+        m.box([8 - r, 8 - r * 0.42, 2.5], [8 + r, 8 + r * 0.42, 12], {"all": "metal", "south": "intake"}, rot=rot)
+        m.box([8 - r * 0.42, 8 - r, 2.5], [8 + r * 0.42, 8 + r, 12], {"all": "metal", "south": "intake"}, rot=rot)
+    m.box([8 - r - 0.1, 7.3, 9.5], [8 + r + 0.1, 8.7, 10.3], "band")
+    m.box([6, 6, 12], [10, 10, 13.5], {"all": "metal_dark", "south": "intake"})
+    m.box([6.3, 6.3, 0.5], [9.7, 9.7, 2.5], {"all": "nozzle", "north": "glow"})
+    m.box([7, 11, 5], [9, 12.5, 9], "mount")
+    m.box([4.2, 7.5, 4], [4.8, 8.5, 10], "metal_dark")
+    m.save("small_jet_engine")
+    save_json({"parent": f"{MODID}:entity/small_jet_engine",
+               "display": display(1.0, gui_rot=(25, 135, 0), ground=0.5, hand=0.6)},
+              ASSETS, "models", "item", "small_jet_engine.json")
+
+
+def bench_textures():
+    rng = random.Random(11)
+
+    def out(name):
+        return path(ASSETS, "textures", "block", name + ".png")
+
+    im = Image.new("RGBA", (16, 16))
+    px = im.load()
+    for y in range(16):
+        for x in range(16):
+            g = rng.randint(-6, 6)
+            c = (46 + g, 110 + g, 70 + g, 255)
+            if x % 4 == 0 or y % 4 == 0:
+                c = (60 + g, 128 + g, 86 + g, 255)
+            px[x, y] = c
+    im.save(out("bench_mat"))
+
+    im = Image.new("RGBA", (16, 16))
+    px = im.load()
+    for y in range(16):
+        for x in range(16):
+            g = rng.randint(-8, 8) + (10 if (y + x // 5) % 5 == 0 else 0)
+            px[x, y] = (88 + g, 62 + g, 38 + g, 255)
+    d = ImageDraw.Draw(im)
+    d.line([0, 7, 15, 7], fill=hexc("#3e2b19"))
+    d.line([0, 15, 15, 15], fill=hexc("#3e2b19"))
+    im.save(out("bench_wood"))
+
+    im = Image.new("RGBA", (16, 16), hexc("#2b2d31"))
+    d = ImageDraw.Draw(im)
+    d.rectangle([0, 0, 15, 15], outline=hexc("#111214"))
+    d.rectangle([2, 2, 9, 7], fill=hexc("#0b0b0b"))
+    d.text((2, 0), "350", fill=hexc("#ff3b3b"))
+    d.ellipse([11, 3, 14, 6], fill=hexc("#8d9399"))
+    d.rectangle([2, 10, 4, 12], fill=hexc("#45ff7b"))
+    d.rectangle([6, 10, 8, 12], fill=hexc("#e3b40f"))
+    im.save(out("bench_station"))
+
+    im = Image.new("RGBA", (16, 16), hexc("#8d9399"))
+    d = ImageDraw.Draw(im)
+    for y in range(0, 16, 3):
+        d.line([0, y, 15, y], fill=hexc("#6f757b"))
+    im.save(out("bench_metal"))
+
+    im = Image.new("RGBA", (16, 16), hexc("#b0141a"))
+    d = ImageDraw.Draw(im)
+    for x in range(0, 16, 3):
+        d.line([x, 0, x, 15], fill=hexc("#7a0f12"))
+    im.save(out("bench_handle"))
+
+    im = Image.new("RGBA", (16, 16), hexc("#9aa0a6"))
+    d = ImageDraw.Draw(im)
+    d.ellipse([2, 2, 13, 13], fill=hexc("#c9c9c9"), outline=hexc("#6f757b"))
+    d.ellipse([6, 6, 9, 9], fill=hexc("#3a3c42"))
+    im.save(out("bench_spool"))
+
+
+def build_bench():
+    bench_textures()
+    boxes = [
+        ([0, 12, 0], [16, 13.8, 16], "wood", None, {"up": "mat"}),
+        ([0.5, 13.8, 0.5], [15.5, 14.1, 15.5], "mat", None, None),
+        ([1, 3, 1], [15, 4, 15], "wood", None, None),
+    ]
+    for x in (0.5, 13):
+        for z in (0.5, 13):
+            boxes.append(([x, 0, z], [x + 2.5, 12, z + 2.5], "wood", None, None))
+    # soldering station + iron on its stand
+    boxes += [
+        ([10.5, 14.1, 0.8], [15, 16.5, 4.2], "metal", None, {"south": "station"}),
+        ([11, 14.1, 5], [13.5, 14.6, 7.5], "metal", None, None),
+        ([11.8, 14.6, 5.4], [12.6, 15.4, 9.5], "handle", None, None),
+        ([12.0, 14.8, 9.5], [12.4, 15.2, 12.5], "metal", None, None),
+        ([3, 14.1, 1.5], [5.5, 16.2, 4], "spool", None, None),
+        ([1.5, 14.1, 11.5], [5, 15.8, 14.5], "metal", None, None),
+        ([2.5, 15.8, 12.5], [4, 16, 13.5], "handle", None, None),
+    ]
+    # half-built frame lying on the mat
+    for ang in (45, -45):
+        boxes.append(([3, 14.1, 7.4], [10, 14.4, 8.6], "station", ([6.5, 14.25, 8], "y", ang), {"up": "metal"}))
+    tex = {"particle": f"{MODID}:block/bench_wood", "wood": f"{MODID}:block/bench_wood",
+           "mat": f"{MODID}:block/bench_mat", "metal": f"{MODID}:block/bench_metal",
+           "station": f"{MODID}:block/bench_station", "handle": f"{MODID}:block/bench_handle",
+           "spool": f"{MODID}:block/bench_spool"}
+    disp = {
+        "gui": {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.625] * 3},
+        "ground": {"rotation": [0, 0, 0], "translation": [0, 3, 0], "scale": [0.25] * 3},
+        "fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.5] * 3},
+        "thirdperson_righthand": {"rotation": [75, 45, 0], "translation": [0, 2.5, 0], "scale": [0.375] * 3},
+        "firstperson_righthand": {"rotation": [0, 45, 0], "translation": [0, 0, 0], "scale": [0.4] * 3},
+    }
+    block_model("assembly_bench", tex, boxes, disp)
+    save_json({"variants": {
+        "facing=north": {"model": f"{MODID}:block/assembly_bench"},
+        "facing=east": {"model": f"{MODID}:block/assembly_bench", "y": 90},
+        "facing=south": {"model": f"{MODID}:block/assembly_bench", "y": 180},
+        "facing=west": {"model": f"{MODID}:block/assembly_bench", "y": 270},
+    }}, ASSETS, "blockstates", "assembly_bench.json")
+    save_json({"parent": f"{MODID}:block/assembly_bench"}, ASSETS, "models", "item", "assembly_bench.json")
+
+
+def gui_texture():
+    im = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    W, H = 176, 166
+    bg, light, dark = hexc("#c6c6c6"), hexc("#ffffff"), hexc("#555555")
+    d.rectangle([0, 0, W - 1, H - 1], fill=bg)
+    d.line([1, 0, W - 3, 0], fill=hexc("#000000"))
+    d.line([0, 1, 0, H - 3], fill=hexc("#000000"))
+    d.line([W - 1, 2, W - 1, H - 2], fill=hexc("#000000"))
+    d.line([2, H - 1, W - 2, H - 1], fill=hexc("#000000"))
+    d.line([1, 1, W - 3, 1], fill=light)
+    d.line([1, 1, 1, H - 3], fill=light)
+    d.line([W - 2, 2, W - 2, H - 2], fill=dark)
+    d.line([2, H - 2, W - 2, H - 2], fill=dark)
+
+    def slot(x, y, size=18):
+        d.rectangle([x, y, x + size - 1, y + size - 1], fill=hexc("#8b8b8b"))
+        d.line([x, y, x + size - 2, y], fill=hexc("#373737"))
+        d.line([x, y, x, y + size - 2], fill=hexc("#373737"))
+        d.line([x + 1, y + size - 1, x + size - 1, y + size - 1], fill=light)
+        d.line([x + size - 1, y + 1, x + size - 1, y + size - 1], fill=light)
+
+    for r in range(3):
+        for c in range(3):
+            slot(29 + c * 18, 16 + r * 18)
+    slot(119, 30, 26)
+    slot(93, 57)
+    # faint iron in the empty tool slot
+    d.line([96, 71, 98, 69], fill=hexc("#7a7a7a"))
+    d.line([98, 69, 102, 65], fill=hexc("#6e6e6e"), width=2)
+    d.line([102, 65, 107, 60], fill=hexc("#7d6a6a"), width=2)
+    # arrow
+    d.polygon([(90, 39), (106, 39), (106, 35), (114, 43), (106, 51), (106, 47), (90, 47)], fill=hexc("#8b8b8b"))
+    # mat stripe under the grid
+    d.rectangle([28, 72, 85, 74], fill=hexc("#4f8a5a"))
+    for r in range(3):
+        for c in range(9):
+            slot(7 + c * 18, 83 + r * 18)
+    for c in range(9):
+        slot(7 + c * 18, 141)
+    im.save(path(ASSETS, "textures", "gui", "assembly_bench.png"))
+
+
+# ---------------------------------------------------------------------------
 # lang
 
 RU = {
     "itemGroup.fpvdrones": "FPV Drones",
+    "item.fpvdrones.frame": "Рама 7\"",
+    "item.fpvdrones.motor": "Бесколлекторный мотор",
+    "item.fpvdrones.esc": "Регулятор 4в1",
+    "item.fpvdrones.flight_stack": "Полётный стек",
+    "item.fpvdrones.battery": "АКБ LiPo 6S",
+    "item.fpvdrones.fpv_camera": "FPV-камера",
+    "item.fpvdrones.vtx": "Видеопередатчик",
+    "item.fpvdrones.receiver": "Приёмник ELRS",
+    "item.fpvdrones.antenna": "Антенна",
+    "item.fpvdrones.gimbal_camera": "Камера на подвесе",
+    "item.fpvdrones.gnss_module": "Модуль ГНСС",
+    "item.fpvdrones.display": "Дисплей",
+    "item.fpvdrones.airframe": "Планер БПЛА",
+    "item.fpvdrones.piston_engine": "Поршневой двигатель",
+    "item.fpvdrones.small_jet_engine": "Малый реактивный двигатель",
+    "item.fpvdrones.warhead": "Боевая часть",
+    "item.fpvdrones.booster": "Стартовый ускоритель",
+    "item.fpvdrones.soldering_iron": "Паяльник",
+    "block.fpvdrones.assembly_bench": "Сборочный верстак",
+    "screen.fpvdrones.needs_iron": "Нужен паяльник",
+    "tooltip.fpvdrones.part": "Запчасть",
+    "tooltip.fpvdrones.soldering_iron": "Кладётся в слот сборочного верстака.",
     "item.fpvdrones.fpv_goggles": "ФПВ-очки",
     "item.fpvdrones.drone_remote": "Пульт управления дроном",
     "item.fpvdrones.fpv_drone": "FPV-дрон",
@@ -1329,6 +1684,28 @@ RU = {
 
 EN = {
     "itemGroup.fpvdrones": "FPV Drones",
+    "item.fpvdrones.frame": "7\" Frame",
+    "item.fpvdrones.motor": "Brushless Motor",
+    "item.fpvdrones.esc": "4-in-1 ESC",
+    "item.fpvdrones.flight_stack": "Flight Stack",
+    "item.fpvdrones.battery": "6S LiPo Battery",
+    "item.fpvdrones.fpv_camera": "FPV Camera",
+    "item.fpvdrones.vtx": "Video Transmitter",
+    "item.fpvdrones.receiver": "ELRS Receiver",
+    "item.fpvdrones.antenna": "Antenna",
+    "item.fpvdrones.gimbal_camera": "Gimbal Camera",
+    "item.fpvdrones.gnss_module": "GNSS Module",
+    "item.fpvdrones.display": "Display",
+    "item.fpvdrones.airframe": "UAV Airframe",
+    "item.fpvdrones.piston_engine": "Piston Engine",
+    "item.fpvdrones.small_jet_engine": "Small Jet Engine",
+    "item.fpvdrones.warhead": "Warhead",
+    "item.fpvdrones.booster": "Launch Booster",
+    "item.fpvdrones.soldering_iron": "Soldering Iron",
+    "block.fpvdrones.assembly_bench": "Assembly Bench",
+    "screen.fpvdrones.needs_iron": "Needs a soldering iron",
+    "tooltip.fpvdrones.part": "Part",
+    "tooltip.fpvdrones.soldering_iron": "Goes into the assembly bench tool slot.",
     "item.fpvdrones.fpv_goggles": "FPV Goggles",
     "item.fpvdrones.drone_remote": "Drone Controller",
     "item.fpvdrones.fpv_drone": "FPV Drone",
@@ -1456,55 +1833,146 @@ def lang():
 # ---------------------------------------------------------------------------
 # recipes / loot
 
+RECIPE_ROWS = []
+
+
 def recipes():
-    def shaped(name, pattern, key, result, count=1):
+    out_dir = os.path.join(DATA, "recipes")
+    if os.path.isdir(out_dir):
+        shutil.rmtree(out_dir)
+    M = "minecraft:"
+
+    def key_of(key):
         k = {}
         for ch, it in key.items():
-            k[ch] = {"tag": it[1:]} if it.startswith("#") else {"item": it}
-        save_json({"type": "minecraft:crafting_shaped", "pattern": pattern, "key": k,
-                   "result": {"item": f"{MODID}:{result}", "count": count}},
-                  DATA, "recipes", name + ".json")
+            if it.startswith("#"):
+                k[ch] = {"tag": it[1:]}
+            else:
+                k[ch] = {"item": it if ":" in it else f"{MODID}:{it}"}
+        return k
 
-    M = "minecraft:"
-    FC = f"{MODID}:flight_controller"
-    PR = f"{MODID}:propeller"
-    shaped("propeller", ["N N", " I ", "N N"], {"N": M + "iron_nugget", "I": M + "iron_ingot"}, "propeller", 4)
-    shaped("flight_controller", ["RQR", "GCG", "RQR"],
-           {"R": M + "redstone", "Q": M + "quartz", "G": M + "gold_nugget", "C": M + "repeater"}, "flight_controller")
-    shaped("fpv_drone", ["P P", "IFI", "P P"], {"P": PR, "I": M + "iron_ingot", "F": FC}, "fpv_drone")
-    shaped("mavic3", ["P P", "IFI", "PEP"], {"P": PR, "I": M + "iron_ingot", "F": FC, "E": M + "ender_eye"}, "mavic3")
-    shaped("fpv_goggles", ["L L", "GFG"], {"L": M + "leather", "G": M + "glass_pane", "F": FC}, "fpv_goggles")
-    shaped("drone_remote", ["R R", "IFI", "BIB"],
-           {"R": M + "iron_bars", "I": M + "iron_ingot", "F": FC,
-            "B": M + "stone_button"}, "drone_remote")
-    shaped("tablet", ["III", "IGI", "IFI"], {"I": M + "iron_ingot", "G": M + "glass_pane", "F": FC}, "tablet")
-    shaped("launch_remote", [" R ", "IFI", "IBI"],
-           {"R": M + "redstone_torch", "I": M + "iron_ingot", "F": FC, "B": M + "stone_button"}, "launch_remote")
-    shaped("launcher", ["  R", "IRI", "BBB"], {"R": M + "rail", "I": M + "iron_ingot", "B": M + "iron_block"}, "launcher")
-    shaped("launch_pad", ["S S", " D ", "S S"], {"S": M + "stick", "D": M + "black_dye"}, "launch_pad")
-    shaped("launch_truck", ["RRR", "BFB", "WIW"],
-           {"R": M + "rail", "B": M + "iron_block", "F": FC, "W": M + "black_wool", "I": M + "piston"}, "launch_truck")
-    shaped("shahed136", ["ITI", "WFW", "IPI"],
-           {"I": M + "iron_ingot", "T": M + "tnt", "W": M + "iron_block", "F": FC, "P": PR}, "shahed136")
-    shaped("geran2", ["ITI", "WFW", "CPC"],
-           {"I": M + "iron_ingot", "T": M + "tnt", "W": M + "iron_block", "F": FC, "P": PR, "C": M + "coal_block"}, "geran2")
-    shaped("geran5", ["TBT", "WFW", "IGI"],
-           {"T": M + "tnt", "B": M + "blaze_rod", "W": M + "iron_block", "F": FC, "I": M + "iron_ingot",
-            "G": M + "gold_ingot"}, "geran5")
-    shaped("pg7vs", [" N ", "ITI", " I "], {"N": M + "iron_nugget", "I": M + "iron_ingot", "T": M + "tnt"}, "pg7vs")
-    shaped("og7", [" N ", "GTG", " I "],
-           {"N": M + "iron_nugget", "G": M + "gunpowder", "T": M + "tnt", "I": M + "iron_ingot"}, "og7")
-    shaped("explosive_canister", ["GSG", "TBT", "GTG"],
-           {"G": M + "gunpowder", "S": M + "string", "T": M + "tnt", "B": M + "bucket"}, "explosive_canister")
-    shaped("rgd5", [" N ", "IGI", " I "], {"N": M + "iron_nugget", "I": M + "iron_ingot", "G": M + "gunpowder"}, "rgd5", 2)
-    shaped("vog17m", [" N ", "IGI", " S "],
-           {"N": M + "iron_nugget", "I": M + "iron_ingot", "G": M + "gunpowder", "S": M + "stick"}, "vog17m", 4)
+    def crafting(name, pattern, key, count=1):
+        save_json({"type": "minecraft:crafting_shaped", "pattern": pattern, "key": key_of(key),
+                   "result": {"item": f"{MODID}:{name}", "count": count}}, DATA, "recipes", name + ".json")
+        RECIPE_ROWS.append((name, pattern, key, count, "верстак"))
 
-    for block in ("launcher", "launch_pad"):
+    def bench(name, pattern, key, count=1, solder=False):
+        obj = {"type": f"{MODID}:assembly", "pattern": pattern, "key": key_of(key),
+               "result": {"item": f"{MODID}:{name}", "count": count}}
+        if solder:
+            obj["soldering"] = True
+        save_json(obj, DATA, "recipes", name + ".json")
+        RECIPE_ROWS.append((name, pattern, key, count, "сборочный + паяльник" if solder else "сборочный"))
+
+    # the only two things made on a vanilla crafting table
+    crafting("soldering_iron", ["  I", " R ", "S  "], {"I": M + "iron_ingot", "R": M + "redstone", "S": M + "stick"})
+    crafting("assembly_bench", ["CCC", "ITI", "P P"],
+             {"C": M + "green_carpet", "I": M + "iron_ingot", "T": M + "crafting_table", "P": "#minecraft:planks"})
+
+    # parts
+    bench("frame", ["I I", "IDI", "I I"], {"I": M + "iron_ingot", "D": M + "black_dye"})
+    bench("motor", [" I ", "RGR", " I "], {"I": M + "iron_ingot", "R": M + "redstone", "G": M + "gold_ingot"}, 2)
+    bench("propeller", ["N N", " I ", "N N"], {"N": M + "iron_nugget", "I": M + "iron_ingot"}, 4)
+    bench("esc", ["RQR", "NCN"], {"R": M + "redstone", "Q": M + "quartz", "N": M + "gold_nugget", "C": M + "comparator"},
+          solder=True)
+    bench("flight_controller", ["RQR", "GCG", "RQR"],
+          {"R": M + "redstone", "Q": M + "quartz", "G": M + "gold_nugget", "C": M + "repeater"}, solder=True)
+    bench("receiver", ["A", "Q", "N"], {"A": M + "iron_bars", "Q": M + "quartz", "N": M + "gold_nugget"}, 2, solder=True)
+    bench("flight_stack", ["F", "E", "R"], {"F": "flight_controller", "E": "esc", "R": "receiver"}, solder=True)
+    bench("battery", ["NRN", "RGR", "NRN"], {"N": M + "iron_nugget", "R": M + "redstone", "G": M + "glowstone_dust"},
+          solder=True)
+    bench("fpv_camera", ["NGN", "NQN"], {"N": M + "iron_nugget", "G": M + "glass_pane", "Q": M + "quartz"}, solder=True)
+    bench("antenna", ["G", "B", "B"], {"G": M + "gold_nugget", "B": M + "iron_bars"}, 2)
+    bench("vtx", [" A ", "QGQ"], {"A": "antenna", "Q": M + "quartz", "G": M + "gold_ingot"}, solder=True)
+    bench("gimbal_camera", ["NMN", "NCN"], {"N": M + "iron_nugget", "M": "motor", "C": "fpv_camera"}, solder=True)
+    bench("gnss_module", ["A", "C", "Q"], {"A": "antenna", "C": M + "compass", "Q": M + "quartz"}, solder=True)
+    bench("display", ["GGG", "RQR"], {"G": M + "glass_pane", "R": M + "redstone", "Q": M + "quartz"}, solder=True)
+    bench("airframe", ["WWW", "III", " W "], {"W": M + "gray_wool", "I": M + "iron_ingot"})
+    bench("piston_engine", ["IPI", "IBI", "IFI"],
+          {"I": M + "iron_ingot", "P": M + "piston", "B": M + "iron_block", "F": M + "flint_and_steel"})
+    bench("small_jet_engine", ["IRI", "CFC", "IBI"],
+          {"I": M + "iron_ingot", "R": M + "blaze_rod", "C": M + "fire_charge", "F": "flight_controller",
+           "B": M + "iron_block"}, solder=True)
+    bench("warhead", ["ITI", "TTT", "ITI"], {"I": M + "iron_ingot", "T": M + "tnt"})
+    bench("booster", ["IGI", "IGI", "IFI"], {"I": M + "iron_ingot", "G": M + "gunpowder", "F": M + "fire_charge"})
+
+    # drones and gear
+    bench("fpv_drone", ["PBP", "MFM", "VSC"],
+          {"P": "propeller", "B": "battery", "M": "motor", "F": "frame", "V": "vtx", "S": "flight_stack",
+           "C": "fpv_camera"}, solder=True)
+    bench("mavic3", ["PBP", "MGM", "NSA"],
+          {"P": "propeller", "B": "battery", "M": "motor", "G": "gimbal_camera", "N": "gnss_module",
+           "S": "flight_stack", "A": "antenna"}, solder=True)
+    bench("fpv_goggles", ["LAL", "DRD"], {"L": M + "leather", "A": "antenna", "D": "display", "R": "receiver"}, solder=True)
+    bench("drone_remote", ["A A", "BDB", "IRI"],
+          {"A": "antenna", "B": M + "stone_button", "D": "display", "I": M + "iron_ingot", "R": "receiver"}, solder=True)
+    bench("tablet", ["IDI", "IRI", "IBI"], {"I": M + "iron_ingot", "D": "display", "R": "receiver", "B": "battery"},
+          solder=True)
+    bench("launch_remote", [" A ", "IDI", "IBI"],
+          {"A": "antenna", "I": M + "iron_ingot", "D": "display", "B": M + "stone_button"}, solder=True)
+    bench("launcher", ["  R", "IRI", "BBB"], {"R": M + "rail", "I": M + "iron_ingot", "B": M + "iron_block"})
+    bench("launch_pad", ["S S", " D ", "S S"], {"S": M + "stick", "D": M + "black_dye"})
+    bench("launch_truck", ["RRR", "BEB", "WFW"],
+          {"R": M + "rail", "B": M + "iron_block", "E": "piston_engine", "W": M + "black_wool", "F": "flight_controller"})
+    bench("shahed136", ["FN ", "EAH", " B "],
+          {"F": "flight_controller", "N": "gnss_module", "E": "piston_engine", "A": "airframe", "H": "warhead",
+           "B": "booster"}, solder=True)
+    bench("geran2", ["FNC", "EAH", " BH"],
+          {"F": "flight_controller", "N": "gnss_module", "C": M + "black_dye", "E": "piston_engine", "A": "airframe",
+           "H": "warhead", "B": "booster"}, solder=True)
+    bench("geran5", ["FN ", "JAH", " BH"],
+          {"F": "flight_controller", "N": "gnss_module", "J": "small_jet_engine", "A": "airframe", "H": "warhead",
+           "B": "booster"}, solder=True)
+
+    # ammo
+    bench("pg7vs", [" N ", "ITI", " I "], {"N": M + "iron_nugget", "I": M + "iron_ingot", "T": M + "tnt"})
+    bench("og7", [" N ", "GTG", " I "], {"N": M + "iron_nugget", "G": M + "gunpowder", "T": M + "tnt", "I": M + "iron_ingot"})
+    bench("explosive_canister", ["GSG", "TBT", "GTG"],
+          {"G": M + "gunpowder", "S": M + "string", "T": M + "tnt", "B": M + "bucket"})
+    bench("rgd5", [" N ", "IGI", " I "], {"N": M + "iron_nugget", "I": M + "iron_ingot", "G": M + "gunpowder"}, 2)
+    bench("vog17m", [" N ", "IGI", " S "],
+          {"N": M + "iron_nugget", "I": M + "iron_ingot", "G": M + "gunpowder", "S": M + "stick"}, 4)
+
+    for block in ("launcher", "launch_pad", "assembly_bench"):
         save_json({"type": "minecraft:block", "pools": [{"rolls": 1, "entries": [
             {"type": "minecraft:item", "name": f"{MODID}:{block}"}],
             "conditions": [{"condition": "minecraft:survives_explosion"}]}]},
             DATA, "loot_tables", "blocks", block + ".json")
+
+
+def recipe_doc():
+    """RECIPES.md next to the README, there's no JEI"""
+    vanilla_ru = {"iron_ingot": "железо", "iron_nugget": "жел. самородок", "gold_ingot": "золото",
+                  "gold_nugget": "зол. самородок", "redstone": "редстоун", "quartz": "кварц", "comparator": "компаратор",
+                  "repeater": "повторитель", "glowstone_dust": "светокамень", "glass_pane": "стекл. панель",
+                  "iron_bars": "решётка", "compass": "компас", "gray_wool": "серая шерсть", "piston": "поршень",
+                  "iron_block": "жел. блок", "flint_and_steel": "огниво", "blaze_rod": "огн. стержень",
+                  "fire_charge": "огн. заряд", "tnt": "ТНТ", "gunpowder": "порох", "leather": "кожа",
+                  "stone_button": "кнопка", "rail": "рельсы", "stick": "палка", "black_dye": "чёрный краситель",
+                  "black_wool": "чёрная шерсть", "string": "нить", "bucket": "ведро", "green_carpet": "зелёный ковёр",
+                  "crafting_table": "верстак", "minecraft:planks": "доски"}
+
+    def name(it):
+        it = it.lstrip("#")
+        if it.startswith("minecraft:"):
+            short = it.split(":", 1)[1]
+            return vanilla_ru.get(short, vanilla_ru.get(it, short))
+        return RU.get(f"item.{MODID}.{it}", RU.get(f"block.{MODID}.{it}", it))
+
+    lines = ["# Рецепты", "", "Всё, кроме паяльника и самого сборочного верстака, собирается на сборочном верстаке.",
+             "«+ паяльник» — паяльник должен лежать в своём слоте, каждая сборка тратит 1 прочности.", ""]
+    for res, pattern, key, count, where in RECIPE_ROWS:
+        title = name(res) + (f" ×{count}" if count > 1 else "")
+        lines.append(f"### {title}")
+        lines.append(f"*{where}*")
+        lines.append("```")
+        lines.extend(p.replace(" ", ".") for p in pattern)
+        lines.append("```")
+        lines.append(", ".join(f"`{ch}` {name(it)}" for ch, it in key.items()))
+        lines.append("")
+    root = os.path.abspath(os.path.join(RES, "..", "..", ".."))
+    with open(os.path.join(root, "RECIPES.md"), "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
 
 
 # ---------------------------------------------------------------------------
@@ -1637,10 +2105,15 @@ def main():
     build_launcher()
     build_launch_pad()
     build_icons()
+    build_part_icons()
+    build_jet_engine()
+    build_bench()
+    gui_texture()
     armor_texture()
     item_models()
     lang()
     recipes()
+    recipe_doc()
     sounds_json()
     gen_sounds()
     print("done:", RES)

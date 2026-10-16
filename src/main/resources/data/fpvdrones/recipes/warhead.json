@@ -1,0 +1,20 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "ITI",
+    "TTT",
+    "ITI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "T": {
+      "item": "minecraft:tnt"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:warhead",
+    "count": 1
+  }
+}

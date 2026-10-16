@@ -1,0 +1,26 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "IPI",
+    "IBI",
+    "IFI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "B": {
+      "item": "minecraft:iron_block"
+    },
+    "F": {
+      "item": "minecraft:flint_and_steel"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:piston_engine",
+    "count": 1
+  }
+}

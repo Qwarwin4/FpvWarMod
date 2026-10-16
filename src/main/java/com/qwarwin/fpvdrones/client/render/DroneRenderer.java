@@ -108,14 +108,18 @@ public class DroneRenderer extends EntityRenderer<AbstractDroneEntity> {
                 break;
             case CANISTER:
                 s = 0.5F;
-                dy = -0.236F;
-                dz = 0F;
+                dy = -0.083F;
+                dz = 0.03F;
                 break;
             default:
                 return;
         }
         ms.pushPose();
         ms.translate(0, dy, dz);
+        if (t == PayloadType.CANISTER) {
+            // strapped on its side like the RPG warheads, cap forward
+            ms.mulPose(Vector3f.XP.rotationDegrees(90F));
+        }
         ms.scale(s, s, s);
         ModModels.render(t.model(), ms, buf, light);
         ms.popPose();

@@ -1,0 +1,20 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "G",
+    "B",
+    "B"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:gold_nugget"
+    },
+    "B": {
+      "item": "minecraft:iron_bars"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:antenna",
+    "count": 2
+  }
+}

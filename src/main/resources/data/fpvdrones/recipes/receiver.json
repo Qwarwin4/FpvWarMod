@@ -1,0 +1,24 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "A",
+    "Q",
+    "N"
+  ],
+  "key": {
+    "A": {
+      "item": "minecraft:iron_bars"
+    },
+    "Q": {
+      "item": "minecraft:quartz"
+    },
+    "N": {
+      "item": "minecraft:gold_nugget"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:receiver",
+    "count": 2
+  },
+  "soldering": true
+}

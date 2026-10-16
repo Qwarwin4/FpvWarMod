@@ -2,8 +2,10 @@ package com.qwarwin.fpvdrones;
 
 import com.qwarwin.fpvdrones.network.Network;
 import com.qwarwin.fpvdrones.registry.ModBlocks;
+import com.qwarwin.fpvdrones.registry.ModContainers;
 import com.qwarwin.fpvdrones.registry.ModEntities;
 import com.qwarwin.fpvdrones.registry.ModItems;
+import com.qwarwin.fpvdrones.registry.ModRecipes;
 import com.qwarwin.fpvdrones.registry.ModSounds;
 import com.qwarwin.fpvdrones.registry.ModTileEntities;
 import net.minecraft.item.ItemGroup;
@@ -34,6 +36,8 @@ public class FpvDrones {
         ModEntities.ENTITIES.register(bus);
         ModTileEntities.TILE_ENTITIES.register(bus);
         ModSounds.SOUNDS.register(bus);
+        ModRecipes.SERIALIZERS.register(bus);
+        ModContainers.CONTAINERS.register(bus);
         bus.addListener(this::setup);
         bus.addListener(ModEntities::registerAttributes);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SPEC);

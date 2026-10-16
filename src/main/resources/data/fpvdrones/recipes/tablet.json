@@ -1,23 +1,27 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "fpvdrones:assembly",
   "pattern": [
-    "III",
-    "IGI",
-    "IFI"
+    "IDI",
+    "IRI",
+    "IBI"
   ],
   "key": {
     "I": {
       "item": "minecraft:iron_ingot"
     },
-    "G": {
-      "item": "minecraft:glass_pane"
+    "D": {
+      "item": "fpvdrones:display"
     },
-    "F": {
-      "item": "fpvdrones:flight_controller"
+    "R": {
+      "item": "fpvdrones:receiver"
+    },
+    "B": {
+      "item": "fpvdrones:battery"
     }
   },
   "result": {
     "item": "fpvdrones:tablet",
     "count": 1
-  }
+  },
+  "soldering": true
 }

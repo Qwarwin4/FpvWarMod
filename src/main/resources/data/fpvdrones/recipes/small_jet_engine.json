@@ -1,0 +1,30 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "IRI",
+    "CFC",
+    "IBI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "R": {
+      "item": "minecraft:blaze_rod"
+    },
+    "C": {
+      "item": "minecraft:fire_charge"
+    },
+    "F": {
+      "item": "fpvdrones:flight_controller"
+    },
+    "B": {
+      "item": "minecraft:iron_block"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:small_jet_engine",
+    "count": 1
+  },
+  "soldering": true
+}

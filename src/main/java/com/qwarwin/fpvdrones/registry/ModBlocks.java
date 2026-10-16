@@ -1,6 +1,7 @@
 package com.qwarwin.fpvdrones.registry;
 
 import com.qwarwin.fpvdrones.FpvDrones;
+import com.qwarwin.fpvdrones.block.AssemblyBenchBlock;
 import com.qwarwin.fpvdrones.block.LaunchPadBlock;
 import com.qwarwin.fpvdrones.block.LauncherBlock;
 import net.minecraft.block.AbstractBlock;
@@ -24,6 +25,12 @@ public final class ModBlocks {
             () -> new LaunchPadBlock(AbstractBlock.Properties.of(Material.DECORATION)
                     .strength(0.6F)
                     .sound(SoundType.SCAFFOLDING)
+                    .noOcclusion()));
+
+    public static final RegistryObject<Block> ASSEMBLY_BENCH = BLOCKS.register("assembly_bench",
+            () -> new AssemblyBenchBlock(AbstractBlock.Properties.of(Material.WOOD)
+                    .strength(2.5F)
+                    .sound(SoundType.WOOD)
                     .noOcclusion()));
 
     private ModBlocks() {

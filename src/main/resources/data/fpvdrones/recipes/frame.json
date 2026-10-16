@@ -1,0 +1,20 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "I I",
+    "IDI",
+    "I I"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "D": {
+      "item": "minecraft:black_dye"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:frame",
+    "count": 1
+  }
+}

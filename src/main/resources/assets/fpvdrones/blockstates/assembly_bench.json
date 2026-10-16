@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "fpvdrones:block/assembly_bench"
+    },
+    "facing=east": {
+      "model": "fpvdrones:block/assembly_bench",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "fpvdrones:block/assembly_bench",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "fpvdrones:block/assembly_bench",
+      "y": 270
+    }
+  }
+}

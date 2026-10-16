@@ -1,32 +1,33 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "fpvdrones:assembly",
   "pattern": [
-    "TBT",
-    "WFW",
-    "IGI"
+    "FN ",
+    "JAH",
+    " BH"
   ],
   "key": {
-    "T": {
-      "item": "minecraft:tnt"
-    },
-    "B": {
-      "item": "minecraft:blaze_rod"
-    },
-    "W": {
-      "item": "minecraft:iron_block"
-    },
     "F": {
       "item": "fpvdrones:flight_controller"
     },
-    "I": {
-      "item": "minecraft:iron_ingot"
+    "N": {
+      "item": "fpvdrones:gnss_module"
     },
-    "G": {
-      "item": "minecraft:gold_ingot"
+    "J": {
+      "item": "fpvdrones:small_jet_engine"
+    },
+    "A": {
+      "item": "fpvdrones:airframe"
+    },
+    "H": {
+      "item": "fpvdrones:warhead"
+    },
+    "B": {
+      "item": "fpvdrones:booster"
     }
   },
   "result": {
     "item": "fpvdrones:geran5",
     "count": 1
-  }
+  },
+  "soldering": true
 }

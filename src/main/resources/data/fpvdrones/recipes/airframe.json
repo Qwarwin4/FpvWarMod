@@ -1,0 +1,20 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "WWW",
+    "III",
+    " W "
+  ],
+  "key": {
+    "W": {
+      "item": "minecraft:gray_wool"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:airframe",
+    "count": 1
+  }
+}

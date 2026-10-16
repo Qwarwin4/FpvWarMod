@@ -1,22 +1,26 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "fpvdrones:assembly",
   "pattern": [
-    "L L",
-    "GFG"
+    "LAL",
+    "DRD"
   ],
   "key": {
     "L": {
       "item": "minecraft:leather"
     },
-    "G": {
-      "item": "minecraft:glass_pane"
+    "A": {
+      "item": "fpvdrones:antenna"
     },
-    "F": {
-      "item": "fpvdrones:flight_controller"
+    "D": {
+      "item": "fpvdrones:display"
+    },
+    "R": {
+      "item": "fpvdrones:receiver"
     }
   },
   "result": {
     "item": "fpvdrones:fpv_goggles",
     "count": 1
-  }
+  },
+  "soldering": true
 }

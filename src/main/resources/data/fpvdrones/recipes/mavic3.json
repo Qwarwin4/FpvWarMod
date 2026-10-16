@@ -1,26 +1,36 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "fpvdrones:assembly",
   "pattern": [
-    "P P",
-    "IFI",
-    "PEP"
+    "PBP",
+    "MGM",
+    "NSA"
   ],
   "key": {
     "P": {
       "item": "fpvdrones:propeller"
     },
-    "I": {
-      "item": "minecraft:iron_ingot"
+    "B": {
+      "item": "fpvdrones:battery"
     },
-    "F": {
-      "item": "fpvdrones:flight_controller"
+    "M": {
+      "item": "fpvdrones:motor"
     },
-    "E": {
-      "item": "minecraft:ender_eye"
+    "G": {
+      "item": "fpvdrones:gimbal_camera"
+    },
+    "N": {
+      "item": "fpvdrones:gnss_module"
+    },
+    "S": {
+      "item": "fpvdrones:flight_stack"
+    },
+    "A": {
+      "item": "fpvdrones:antenna"
     }
   },
   "result": {
     "item": "fpvdrones:mavic3",
     "count": 1
-  }
+  },
+  "soldering": true
 }

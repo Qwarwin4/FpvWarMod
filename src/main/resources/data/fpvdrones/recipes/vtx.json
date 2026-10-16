@@ -1,0 +1,23 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    " A ",
+    "QGQ"
+  ],
+  "key": {
+    "A": {
+      "item": "fpvdrones:antenna"
+    },
+    "Q": {
+      "item": "minecraft:quartz"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:vtx",
+    "count": 1
+  },
+  "soldering": true
+}

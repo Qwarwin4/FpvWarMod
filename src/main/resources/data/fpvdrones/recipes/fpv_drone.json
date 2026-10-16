@@ -1,23 +1,36 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "fpvdrones:assembly",
   "pattern": [
-    "P P",
-    "IFI",
-    "P P"
+    "PBP",
+    "MFM",
+    "VSC"
   ],
   "key": {
     "P": {
       "item": "fpvdrones:propeller"
     },
-    "I": {
-      "item": "minecraft:iron_ingot"
+    "B": {
+      "item": "fpvdrones:battery"
+    },
+    "M": {
+      "item": "fpvdrones:motor"
     },
     "F": {
-      "item": "fpvdrones:flight_controller"
+      "item": "fpvdrones:frame"
+    },
+    "V": {
+      "item": "fpvdrones:vtx"
+    },
+    "S": {
+      "item": "fpvdrones:flight_stack"
+    },
+    "C": {
+      "item": "fpvdrones:fpv_camera"
     }
   },
   "result": {
     "item": "fpvdrones:fpv_drone",
     "count": 1
-  }
+  },
+  "soldering": true
 }

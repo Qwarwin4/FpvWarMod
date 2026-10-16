@@ -1,0 +1,23 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "NMN",
+    "NCN"
+  ],
+  "key": {
+    "N": {
+      "item": "minecraft:iron_nugget"
+    },
+    "M": {
+      "item": "fpvdrones:motor"
+    },
+    "C": {
+      "item": "fpvdrones:fpv_camera"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:gimbal_camera",
+    "count": 1
+  },
+  "soldering": true
+}

@@ -1,9 +1,9 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "fpvdrones:assembly",
   "pattern": [
     "RRR",
-    "BFB",
-    "WIW"
+    "BEB",
+    "WFW"
   ],
   "key": {
     "R": {
@@ -12,14 +12,14 @@
     "B": {
       "item": "minecraft:iron_block"
     },
-    "F": {
-      "item": "fpvdrones:flight_controller"
+    "E": {
+      "item": "fpvdrones:piston_engine"
     },
     "W": {
       "item": "minecraft:black_wool"
     },
-    "I": {
-      "item": "minecraft:piston"
+    "F": {
+      "item": "fpvdrones:flight_controller"
     }
   },
   "result": {

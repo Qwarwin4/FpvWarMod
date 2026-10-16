@@ -1,26 +1,30 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "fpvdrones:assembly",
   "pattern": [
-    "R R",
-    "IFI",
-    "BIB"
+    "A A",
+    "BDB",
+    "IRI"
   ],
   "key": {
-    "R": {
-      "item": "minecraft:iron_bars"
+    "A": {
+      "item": "fpvdrones:antenna"
+    },
+    "B": {
+      "item": "minecraft:stone_button"
+    },
+    "D": {
+      "item": "fpvdrones:display"
     },
     "I": {
       "item": "minecraft:iron_ingot"
     },
-    "F": {
-      "item": "fpvdrones:flight_controller"
-    },
-    "B": {
-      "item": "minecraft:stone_button"
+    "R": {
+      "item": "fpvdrones:receiver"
     }
   },
   "result": {
     "item": "fpvdrones:drone_remote",
     "count": 1
-  }
+  },
+  "soldering": true
 }

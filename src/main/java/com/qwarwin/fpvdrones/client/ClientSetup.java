@@ -7,9 +7,12 @@ import com.qwarwin.fpvdrones.client.render.MunitionRenderer;
 import com.qwarwin.fpvdrones.client.render.OperatorRenderer;
 import com.qwarwin.fpvdrones.client.render.StrikeDroneRenderer;
 import com.qwarwin.fpvdrones.client.render.TruckRenderer;
+import com.qwarwin.fpvdrones.client.screen.AssemblyScreen;
 import com.qwarwin.fpvdrones.registry.ModBlocks;
+import com.qwarwin.fpvdrones.registry.ModContainers;
 import com.qwarwin.fpvdrones.registry.ModEntities;
 import com.qwarwin.fpvdrones.registry.ModTileEntities;
+import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.util.ResourceLocation;
@@ -37,6 +40,8 @@ public final class ClientSetup {
         event.enqueueWork(() -> {
             RenderTypeLookup.setRenderLayer(ModBlocks.LAUNCHER.get(), RenderType.cutout());
             RenderTypeLookup.setRenderLayer(ModBlocks.LAUNCH_PAD.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.ASSEMBLY_BENCH.get(), RenderType.cutout());
+            ScreenManager.register(ModContainers.ASSEMBLY.get(), AssemblyScreen::new);
         });
         KeyBinds.register();
     }

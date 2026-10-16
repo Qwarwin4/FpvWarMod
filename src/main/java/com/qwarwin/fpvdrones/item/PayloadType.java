@@ -12,7 +12,7 @@ public enum PayloadType {
     NONE("none", false, false, 0F),
     PG7VS("pg7vs", true, false, 0.13F),
     OG7("og7", true, false, 0.12F),
-    CANISTER("explosive_canister", true, false, 0.42F),
+    CANISTER("explosive_canister", true, false, 0.17F),
     RGD5("rgd5", false, true, 0.17F),
     VOG17M("vog17m", false, true, 0.21F);
 

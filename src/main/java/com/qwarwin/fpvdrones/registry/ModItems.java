@@ -7,8 +7,10 @@ import com.qwarwin.fpvdrones.item.DroneItem;
 import com.qwarwin.fpvdrones.item.DroneRemoteItem;
 import com.qwarwin.fpvdrones.item.FpvGogglesItem;
 import com.qwarwin.fpvdrones.item.LaunchRemoteItem;
+import com.qwarwin.fpvdrones.item.PartItem;
 import com.qwarwin.fpvdrones.item.PayloadItem;
 import com.qwarwin.fpvdrones.item.PayloadType;
+import com.qwarwin.fpvdrones.item.SolderingIronItem;
 import com.qwarwin.fpvdrones.item.StrikeDroneItem;
 import com.qwarwin.fpvdrones.item.TabletItem;
 import com.qwarwin.fpvdrones.item.TruckItem;
@@ -59,8 +61,31 @@ public final class ModItems {
     public static final RegistryObject<Item> RGD5 = payload("rgd5", PayloadType.RGD5, 16);
     public static final RegistryObject<Item> VOG17M = payload("vog17m", PayloadType.VOG17M, 32);
 
-    public static final RegistryObject<Item> PROPELLER = ITEMS.register("propeller", () -> new Item(props()));
-    public static final RegistryObject<Item> FLIGHT_CONTROLLER = ITEMS.register("flight_controller", () -> new Item(props()));
+    // parts
+    public static final RegistryObject<Item> FRAME = part("frame");
+    public static final RegistryObject<Item> MOTOR = part("motor");
+    public static final RegistryObject<Item> PROPELLER = part("propeller");
+    public static final RegistryObject<Item> ESC = part("esc");
+    public static final RegistryObject<Item> FLIGHT_CONTROLLER = part("flight_controller");
+    public static final RegistryObject<Item> FLIGHT_STACK = part("flight_stack");
+    public static final RegistryObject<Item> BATTERY = part("battery");
+    public static final RegistryObject<Item> FPV_CAMERA = part("fpv_camera");
+    public static final RegistryObject<Item> VTX = part("vtx");
+    public static final RegistryObject<Item> RECEIVER = part("receiver");
+    public static final RegistryObject<Item> ANTENNA = part("antenna");
+    public static final RegistryObject<Item> GIMBAL_CAMERA = part("gimbal_camera");
+    public static final RegistryObject<Item> GNSS_MODULE = part("gnss_module");
+    public static final RegistryObject<Item> DISPLAY = part("display");
+    public static final RegistryObject<Item> AIRFRAME = part("airframe");
+    public static final RegistryObject<Item> PISTON_ENGINE = part("piston_engine");
+    public static final RegistryObject<Item> SMALL_JET_ENGINE = part("small_jet_engine");
+    public static final RegistryObject<Item> WARHEAD = part("warhead");
+    public static final RegistryObject<Item> BOOSTER = part("booster");
+
+    public static final RegistryObject<Item> SOLDERING_IRON = ITEMS.register("soldering_iron",
+            () -> new SolderingIronItem(props().durability(256)));
+    public static final RegistryObject<Item> ASSEMBLY_BENCH = ITEMS.register("assembly_bench",
+            () -> new BlockItem(ModBlocks.ASSEMBLY_BENCH.get(), props()));
 
     public static final RegistryObject<Item> LAUNCHER = ITEMS.register("launcher",
             () -> new BlockItem(ModBlocks.LAUNCHER.get(), props()));
@@ -74,6 +99,10 @@ public final class ModItems {
 
     private static RegistryObject<Item> payload(String name, PayloadType type, int stack) {
         return ITEMS.register(name, () -> new PayloadItem(type, props().stacksTo(stack)));
+    }
+
+    private static RegistryObject<Item> part(String name) {
+        return ITEMS.register(name, () -> new PartItem(props()));
     }
 
     private static Item.Properties props() {

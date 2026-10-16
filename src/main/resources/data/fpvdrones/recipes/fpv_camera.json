@@ -1,0 +1,23 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "NGN",
+    "NQN"
+  ],
+  "key": {
+    "N": {
+      "item": "minecraft:iron_nugget"
+    },
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "Q": {
+      "item": "minecraft:quartz"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:fpv_camera",
+    "count": 1
+  },
+  "soldering": true
+}

@@ -1,5 +1,5 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "fpvdrones:assembly",
   "pattern": [
     "RQR",
     "GCG",
@@ -22,5 +22,6 @@
   "result": {
     "item": "fpvdrones:flight_controller",
     "count": 1
-  }
+  },
+  "soldering": true
 }
