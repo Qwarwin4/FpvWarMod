@@ -323,7 +323,7 @@ public final class HudRenderer {
         font.drawShadow(ms, String.format(Locale.ROOT, "ETA  %02d:%02d", eta / 60, eta % 60), px, py + 42, GREEN);
         font.drawShadow(ms, String.format(Locale.ROOT, "ЦЕЛЬ %d %d %d", (int) ClientSession.targetX,
                 (int) ClientSession.targetY, (int) ClientSession.targetZ), px, py + 52, 0xFFB0FFB0);
-        String hint = "[" + key(KeyBinds.TOGGLE_VIEW) + "] ВЫХОД";
+        String hint = "[" + key(KeyBinds.TOGGLE_VIEW) + "] или [SHIFT] ВЫХОД";
         font.drawShadow(ms, hint, w - b - 8 - font.width(hint), b + 6, GREY);
     }
 

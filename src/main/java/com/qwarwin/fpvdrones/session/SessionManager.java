@@ -377,7 +377,8 @@ public final class SessionManager {
     /** V key */
     public static void toggle(ServerPlayerEntity p) {
         if (SESSIONS.containsKey(p.getUUID())) {
-            end(p, "reason.fpvdrones.disconnected");
+            // leaving on purpose: straight back to the body, no "signal lost" screen
+            end(p, null);
         } else if (p.getItemBySlot(EquipmentSlotType.HEAD).getItem() instanceof FpvGogglesItem) {
             connectGoggles(p);
         }

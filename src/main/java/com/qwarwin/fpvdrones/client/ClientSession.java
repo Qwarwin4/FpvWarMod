@@ -23,10 +23,15 @@ public final class ClientSession {
 
     // "no signal" screen after the link drops
     public static int lostTicks;
+    // ticks the client has thought it's watching while the game says we're not a spectator any more
+    public static int desyncTicks;
+    public static boolean exitSent;
     public static String lostReason = "";
 
     public static void reset() {
         active = false;
+        desyncTicks = 0;
+        exitSent = false;
         entityId = -1;
         signal = 1F;
         ticks = 0;

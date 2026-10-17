@@ -27,6 +27,9 @@ public final class ClientPacketHandler {
                 boolean wasActive = ClientSession.active;
                 ClientSession.active = false;
                 ClientSession.entityId = -1;
+                ClientSession.exitSent = false;
+                ClientSession.desyncTicks = 0;
+                ClientSession.zoom = 1F;
                 ControlState.reset();
                 if (mc.player != null) {
                     mc.setCameraEntity(mc.player);
@@ -46,6 +49,8 @@ public final class ClientPacketHandler {
 
     private static void start(Minecraft mc, SessionStatePacket m) {
         ClientSession.active = true;
+        ClientSession.exitSent = false;
+        ClientSession.desyncTicks = 0;
         ClientSession.entityId = m.entityId;
         ClientSession.kind = m.kind;
         ClientSession.handheld = m.handheld;

@@ -46,6 +46,11 @@ public final class ClientEvents {
         }
         Minecraft mc = Minecraft.getInstance();
         MovementInput in = event.getMovementInput();
+        if (ClientSession.kind == DroneKind.STRIKE && in.shiftKeyDown && !ClientSession.exitSent) {
+            // nothing to fly on the tablet, so sneak works as "exit" like in vanilla spectating
+            ClientSession.exitSent = true;
+            Network.CHANNEL.sendToServer(new DroneActionPacket(DroneActionPacket.TOGGLE_VIEW));
+        }
         if (ClientSession.kind != DroneKind.STRIKE && mc.player != null) {
             ControlState.forward = in.forwardImpulse;
             ControlState.strafe = in.leftImpulse;
@@ -119,6 +124,13 @@ public final class ClientEvents {
             if (ClientSession.active) {
                 ClientSession.ticks++;
                 updateAim(mc);
+                // the stop packet got lost or arrived out of order: don't keep the camera glued to the drone
+                ClientSession.desyncTicks = mc.player.isSpectator() ? 0 : ClientSession.desyncTicks + 1;
+                if (ClientSession.desyncTicks > 40) {
+                    ClientSession.reset();
+                    ControlState.reset();
+                    mc.setCameraEntity(mc.player);
+                }
             }
             if (ClientSession.lostTicks > 0) {
                 ClientSession.lostTicks--;
