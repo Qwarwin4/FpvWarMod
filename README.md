@@ -64,7 +64,7 @@ gradlew build
 
 Jar будет в `build/libs/`.
 
-Модели, текстуры и звуки генерирует `tools/gen_assets.py` (Pillow, для звуков numpy + ffmpeg):
+Модели, текстуры и звуки генерирует `tools/gen_assets.py` (Pillow + numpy, для звуков ещё ffmpeg). Для сборки мода он не нужен — всё уже сгенерировано и лежит в `src/main/resources`:
 
 ```
 python3 tools/gen_assets.py src/main/resources

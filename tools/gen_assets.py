@@ -11,7 +11,8 @@ import subprocess
 import sys
 import tempfile
 
-from PIL import Image, ImageDraw
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
 
 MODID = "fpvdrones"
 RES = sys.argv[1] if len(sys.argv) > 1 else "src/main/resources"
@@ -45,11 +46,247 @@ def mix(a, b, t):
 
 
 # ---------------------------------------------------------------------------
-# swatch atlases: every face of an element maps onto one 16x16 swatch
+# swatch atlases: every face of an element maps onto one swatch.
+# Painters still think in the old 16 px grid; SD() and the px helpers scale that up, so the
+# swatches come out at 16 * TEX_K px and then get a weathering pass by material.
 
-CELL = 16
+TEX_K = 4
+ICON_K = 2
+CELL = 16 * TEX_K
 GRID = 8
 UV_CELL = 16.0 / GRID
+
+try:
+    _FONT_PATH = next(p for p in ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                                  "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf",
+                                  "C:/Windows/Fonts/arialbd.ttf") if os.path.exists(p))
+except StopIteration:
+    _FONT_PATH = None
+
+
+def _flat(xy):
+    out = []
+    for v in xy:
+        if isinstance(v, (tuple, list)):
+            out.extend(v)
+        else:
+            out.append(v)
+    return out
+
+
+class SD:
+    """ImageDraw taking coordinates on the old 16 px grid and drawing at the image's real size"""
+
+    def __init__(self, im):
+        self.im = im
+        self.d = ImageDraw.Draw(im)
+        self.k = im.width / 16.0
+
+    def _box(self, xy):
+        x1, y1, x2, y2 = _flat(xy)
+        k = self.k
+        return [x1 * k, y1 * k, (x2 + 1) * k - 1, (y2 + 1) * k - 1]
+
+    def _pt(self, x, y):
+        k = self.k
+        return x * k + (k - 1) / 2, y * k + (k - 1) / 2
+
+    def _w(self, w):
+        return max(1, int(round(w * self.k * 0.6)))
+
+    def rectangle(self, xy, fill=None, outline=None, width=1):
+        self.d.rectangle(self._box(xy), fill=fill, outline=outline, width=self._w(width) if outline else 0)
+
+    def rounded_rectangle(self, xy, radius=0, fill=None, outline=None, width=1):
+        self.d.rounded_rectangle(self._box(xy), radius=radius * self.k, fill=fill, outline=outline,
+                                 width=self._w(width) if outline else 0)
+
+    def ellipse(self, xy, fill=None, outline=None, width=1):
+        self.d.ellipse(self._box(xy), fill=fill, outline=outline, width=self._w(width) if outline else 0)
+
+    def arc(self, xy, start, end, fill=None, width=1):
+        self.d.arc(self._box(xy), start, end, fill=fill, width=self._w(width))
+
+    def pieslice(self, xy, start, end, fill=None, outline=None):
+        self.d.pieslice(self._box(xy), start, end, fill=fill, outline=outline)
+
+    def chord(self, xy, start, end, fill=None, outline=None):
+        self.d.chord(self._box(xy), start, end, fill=fill, outline=outline)
+
+    def line(self, xy, fill=None, width=1):
+        p = _flat(xy)
+        pts = [self._pt(p[i], p[i + 1]) for i in range(0, len(p), 2)]
+        self.d.line(pts, fill=fill, width=self._w(width))
+
+    def point(self, xy, fill=None):
+        p = _flat(xy)
+        for i in range(0, len(p), 2):
+            cx, cy = self._pt(p[i], p[i + 1])
+            r = max(0.5, self.k * 0.45)
+            self.d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=fill)
+
+    def polygon(self, xy, fill=None, outline=None):
+        p = _flat(xy)
+        self.d.polygon([self._pt(p[i], p[i + 1]) for i in range(0, len(p), 2)], fill=fill, outline=outline)
+
+    def text(self, xy, s, fill=None):
+        if not s:
+            return
+        size = max(6, int(4.2 * self.k))
+        font = ImageFont.truetype(_FONT_PATH, size) if _FONT_PATH else ImageFont.load_default()
+        self.d.text((xy[0] * self.k, xy[1] * self.k), s, fill=fill, font=font)
+
+
+def edge16(x, y, n):
+    """distance from pixel (x, y) to the swatch border, in old 16-grid pixels"""
+    return min(x + 0.5, y + 0.5, n - x - 0.5, n - y - 0.5) * 16.0 / n
+
+
+def bevel(dist, border):
+    """dark outer rim, a thin catch-light just inside it"""
+    if dist < 0.75:
+        return border + (1 - border) * (dist / 0.75) ** 1.5
+    return 1.0 + 0.06 * math.exp(-((dist - 1.1) / 0.35) ** 2)
+
+
+def _nrng(rng):
+    return np.random.default_rng(rng.randrange(1 << 30))
+
+
+def value_noise(h, w, cells, nr):
+    g = nr.random((cells + 1, cells + 1))
+    ys = np.arange(h) * cells / h
+    xs = np.arange(w) * cells / w
+    y0, x0 = ys.astype(int), xs.astype(int)
+    fy = ys - y0
+    fx = xs - x0
+    fy = (fy * fy * (3 - 2 * fy))[:, None]
+    fx = (fx * fx * (3 - 2 * fx))[None, :]
+    a = g[y0][:, x0]
+    b = g[y0][:, x0 + 1]
+    c = g[y0 + 1][:, x0]
+    d = g[y0 + 1][:, x0 + 1]
+    return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy
+
+
+def fbm(h, w, nr, octaves=4, base=2):
+    out = np.zeros((h, w))
+    amp, tot = 1.0, 0.0
+    for i in range(octaves):
+        out += amp * value_noise(h, w, base * 2 ** i, nr)
+        tot += amp
+        amp *= 0.5
+    return out / tot * 2 - 1
+
+
+def _to_arr(t):
+    return np.asarray(t, dtype=np.float64).copy()
+
+
+def _from_arr(t, a):
+    t.paste(Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), "RGBA"))
+
+
+def _scratches(rgb, nr, count, strength, n):
+    for _ in range(count):
+        x0, y0 = nr.random() * n, nr.random() * n
+        ang = nr.random() * math.pi
+        length = n * (0.15 + nr.random() * 0.35)
+        steps = int(length)
+        for s in range(steps):
+            x = int(x0 + math.cos(ang) * s + math.sin(s * 0.15) * 0.6)
+            y = int(y0 + math.sin(ang) * s)
+            if 0 <= x < n and 0 <= y < n:
+                fade = math.sin(math.pi * s / max(1, steps))
+                lit = np.minimum(255, rgb[y, x] * 1.7 + 35)
+                rgb[y, x] = rgb[y, x] + (lit - rgb[y, x]) * strength * 2.2 * fade
+                if y + 1 < n:
+                    rgb[y + 1, x] *= 1 - strength * 0.4 * fade
+
+
+def weather(t, kind, rng):
+    """material pass: paint gets grime, chipped edges and scratches, metal gets brushing, rubber gets dust"""
+    if kind in ("emissive", None):
+        return
+    nr = _nrng(rng)
+    a = _to_arr(t)
+    n = a.shape[0]
+    rgb = a[:, :, :3]
+    yy = (np.arange(n)[:, None] + 0.5) / n
+    xx = (np.arange(n)[None, :] + 0.5) / n
+    grain = nr.random((n, n)) - 0.5
+    big = fbm(n, n, nr, 4, 2)
+    if kind == "glass":
+        rgb *= (1 + 0.03 * big)[:, :, None]
+        _from_arr(t, a)
+        return
+    if kind == "metal":
+        brushed = value_noise(n, 1, max(4, n // 2), nr)[:, :1] * np.ones((1, n)) - 0.5
+        rgb *= (1 + 0.05 * big + 0.06 * brushed + 0.035 * grain)[:, :, None]
+        _scratches(rgb, nr, 5, 0.22, n)
+        grime = 1 - 0.08 * np.clip((yy - 0.55) / 0.45, 0, 1) * (0.6 + 0.4 * big)
+        rgb *= grime[:, :, None]
+    elif kind == "dark":
+        rgb *= (1 + 0.10 * big + 0.06 * grain)[:, :, None]
+        dust = nr.random((n, n)) < 0.005
+        rgb[dust] = rgb[dust] * 0.6 + np.array([110, 104, 90]) * 0.4
+        _scratches(rgb, nr, 2, 0.08, n)
+    elif kind == "fabric":
+        weave = ((np.arange(n)[:, None] + np.arange(n)[None, :]) % 2) * 2 - 1
+        rgb *= (1 + 0.07 * big + 0.03 * weave + 0.04 * grain)[:, :, None]
+        grime = 1 - 0.12 * np.clip((yy - 0.6) / 0.4, 0, 1) * (0.5 + 0.5 * big)
+        rgb *= grime[:, :, None]
+    elif kind in ("plastic", "carbon"):
+        rgb *= (1 + 0.035 * big + 0.03 * grain)[:, :, None]
+        _scratches(rgb, nr, 2 if kind == "carbon" else 1, 0.12, n)
+    else:  # painted steel
+        rgb *= (1 + 0.07 * big + 0.035 * grain)[:, :, None]
+        # rain streaks from the top, grime collecting low down
+        for _ in range(int(nr.integers(2, 5))):
+            sx = int(nr.random() * n)
+            ln = int(n * (0.3 + nr.random() * 0.6))
+            w = max(1, n // 40)
+            col = np.linspace(0.07, 0.0, ln)[:, None]
+            rgb[:ln, sx:sx + w] *= (1 - col)[:, :, None]
+        grime = 1 - 0.14 * np.clip((yy - 0.55) / 0.45, 0, 1) * (0.55 + 0.45 * big)
+        rgb *= grime[:, :, None]
+        # paint chipped off the edges down to bare metal
+        dist = np.minimum(np.minimum(xx, 1 - xx), np.minimum(yy, 1 - yy)) * 16
+        chip_noise = fbm(n, n, nr, 3, 6)
+        chips = (dist < 1.4) & (chip_noise > 0.5)
+        rgb[chips] = rgb[chips] * 0.35 + np.array([128, 126, 118]) * 0.65
+        spots = (fbm(n, n, nr, 3, 8) > 0.62) & (nr.random((n, n)) < 0.5)
+        rgb[spots] *= 0.86
+        _scratches(rgb, nr, 3, 0.18, n)
+        dust = nr.random((n, n)) < 0.006
+        rgb[dust] = rgb[dust] * 0.5 + np.array([150, 140, 115]) * 0.5
+    _from_arr(t, a)
+
+
+_KIND_WORDS = [
+    ("emissive", ("glow", "plume", "tracer", "led", "headlight", "taillight", "screen", "flame")),
+    ("glass", ("glass", "lens", "dome", "cab_front", "cab_side", "window", "jav_dome")),
+    ("fabric", ("tarp", "wool", "camo", "strap", "tape", "net", "mat")),
+    ("dark", ("tire", "tracks", "black", "dark", "rubber", "wire", "fin", "grille", "chassis", "hole")),
+    ("metal", ("steel", "alu", "rail", "chrome", "nozzle", "metal", "brass", "copper", "muzzle", "nut",
+               "pipe", "exhaust", "rim")),
+    ("plastic", ("print", "pcb", "plastic", "battery", "body_print")),
+    ("carbon", ("carbon",)),
+]
+
+
+def guess_kind(key, tile):
+    for kind, words in _KIND_WORDS:
+        if any(w in key for w in words):
+            return kind
+    a = np.asarray(tile, dtype=np.float64)[:, :, :3].reshape(-1, 3).mean(0) / 255
+    mx, mn = a.max(), a.min()
+    sat = 0 if mx == 0 else (mx - mn) / mx
+    if mx > 0.85 and sat > 0.5:
+        return "emissive"
+    if sat < 0.13:
+        return "metal" if mx > 0.38 else "dark"
+    return "paint"
 
 
 class Atlas:
@@ -59,18 +296,20 @@ class Atlas:
         self.cells = {}
         self.rng = random.Random(sum(map(ord, name)))
 
-    def add(self, key, painter):
+    def add(self, key, painter, kind=None):
         idx = len(self.cells)
         assert idx < GRID * GRID, self.name
         cx, cy = idx % GRID, idx // GRID
         tile = Image.new("RGBA", (CELL, CELL), (0, 0, 0, 0))
         painter(tile, self.rng)
+        kind = kind or getattr(painter, "kind", None) or guess_kind(key, tile)
+        weather(tile, kind, self.rng)
         self.img.paste(tile, (cx * CELL, cy * CELL))
         self.cells[key] = (cx, cy)
 
     def uv(self, key):
         cx, cy = self.cells[key]
-        e = 0.06
+        e = 0.03
         return [round(cx * UV_CELL + e, 3), round(cy * UV_CELL + e, 3),
                 round((cx + 1) * UV_CELL - e, 3), round((cy + 1) * UV_CELL - e, 3)]
 
@@ -81,22 +320,36 @@ class Atlas:
         self.img.save(path(ASSETS, "textures", "entity", self.name + ".png"))
 
 
-def p_flat(base, noise=7, border=0.72, light=1.10, alpha=255):
-    base = hexc(base, alpha)
+def _kind(paint, kind):
+    paint.kind = kind
+    return paint
+
+
+def p_flat(base, noise=7, border=0.72, light=1.10, alpha=255, kind=None):
+    col = np.array(hexc(base)[:3], dtype=np.float64)
 
     def paint(t, rng):
-        px = t.load()
-        for y in range(CELL):
-            for x in range(CELL):
-                n = rng.randint(-noise, noise)
-                c = (base[0] + n, base[1] + n, base[2] + n, base[3])
-                c = shade(c, 1.0 + (light - 1.0) * (1 - y / (CELL - 1)))
-                if x in (0, CELL - 1) or y in (0, CELL - 1):
-                    c = shade(c, border)
-                elif x == 1 or y == 1:
-                    c = shade(c, 1.08)
-                px[x, y] = c
-    return paint
+        n = t.width
+        nr = _nrng(rng)
+        y = (np.arange(n)[:, None] + 0.5) / n
+        x = (np.arange(n)[None, :] + 0.5) / n
+        lum = 1.0 + (light - 1.0) * (1 - y) + fbm(n, n, nr, 3, 2) * noise / 255 * 1.4 \
+            + (nr.random((n, n)) - 0.5) * noise / 255 * 0.9
+        d = np.minimum(np.minimum(x, 1 - x), np.minimum(y, 1 - y)) * 16
+        bv = np.where(d < 0.75, border + (1 - border) * np.clip(d / 0.75, 0, 1) ** 1.5,
+                      1.0 + 0.06 * np.exp(-((d - 1.1) / 0.35) ** 2))
+        rgb = col[None, None, :] * (lum * bv)[:, :, None]
+        out = np.dstack([rgb, np.full((n, n), float(alpha))])
+        _from_arr(t, out)
+    return _kind(paint, kind)
+
+
+def _pixels(t):
+    n = t.width
+    k = n / 16.0
+    for y in range(n):
+        for x in range(n):
+            yield x, y, (x + 0.5) / k - 0.5, (y + 0.5) / k - 0.5
 
 
 def p_carbon(c1="#16171a", c2="#222328", edge=0.55):
@@ -104,29 +357,30 @@ def p_carbon(c1="#16171a", c2="#222328", edge=0.55):
 
     def paint(t, rng):
         px = t.load()
-        for y in range(CELL):
-            for x in range(CELL):
-                c = a if ((x // 2) + (y // 2)) % 2 else b
-                if (x + y) % 4 == 0:
-                    c = shade(c, 1.12)
-                if abs((x - y) - 3) < 2:
-                    c = shade(c, 1.2)
-                if x in (0, CELL - 1) or y in (0, CELL - 1):
-                    c = shade(c, edge)
-                px[x, y] = c
-    return paint
+        n = t.width
+        s = n / 10.0
+        for y in range(n):
+            for x in range(n):
+                i, j = int(x // s), int(y // s)
+                warp = (i + j) % 2
+                along = (x % s) / s if warp else (y % s) / s
+                c = shade(a if warp else b, 0.82 + 0.38 * math.sin(math.pi * along))
+                if abs((x - y) / n - 0.25) < 0.06:
+                    c = shade(c, 1.18)
+                px[x, y] = shade(c, bevel(edge16(x, y, n), edge))
+    return _kind(paint, "carbon")
 
 
 def p_carbon_cut():
     """top plate with the long weight-saving slots"""
     def paint(t, rng):
         p_carbon()(t, rng)
-        d = ImageDraw.Draw(t)
-        d.rectangle([3, 3, 6, 12], fill=hexc("#060607"))
-        d.rectangle([9, 3, 12, 12], fill=hexc("#060607"))
-        d.line([3, 3, 6, 3], fill=hexc("#3a3c42"))
-        d.line([9, 3, 12, 3], fill=hexc("#3a3c42"))
-    return paint
+        d = SD(t)
+        for x1, x2 in ((3, 6), (9, 12)):
+            d.rounded_rectangle([x1, 3, x2, 12], radius=1.2, fill=hexc("#050506"))
+            d.line([x1 + 0.3, 3.2, x2 - 0.3, 3.2], fill=hexc("#3a3c42"))
+            d.line([x1 + 0.3, 11.8, x2 - 0.3, 11.8], fill=hexc("#0f1012"))
+    return _kind(paint, "carbon")
 
 
 def p_lens(rim="#151515", glass="#2a2f7a", glint="#a9d4ff", bg="#1a1b1e"):
@@ -134,24 +388,26 @@ def p_lens(rim="#151515", glass="#2a2f7a", glint="#a9d4ff", bg="#1a1b1e"):
 
     def paint(t, rng):
         px = t.load()
-        c0 = (CELL - 1) / 2
-        for y in range(CELL):
-            for x in range(CELL):
-                r = math.hypot(x - c0, y - c0)
-                if r > 7.2:
-                    c = bg
-                elif r > 5.6:
-                    c = rim
-                elif r > 4.6:
-                    c = shade(rim, 1.6)
-                else:
-                    c = mix(shade(glass, 1.5), shade(glass, 0.55), r / 4.6)
-                    if 1 < r < 2.4 and x < c0 and y < c0:
-                        c = glint
-                if x in (0, CELL - 1) or y in (0, CELL - 1):
-                    c = shade(bg, 0.7)
-                px[x, y] = c
-    return paint
+        n = t.width
+        c0 = 7.5
+        for x, y, u, v in _pixels(t):
+            r = math.hypot(u - c0, v - c0)
+            if r > 7.2:
+                c = bg
+            elif r > 5.6:
+                c = shade(rim, 0.9 + 0.3 * (7.2 - r) / 1.6)
+            elif r > 4.6:
+                c = shade(rim, 1.7)
+            else:
+                c = mix(shade(glass, 1.5), shade(glass, 0.45), (r / 4.6) ** 0.8)
+                g = math.hypot(u - (c0 - 1.6), v - (c0 - 1.6))
+                if g < 1.3:
+                    c = mix(glint, c, (g / 1.3) ** 2)
+                g2 = math.hypot(u - (c0 + 1.8), v - (c0 + 1.9))
+                if g2 < 0.6:
+                    c = mix(shade(glint, 0.8), c, g2 / 0.6)
+            px[x, y] = shade(c, bevel(edge16(x, y, n), 0.7)) if r > 7.2 else c
+    return _kind(paint, "glass")
 
 
 def p_stripes(c1, c2, width=2, vertical=False, border=0.7):
@@ -159,15 +415,15 @@ def p_stripes(c1, c2, width=2, vertical=False, border=0.7):
 
     def paint(t, rng):
         px = t.load()
-        for y in range(CELL):
-            for x in range(CELL):
-                k = x if vertical else y
-                c = a if (k // width) % 2 == 0 else b
-                n = rng.randint(-5, 5)
-                c = tuple(max(0, min(255, v + n)) for v in c[:3]) + (255,)
-                if x in (0, CELL - 1) or y in (0, CELL - 1):
-                    c = shade(c, border)
-                px[x, y] = c
+        n = t.width
+        for x, y, u, v in _pixels(t):
+            kk = u if vertical else v
+            pos = (kk + 0.5) / width
+            c = a if int(pos) % 2 == 0 else b
+            frac = pos - int(pos)
+            # slight rounding on each stripe so it reads as ribs, not paint
+            c = shade(c, 0.92 + 0.14 * math.sin(math.pi * frac))
+            px[x, y] = shade(c, bevel(edge16(x, y, n), border))
     return paint
 
 
@@ -176,29 +432,33 @@ def p_hazard(c1="#f2c200", c2="#1b1b1b"):
 
     def paint(t, rng):
         px = t.load()
-        for y in range(CELL):
-            for x in range(CELL):
-                c = a if ((x + y) // 4) % 2 == 0 else b
-                if x in (0, CELL - 1) or y in (0, CELL - 1):
-                    c = shade(c, 0.7)
-                px[x, y] = c
-    return paint
+        n = t.width
+        for x, y, u, v in _pixels(t):
+            c = a if int((u + v + 1) // 4) % 2 == 0 else b
+            px[x, y] = shade(c, bevel(edge16(x, y, n), 0.7))
+    return _kind(paint, "paint")
 
 
 def p_pcb(base="#141815"):
     def paint(t, rng):
-        d = ImageDraw.Draw(t)
+        d = SD(t)
         d.rectangle([0, 0, 15, 15], fill=hexc(base))
-        for _ in range(8):
-            x, y = rng.randint(1, 14), rng.randint(1, 14)
-            d.line([x, y, x + rng.randint(-4, 4), y], fill=hexc("#2b332d"))
+        trace = hexc("#2b3a2f")
+        for _ in range(16):
+            x, y = rng.uniform(1, 14), rng.uniform(1, 14)
+            dx = rng.choice([-1, 1]) * rng.uniform(2, 5)
+            dy = rng.choice([-1, 1]) * rng.uniform(1, 3)
+            d.line([x, y, x + dx, y, x + dx + dy, y + dy], fill=trace, width=0.5)
+        for _ in range(10):
+            d.point((rng.uniform(1, 14), rng.uniform(1, 14)), fill=hexc("#8a7a3a"))
         d.rectangle([5, 5, 10, 10], fill=hexc("#0b0b0b"))
-        for i in range(2, 14, 3):
-            d.point([i, 2], fill=hexc("#b89a42"))
-            d.point([i, 13], fill=hexc("#b89a42"))
+        d.rectangle([5, 5, 10, 5.4], fill=hexc("#262626"))
+        for i in range(2, 14, 2):
+            d.rectangle([i, 1.6, i + 0.6, 2.6], fill=hexc("#c9a54a"))
+            d.rectangle([i, 13, i + 0.6, 14], fill=hexc("#c9a54a"))
         d.point([12, 6], fill=hexc("#ff4040"))
         d.point([3, 9], fill=hexc("#3b8bff"))
-    return paint
+    return _kind(paint, "plastic")
 
 
 def p_vent(base, slot):
@@ -206,9 +466,10 @@ def p_vent(base, slot):
 
     def paint(t, rng):
         p_flat(base, 4)(t, rng)
-        d = ImageDraw.Draw(t)
+        d = SD(t)
         for y in range(3, 13, 2):
-            d.line([3, y, 12, y], fill=slot_c)
+            d.rectangle([3, y - 0.3, 12, y + 0.3], fill=slot_c)
+            d.line([3, y + 0.6, 12, y + 0.6], fill=shade(hexc(base), 1.25), width=0.4)
     return paint
 
 
@@ -218,46 +479,49 @@ def p_motor_top(bell, cap="#9aa0a8"):
     def paint(t, rng):
         px = t.load()
         c0 = 7.5
-        for y in range(CELL):
-            for x in range(CELL):
-                r = math.hypot(x - c0, y - c0)
-                c = shade(an, 1.0 + 0.25 * math.cos(math.atan2(y - c0, x - c0) * 3))
-                if r < 2.2:
-                    c = hexc(cap)
-                elif r < 3.0:
-                    c = hexc("#111111")
-                if r > 7.3:
-                    c = shade(an, 0.5)
-                px[x, y] = c
-    return paint
+        for x, y, u, v in _pixels(t):
+            r = math.hypot(u - c0, v - c0)
+            ang = math.atan2(v - c0, u - c0)
+            c = shade(an, 1.0 + 0.25 * math.cos(ang * 3) + 0.08 * math.cos(ang * 14))
+            if r < 2.2:
+                c = shade(hexc(cap), 1.1 - 0.2 * r / 2.2)
+            elif r < 3.0:
+                c = hexc("#111111")
+            elif 4.2 < r < 4.6:
+                c = shade(an, 0.7)
+            if r > 7.3:
+                c = shade(an, 0.5)
+            px[x, y] = c
+    return _kind(paint, "metal")
 
 
 def p_motor_side(bell="#1c1c1f", ring="#4a4c52"):
     def paint(t, rng):
-        d = ImageDraw.Draw(t)
+        d = SD(t)
         d.rectangle([0, 0, 15, 15], fill=hexc(bell))
         for x in range(1, 15, 2):
-            d.line([x, 6, x, 11], fill=hexc("#2a2b2f"))
+            d.rectangle([x, 6, x + 0.6, 11], fill=hexc("#b07a3a"))
         d.rectangle([0, 0, 15, 2], fill=hexc(ring))
-        d.text((3, 3), "2812", fill=hexc("#6a6d74"))
+        d.line([0, 2.4, 15, 2.4], fill=hexc("#0a0a0b"), width=0.5)
+        d.text((3, 2.6), "2812", fill=hexc("#7a7d84"))
         d.rectangle([0, 0, 15, 15], outline=hexc("#0a0a0b"))
-    return paint
+    return _kind(paint, "metal")
 
 
 def p_battery():
     def paint(t, rng):
-        d = ImageDraw.Draw(t)
+        d = SD(t)
         d.rectangle([0, 0, 15, 15], fill=hexc("#17181b"))
         d.rectangle([0, 6, 15, 10], fill=hexc("#e6b800"))
-        d.text((2, 5), "6S", fill=hexc("#17181b"))
+        d.text((1.5, 5.2), "6S 1300", fill=hexc("#17181b"))
         d.rectangle([0, 0, 15, 15], outline=hexc("#08080a"))
-    return paint
+    return _kind(paint, "plastic")
 
 
 def p_label(base, band, mark):
     def paint(t, rng):
         p_flat(base, 5)(t, rng)
-        d = ImageDraw.Draw(t)
+        d = SD(t)
         d.rectangle([0, 6, 15, 9], fill=hexc(band))
         d.line([3, 11, 12, 11], fill=hexc(mark))
         d.line([3, 13, 9, 13], fill=hexc(mark))
@@ -267,138 +531,178 @@ def p_label(base, band, mark):
 def p_panel_lines(base, line):
     def paint(t, rng):
         p_flat(base, 5, border=0.6)(t, rng)
-        d = ImageDraw.Draw(t)
-        d.line([0, 5, 15, 5], fill=hexc(line))
-        d.line([8, 5, 8, 15], fill=hexc(line))
-        for p in [(2, 2), (13, 2), (2, 12), (13, 12)]:
-            d.point(p, fill=shade(hexc(base), 1.4))
+        d = SD(t)
+        lc, hi = hexc(line), shade(hexc(base), 1.25)
+        d.line([0, 5, 15, 5], fill=lc)
+        d.line([0, 5.7, 15, 5.7], fill=hi, width=0.4)
+        d.line([8, 5, 8, 15], fill=lc)
+        d.line([8.7, 5.5, 8.7, 15], fill=hi, width=0.4)
+        for p in [(2, 2), (13, 2), (2, 12), (13, 12), (5, 8), (11, 8)]:
+            d.point(p, fill=shade(hexc(base), 0.7))
+            d.point((p[0] - 0.2, p[1] - 0.2), fill=shade(hexc(base), 1.35))
     return paint
 
 
 def p_sensor(base):
     def paint(t, rng):
         p_flat(base, 3)(t, rng)
-        d = ImageDraw.Draw(t)
-        d.ellipse([2, 5, 6, 9], fill=hexc("#0b0b10"), outline=hexc("#3a3a46"))
-        d.ellipse([9, 5, 13, 9], fill=hexc("#0b0b10"), outline=hexc("#3a3a46"))
-        d.point([3, 6], fill=hexc("#7f8dff"))
-        d.point([10, 6], fill=hexc("#7f8dff"))
+        d = SD(t)
+        for x in (2, 9):
+            d.ellipse([x, 5, x + 4, 9], fill=hexc("#0b0b10"), outline=hexc("#3a3a46"))
+            d.ellipse([x + 1, 6, x + 2, 7], fill=hexc("#7f8dff"))
     return paint
 
 
 def p_led(color, base="#2a2b2e"):
+    col = hexc(color)
+
     def paint(t, rng):
         p_flat(base, 3)(t, rng)
-        d = ImageDraw.Draw(t)
-        d.rectangle([4, 4, 11, 11], fill=hexc(color))
-        d.rectangle([6, 6, 9, 9], fill=shade(hexc(color), 1.5))
-    return paint
+        px = t.load()
+        for x, y, u, v in _pixels(t):
+            r = max(abs(u - 7.5), abs(v - 7.5))
+            if r < 4.0:
+                k = 1.0 + 0.6 * (1 - r / 4.0) ** 2
+                px[x, y] = shade(col, k)
+            elif r < 4.6:
+                px[x, y] = shade(col, 0.55)
+    return _kind(paint, "emissive")
 
 
 def p_tape():
     def paint(t, rng):
         px = t.load()
-        for y in range(CELL):
-            for x in range(CELL):
-                g = 150 + rng.randint(-14, 14) + (12 if (x * 3 + y) % 7 == 0 else 0)
-                px[x, y] = (g, g + 2, g + 6, 255)
-        d = ImageDraw.Draw(t)
-        d.line([0, 0, 15, 0], fill=(95, 98, 104, 255))
-        d.line([0, 15, 15, 15], fill=(95, 98, 104, 255))
-    return paint
+        n = t.width
+        for x, y, u, v in _pixels(t):
+            g = 150 + rng.randint(-10, 10) + (10 if (x * 3 + y) % 7 == 0 else 0)
+            g += int(8 * math.sin(u * 2.1 + v * 0.3))
+            if v < 0.3 or v > 14.7:
+                g = 96
+            px[x, y] = (g, g + 2, g + 6, 255)
+    return _kind(paint, "fabric")
 
 
 def p_print(color, layer=0.85):
     def paint(t, rng):
         c = hexc(color)
         px = t.load()
-        for y in range(CELL):
-            for x in range(CELL):
-                k = 1.08 if y % 2 == 0 else layer
+        n = t.width
+        period = max(2, n // 24)
+        for x in range(n):
+            for y in range(n):
+                k = 1.08 if (y // (period // 2 or 1)) % 2 == 0 else layer
                 px[x, y] = shade(c, k + rng.uniform(-0.03, 0.03))
-        ImageDraw.Draw(t).rectangle([0, 0, 15, 15], outline=shade(c, 0.6))
-    return paint
+        SD(t).rectangle([0, 0, 15, 15], outline=shade(c, 0.6))
+    return _kind(paint, "plastic")
 
 
 def p_glass(base="#1a2630"):
     def paint(t, rng):
         px = t.load()
         b = hexc(base)
-        for y in range(CELL):
-            for x in range(CELL):
-                c = shade(b, 1.0 + 0.4 * (1 - y / 15))
-                if abs(x - y - 4) < 2 or abs(x - y + 3) < 1:
-                    c = shade(c, 1.6)
-                px[x, y] = c
-        ImageDraw.Draw(t).rectangle([0, 0, 15, 15], outline=hexc("#0c0f12"))
-    return paint
+        n = t.width
+        for x, y, u, v in _pixels(t):
+            c = shade(b, 1.0 + 0.45 * (1 - v / 15))
+            dd = u - v
+            if abs(dd - 4) < 1.6:
+                c = shade(c, 1.0 + 0.6 * (1 - abs(dd - 4) / 1.6))
+            elif abs(dd + 3) < 0.7:
+                c = shade(c, 1.35)
+            px[x, y] = shade(c, bevel(edge16(x, y, n), 0.45))
+    return _kind(paint, "glass")
+
+
+def _glass_rect(t, box, glass):
+    """window pane with a sky gradient and a reflection streak, box on the 16 grid"""
+    x1, y1, x2, y2 = box
+    n = t.width
+    k = n / 16.0
+    px = t.load()
+    g = hexc(glass)
+    for y in range(int(y1 * k), int((y2 + 1) * k)):
+        for x in range(int(x1 * k), int((x2 + 1) * k)):
+            u, v = (x + 0.5) / k - 0.5, (y + 0.5) / k - 0.5
+            fy = (v - y1) / max(0.1, y2 - y1)
+            c = shade(g, 1.35 - 0.5 * fy)
+            dd = (u - x1) - (v - y1) * 1.4
+            if 1.5 < dd < 3.0:
+                c = shade(c, 1.45)
+            px[x, y] = c
 
 
 def p_window_split(body, glass="#1d2a33", glass_rows=8):
     """upper part glass, lower part painted body"""
     def paint(t, rng):
         p_flat(body, 6)(t, rng)
-        d = ImageDraw.Draw(t)
-        d.rectangle([1, 1, 14, glass_rows], fill=hexc(glass))
-        d.line([2, 2, 6, 2], fill=hexc("#4e6574"))
-        d.line([2, 3, 4, 3], fill=hexc("#4e6574"))
+        _glass_rect(t, (1, 1, 14, glass_rows), glass)
+        d = SD(t)
         d.rectangle([1, 1, 14, glass_rows], outline=hexc("#121212"))
-    return paint
+        d.line([1, glass_rows + 1.3, 14, glass_rows + 1.3], fill=shade(hexc(body), 0.7), width=0.5)
+    return _kind(paint, "paint")
 
 
 def p_cab_front(body):
     def paint(t, rng):
         p_window_split(body, glass_rows=7)(t, rng)
-        d = ImageDraw.Draw(t)
-        d.line([7, 1, 8, 7], fill=hexc("#121212"))
+        d = SD(t)
+        d.line([7.5, 1, 7.5, 7], fill=hexc("#121212"), width=1.2)
+        d.line([3, 3.5, 6.5, 1.5], fill=hexc("#0f0f0f"), width=0.4)
+        d.line([9, 3.5, 12.5, 1.5], fill=hexc("#0f0f0f"), width=0.4)
         for y in range(10, 15, 2):
-            d.line([3, y, 12, y], fill=hexc("#22261a"))
-    return paint
+            d.rectangle([3, y - 0.35, 12, y + 0.35], fill=hexc("#1c2015"))
+    return _kind(paint, "paint")
 
 
 def p_tire():
     def paint(t, rng):
         px = t.load()
-        for y in range(CELL):
-            for x in range(CELL):
-                g = 26 + rng.randint(-4, 4)
-                if (x + (y // 3) * 2) % 6 < 2:
-                    g += 14
-                px[x, y] = (g, g, g + 2, 255)
-    return paint
+        n = t.width
+        for x, y, u, v in _pixels(t):
+            g = 27 + rng.randint(-3, 3)
+            # chevron lugs of an off-road tyre
+            lug = (v + abs(u - 7.5) * 0.9) % 5
+            if lug < 2.2:
+                g += 12 + int(6 * math.sin(math.pi * lug / 2.2))
+            elif lug < 2.6:
+                g -= 9
+            if abs(u - 7.5) < 0.35:
+                g -= 6
+            px[x, y] = (g, g, g + 2, 255)
+    return _kind(paint, "dark")
 
 
 def p_hub(base):
     def paint(t, rng):
         p_flat(base, 5)(t, rng)
-        d = ImageDraw.Draw(t)
-        d.ellipse([3, 3, 12, 12], outline=shade(hexc(base), 0.6))
-        for a in range(0, 360, 60):
-            x = 7.5 + 3 * math.cos(math.radians(a))
-            y = 7.5 + 3 * math.sin(math.radians(a))
-            d.point((round(x), round(y)), fill=hexc("#a8a89a"))
-        d.rectangle([6, 6, 9, 9], fill=shade(hexc(base), 0.7))
-    return paint
+        d = SD(t)
+        b = hexc(base)
+        d.ellipse([2.5, 2.5, 12.5, 12.5], fill=shade(b, 0.85), outline=shade(b, 0.55))
+        d.ellipse([3.5, 3.5, 11.5, 11.5], outline=shade(b, 1.2), width=0.5)
+        for a in range(0, 360, 45):
+            x = 7.5 + 3.2 * math.cos(math.radians(a))
+            y = 7.5 + 3.2 * math.sin(math.radians(a))
+            d.point((x, y), fill=hexc("#b4b4a6"))
+        d.ellipse([5.5, 5.5, 9.5, 9.5], fill=shade(b, 0.65), outline=shade(b, 1.15))
+    return _kind(paint, "paint")
 
 
 def p_camo(c1, c2, c3):
     cols = [hexc(c1), hexc(c2), hexc(c3)]
 
     def paint(t, rng):
+        n = t.width
+        nr = _nrng(rng)
+        f1 = fbm(n, n, nr, 4, 2)
+        f2 = fbm(n, n, nr, 4, 2)
         px = t.load()
-        seeds = [(rng.randint(0, 15), rng.randint(0, 15), rng.randint(1, 2)) for _ in range(5)]
-        for y in range(CELL):
-            for x in range(CELL):
-                c = cols[0]
-                for i, (sx, sy, ci) in enumerate(seeds):
-                    if (x - sx) ** 2 * 0.6 + (y - sy) ** 2 < 10 + i * 3:
-                        c = cols[ci]
-                n = rng.randint(-5, 5)
-                c = (c[0] + n, c[1] + n, c[2] + n, 255)
-                if x in (0, 15) or y in (0, 15):
-                    c = shade(c, 0.75)
-                px[x, y] = tuple(max(0, min(255, v)) for v in c)
-    return paint
+        for x, y, u, v in _pixels(t):
+            c = cols[0]
+            if f1[y, x] > 0.18:
+                c = cols[1]
+            elif f2[y, x] > 0.22:
+                c = cols[2]
+            px[x, y] = shade(c, bevel(edge16(x, y, n), 0.75))
+    return _kind(paint, "fabric")
 
 
 # ---------------------------------------------------------------------------
@@ -987,73 +1291,64 @@ def build_truck():
 
 def block_textures():
     rng = random.Random(7)
+    size = 16 * ICON_K
 
     def base_tex(col, noise=8):
-        im = Image.new("RGBA", (16, 16))
-        px = im.load()
-        c = hexc(col)
-        for y in range(16):
-            for x in range(16):
-                n = rng.randint(-noise, noise)
-                px[x, y] = (max(0, c[0] + n), max(0, c[1] + n), max(0, c[2] + n), 255)
+        im = Image.new("RGBA", (size, size))
+        p_flat(col, noise, border=0.8, light=1.06)(im, rng)
         return im
 
-    def out(name):
-        return path(ASSETS, "textures", "block", name + ".png")
+    def save(im, name, kind="paint"):
+        weather(im, kind, rng)
+        im.save(path(ASSETS, "textures", "block", name + ".png"))
 
     im = base_tex("#4b5320")
-    d = ImageDraw.Draw(im)
+    d = SD(im)
     d.rectangle([0, 0, 15, 15], outline=hexc("#363c17"))
     for p in [(2, 2), (13, 2), (2, 13), (13, 13)]:
-        d.point(p, fill=hexc("#6b7536"))
-        d.point((p[0] + 1, p[1] + 1), fill=hexc("#2b3011"))
+        d.point(p, fill=hexc("#2b3011"))
+        d.point((p[0] - 0.25, p[1] - 0.25), fill=hexc("#7b8546"))
     d.line([0, 8, 15, 8], fill=hexc("#3d4419"))
-    for _ in range(6):
-        d.point((rng.randint(1, 14), rng.randint(1, 14)), fill=hexc("#8a8d86"))
-    im.save(out("launcher_metal"))
+    d.line([0, 8.6, 15, 8.6], fill=hexc("#5d6631"), width=0.4)
+    save(im, "launcher_metal")
 
     im = base_tex("#7d838a", 6)
-    d = ImageDraw.Draw(im)
+    d = SD(im)
     d.rectangle([6, 0, 9, 15], fill=hexc("#2e3135"))
-    d.line([5, 0, 5, 15], fill=hexc("#a9afb6"))
+    d.line([5, 0, 5, 15], fill=hexc("#b9bfc6"))
     d.line([10, 0, 10, 15], fill=hexc("#a9afb6"))
     for y in range(1, 16, 4):
-        d.point((7, y), fill=hexc("#4a4e53"))
-    im.save(out("launcher_rail"))
+        d.point((7.5, y), fill=hexc("#5a5e63"))
+    save(im, "launcher_rail", "metal")
 
     im = base_tex("#3a4129", 7)
-    d = ImageDraw.Draw(im)
+    d = SD(im)
     d.rectangle([0, 0, 15, 15], outline=hexc("#262b1a"))
     for x in range(0, 16, 5):
-        d.line([x, 0, x + 3, 15], fill=hexc("#33391f"))
-    im.save(out("launcher_base"))
+        d.line([x, 0, x + 3, 15], fill=hexc("#2b3119"))
+    save(im, "launcher_base")
 
     im = base_tex("#5a5f5a", 5)
-    d = ImageDraw.Draw(im)
+    d = SD(im)
     d.rectangle([0, 0, 15, 15], outline=hexc("#2e312e"))
     d.rectangle([2, 2, 13, 7], fill=hexc("#0c1c10"))
-    d.line([3, 5, 7, 3], fill=hexc("#45ff7b"))
-    d.line([7, 3, 12, 6], fill=hexc("#45ff7b"))
-    d.rectangle([3, 10, 5, 12], fill=hexc("#d22626"))
-    d.rectangle([7, 10, 8, 12], fill=hexc("#e0c021"))
-    d.rectangle([10, 10, 12, 12], fill=hexc("#2e9b3d"))
-    im.save(out("launcher_panel"))
+    for gx in range(3, 13, 2):
+        d.line([gx, 2.3, gx, 6.7], fill=hexc("#12301a"), width=0.3)
+    d.line([3, 5, 7, 3], fill=hexc("#45ff7b"), width=0.6)
+    d.line([7, 3, 12, 6], fill=hexc("#45ff7b"), width=0.6)
+    for x, c in ((3, "#d22626"), (7, "#e0c021"), (10, "#2e9b3d")):
+        d.rounded_rectangle([x, 10, x + 2, 12], radius=0.6, fill=hexc(c))
+        d.point((x + 0.5, 10.5), fill=(255, 255, 255, 160))
+    save(im, "launcher_panel", "metal")
 
-    im = Image.new("RGBA", (16, 16))
-    px = im.load()
-    for y in range(16):
-        for x in range(16):
-            px[x, y] = hexc("#e3b40f") if ((x + y) // 4) % 2 == 0 else hexc("#1c1c1c")
-    im.save(out("launcher_hazard"))
+    im = Image.new("RGBA", (size, size))
+    p_hazard("#e3b40f", "#1c1c1c")(im, rng)
+    save(im, "launcher_hazard")
 
     # black PLA with visible layers
-    im = Image.new("RGBA", (16, 16))
-    px = im.load()
-    for y in range(16):
-        for x in range(16):
-            g = (30 if y % 2 == 0 else 22) + rng.randint(-3, 3)
-            px[x, y] = (g, g, g + 2, 255)
-    im.save(out("launch_pad"))
+    im = Image.new("RGBA", (size, size))
+    p_print("#1e1e20", 0.75)(im, rng)
+    save(im, "launch_pad", "plastic")
 
 
 def box_uv(fr, to, d):
@@ -1148,6 +1443,76 @@ def build_launch_pad():
 # ---------------------------------------------------------------------------
 # flat item icons
 
+def scale2x(im):
+    """EPX: doubles a pixel-art image and rounds off its diagonals instead of making blocks"""
+    src = im.load()
+    w, h = im.size
+    out = Image.new("RGBA", (w * 2, h * 2), (0, 0, 0, 0))
+    dst = out.load()
+
+    def at(x, y):
+        return src[min(w - 1, max(0, x)), min(h - 1, max(0, y))]
+
+    for y in range(h):
+        for x in range(w):
+            p = src[x, y]
+            a, b, c, d = at(x, y - 1), at(x + 1, y), at(x - 1, y), at(x, y + 1)
+            e1 = a if c == a and c != d and a != b else p
+            e2 = b if a == b and a != c and b != d else p
+            e3 = c if d == c and d != b and c != a else p
+            e4 = d if b == d and b != a and d != c else p
+            dst[2 * x, 2 * y] = e1
+            dst[2 * x + 1, 2 * y] = e2
+            dst[2 * x, 2 * y + 1] = e3
+            dst[2 * x + 1, 2 * y + 1] = e4
+    return out
+
+
+def finish_icon(im, seed):
+    """light from the top left: catch-lights and shadows on every colour edge, soft gradient, surface noise"""
+    a = np.asarray(im, dtype=np.float64).copy()
+    h, w = a.shape[:2]
+    rgb, alpha = a[:, :, :3], a[:, :, 3] > 0
+    nr = np.random.default_rng(seed)
+
+    def boundary(dy, dx):
+        sh_a = np.roll(np.roll(alpha, -dy, 0), -dx, 1)
+        sh_c = np.roll(np.roll(rgb, -dy, 0), -dx, 1)
+        diff = np.abs(sh_c - rgb).sum(2) > 60
+        b = (~sh_a) | diff
+        if dy < 0:
+            b[0, :] = True
+        if dy > 0:
+            b[-1, :] = True
+        if dx < 0:
+            b[:, 0] = True
+        if dx > 0:
+            b[:, -1] = True
+        return b & alpha
+
+    hi = (boundary(-1, 0) | boundary(0, -1)).astype(float)
+    lo = (boundary(1, 0) | boundary(0, 1)).astype(float)
+    ys, xs = np.nonzero(alpha)
+    if len(xs) == 0:
+        return im
+    x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+    gx = (np.arange(w)[None, :] - x0) / max(1, x1 - x0)
+    gy = (np.arange(h)[:, None] - y0) / max(1, y1 - y0)
+    grad = 1.1 - 0.2 * (gx + gy) / 2
+    noise = 1 + 0.05 * fbm(h, w, nr, 3, 2) + 0.035 * (nr.random((h, w)) - 0.5)
+    k = (1 + 0.2 * hi - 0.24 * lo) * grad * noise
+    rgb[alpha] *= k[alpha][:, None]
+    out = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), "RGBA")
+    return out
+
+
+def save_icon(name, im):
+    im = finish_icon(im, sum(map(ord, name)))
+    im.save(path(ASSETS, "textures", "item", name + ".png"))
+    save_json({"parent": "item/generated", "textures": {"layer0": f"{MODID}:item/{name}"}},
+              ASSETS, "models", "item", name + ".json")
+
+
 def pixel_icon(name, rows, pal):
     assert len(rows) == 16, name
     im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
@@ -1157,9 +1522,9 @@ def pixel_icon(name, rows, pal):
         for x, ch in enumerate(row):
             if ch != ".":
                 px[x, y] = hexc(pal[ch])
-    im.save(path(ASSETS, "textures", "item", name + ".png"))
-    save_json({"parent": "item/generated", "textures": {"layer0": f"{MODID}:item/{name}"}},
-              ASSETS, "models", "item", name + ".json")
+    for _ in range(ICON_K // 2):
+        im = scale2x(im)
+    save_icon(name, im)
 
 
 def build_icons():
@@ -1259,8 +1624,9 @@ def armor_texture():
     d.point((11, 12), fill=hexc("#2cff6a"))
     d.rectangle([12, 2, 12, 5], fill=hexc("#202226"))
     d.point((12, 1), fill=hexc("#ff6a00"))
+    im = finish_icon(scale2x(im), 3)
     im.save(path(ASSETS, "textures", "models", "armor", "fpv_goggles_layer_1.png"))
-    Image.new("RGBA", (64, 32), (0, 0, 0, 0)).save(
+    Image.new("RGBA", (128, 64), (0, 0, 0, 0)).save(
         path(ASSETS, "textures", "models", "armor", "fpv_goggles_layer_2.png"))
 
 
@@ -1286,11 +1652,9 @@ def item_models():
 # parts
 
 def draw_icon(name, fn):
-    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
-    fn(ImageDraw.Draw(im), im)
-    im.save(path(ASSETS, "textures", "item", name + ".png"))
-    save_json({"parent": "item/generated", "textures": {"layer0": f"{MODID}:item/{name}"}},
-              ASSETS, "models", "item", name + ".json")
+    im = Image.new("RGBA", (16 * ICON_K, 16 * ICON_K), (0, 0, 0, 0))
+    fn(SD(im), im)
+    save_icon(name, im)
 
 
 def build_part_icons():
@@ -1473,59 +1837,72 @@ def build_jet_engine():
 
 def bench_textures():
     rng = random.Random(11)
+    size = 16 * ICON_K
 
-    def out(name):
-        return path(ASSETS, "textures", "block", name + ".png")
+    def save(im, name, kind):
+        weather(im, kind, rng)
+        im.save(path(ASSETS, "textures", "block", name + ".png"))
 
-    im = Image.new("RGBA", (16, 16))
+    # green cutting mat with a grid
+    im = Image.new("RGBA", (size, size))
+    p_flat("#2e6e46", 5, border=0.85, light=1.04)(im, rng)
+    d = SD(im)
+    for i in range(0, 16, 4):
+        d.line([i, 0, i, 15], fill=hexc("#4c9a68"), width=0.35)
+        d.line([0, i, 15, i], fill=hexc("#4c9a68"), width=0.35)
+    for i in range(0, 16):
+        d.line([i, 0, i, 0.6], fill=hexc("#8cc8a0"), width=0.25)
+    save(im, "bench_mat", "fabric")
+
+    # oak top with grain
+    im = Image.new("RGBA", (size, size))
     px = im.load()
-    for y in range(16):
-        for x in range(16):
-            g = rng.randint(-6, 6)
-            c = (46 + g, 110 + g, 70 + g, 255)
-            if x % 4 == 0 or y % 4 == 0:
-                c = (60 + g, 128 + g, 86 + g, 255)
-            px[x, y] = c
-    im.save(out("bench_mat"))
-
-    im = Image.new("RGBA", (16, 16))
-    px = im.load()
-    for y in range(16):
-        for x in range(16):
-            g = rng.randint(-8, 8) + (10 if (y + x // 5) % 5 == 0 else 0)
-            px[x, y] = (88 + g, 62 + g, 38 + g, 255)
-    d = ImageDraw.Draw(im)
+    nr = _nrng(rng)
+    grain = fbm(size, size, nr, 4, 2)
+    for x, y, u, v in _pixels(im):
+        w = math.sin((v + grain[y, x] * 2.5) * 2.3) * 0.5 + 0.5
+        g = int(14 * w) + rng.randint(-4, 4)
+        px[x, y] = (88 + g, 62 + g, 38 + g, 255)
+    d = SD(im)
     d.line([0, 7, 15, 7], fill=hexc("#3e2b19"))
     d.line([0, 15, 15, 15], fill=hexc("#3e2b19"))
-    im.save(out("bench_wood"))
+    save(im, "bench_wood", "plastic")
 
-    im = Image.new("RGBA", (16, 16), hexc("#2b2d31"))
-    d = ImageDraw.Draw(im)
-    d.rectangle([0, 0, 15, 15], outline=hexc("#111214"))
-    d.rectangle([2, 2, 9, 7], fill=hexc("#0b0b0b"))
-    d.text((2, 0), "350", fill=hexc("#ff3b3b"))
-    d.ellipse([11, 3, 14, 6], fill=hexc("#8d9399"))
-    d.rectangle([2, 10, 4, 12], fill=hexc("#45ff7b"))
-    d.rectangle([6, 10, 8, 12], fill=hexc("#e3b40f"))
-    im.save(out("bench_station"))
+    # soldering station front
+    im = Image.new("RGBA", (size, size))
+    p_flat("#2b2d31", 3, border=0.6)(im, rng)
+    d = SD(im)
+    d.rounded_rectangle([1.5, 1.5, 9.5, 7.5], radius=0.8, fill=hexc("#0b0b0b"), outline=hexc("#44474d"))
+    d.text((2.2, 2.2), "350°", fill=hexc("#ff3b3b"))
+    d.ellipse([10.5, 2.5, 14.5, 6.5], fill=hexc("#8d9399"), outline=hexc("#4a4e53"))
+    d.line([12.5, 3, 12.5, 4.5], fill=hexc("#2b2d31"), width=0.5)
+    d.rounded_rectangle([2, 10, 4, 12], radius=0.5, fill=hexc("#45ff7b"))
+    d.rounded_rectangle([6, 10, 8, 12], radius=0.5, fill=hexc("#e3b40f"))
+    save(im, "bench_station", "plastic")
 
-    im = Image.new("RGBA", (16, 16), hexc("#8d9399"))
-    d = ImageDraw.Draw(im)
+    im = Image.new("RGBA", (size, size))
+    p_flat("#8d9399", 4, border=0.8)(im, rng)
+    d = SD(im)
     for y in range(0, 16, 3):
-        d.line([0, y, 15, y], fill=hexc("#6f757b"))
-    im.save(out("bench_metal"))
+        d.line([0, y, 15, y], fill=hexc("#6f757b"), width=0.6)
+    save(im, "bench_metal", "metal")
 
-    im = Image.new("RGBA", (16, 16), hexc("#b0141a"))
-    d = ImageDraw.Draw(im)
+    im = Image.new("RGBA", (size, size))
+    p_flat("#b0141a", 4, border=0.8)(im, rng)
+    d = SD(im)
     for x in range(0, 16, 3):
-        d.line([x, 0, x, 15], fill=hexc("#7a0f12"))
-    im.save(out("bench_handle"))
+        d.line([x, 0, x, 15], fill=hexc("#7a0f12"), width=0.7)
+    save(im, "bench_handle", "plastic")
 
-    im = Image.new("RGBA", (16, 16), hexc("#9aa0a6"))
-    d = ImageDraw.Draw(im)
+    # solder spool
+    im = Image.new("RGBA", (size, size))
+    p_flat("#9aa0a6", 4, border=0.8)(im, rng)
+    d = SD(im)
     d.ellipse([2, 2, 13, 13], fill=hexc("#c9c9c9"), outline=hexc("#6f757b"))
+    for r in (3.2, 4.2):
+        d.ellipse([7.5 - r, 7.5 - r, 7.5 + r, 7.5 + r], outline=hexc("#a8a8a8"), width=0.3)
     d.ellipse([6, 6, 9, 9], fill=hexc("#3a3c42"))
-    im.save(out("bench_spool"))
+    save(im, "bench_spool", "metal")
 
 
 def build_bench():
@@ -1662,60 +2039,81 @@ def p_jacket(base="#3c4434"):
     """perforated barrel shroud"""
     def paint(t, rng):
         p_flat(base, 5)(t, rng)
-        d = ImageDraw.Draw(t)
+        d = SD(t)
         for x in range(2, 15, 3):
-            d.rectangle([x, 4, x + 1, 11], fill=hexc("#0f120d"))
-    return paint
+            d.rounded_rectangle([x, 4, x + 1, 11], radius=0.5, fill=hexc("#0b0d09"))
+            d.line([x + 1.5, 4.2, x + 1.5, 10.8], fill=shade(hexc(base), 1.25), width=0.4)
+    return _kind(paint, "metal")
 
 
 def p_door(base):
     def paint(t, rng):
         p_flat(base, 6)(t, rng)
-        d = ImageDraw.Draw(t)
-        d.rectangle([2, 2, 13, 13], outline=shade(hexc(base), 0.62))
-        d.rectangle([11, 7, 12, 9], fill=hexc("#1c1f18"))
-        d.point((3, 3), fill=shade(hexc(base), 1.3))
-        d.point((12, 12), fill=shade(hexc(base), 1.3))
-    return paint
+        d = SD(t)
+        b = hexc(base)
+        d.rectangle([2, 2, 13, 13], outline=shade(b, 0.55))
+        d.rectangle([2.6, 2.6, 13.6, 13.6], outline=shade(b, 1.2), width=0.4)
+        d.rounded_rectangle([11, 6.5, 12.2, 9.5], radius=0.4, fill=hexc("#1c1f18"))
+        d.line([11.2, 6.7, 11.2, 9.3], fill=hexc("#5a6048"), width=0.3)
+        for p in ((3, 3), (12.4, 12.4), (3, 12.4), (12.4, 3)):
+            d.point(p, fill=shade(b, 0.7))
+            d.point((p[0] - 0.15, p[1] - 0.15), fill=shade(b, 1.35))
+        for y in (4, 11):
+            d.rectangle([1.2, y, 2, y + 1.6], fill=shade(b, 0.6))
+    return _kind(paint, "paint")
 
 
 def p_tracks():
     def paint(t, rng):
         px = t.load()
-        for y in range(CELL):
-            for x in range(CELL):
-                g = 34 + rng.randint(-5, 5)
-                if y % 4 == 0:
-                    g = 22
-                elif y % 4 == 1:
-                    g += 22
-                if x in (0, 15):
-                    g = 18
-                px[x, y] = (g, g, g + 3, 255)
-    return paint
+        n = t.width
+        for x, y, u, v in _pixels(t):
+            ph = (v + 0.5) % 4
+            g = 36 + rng.randint(-4, 4)
+            if ph < 0.6:
+                g = 20
+            elif ph < 1.4:
+                g += 24 - int(10 * (ph - 0.6))
+            elif ph > 3.4:
+                g -= 6
+            # centre guide horns
+            if 6.5 < u < 8.5 and 1.0 < ph < 2.6:
+                g += 30
+            if u < 0.6 or u > 14.4:
+                g = 18
+            px[x, y] = (g, g, g + 3, 255)
+    return _kind(paint, "dark")
 
 
 def p_era(base):
     """bricks of reactive armour"""
     def paint(t, rng):
         p_flat(base, 6)(t, rng)
-        d = ImageDraw.Draw(t)
+        d = SD(t)
+        b = hexc(base)
+        dark, hi = shade(b, 0.5), shade(b, 1.22)
         for y in (0, 8):
-            d.line([0, y, 15, y], fill=shade(hexc(base), 0.55))
+            d.line([0, y, 15, y], fill=dark)
+            d.line([0, y + 0.6, 15, y + 0.6], fill=hi, width=0.4)
         for x in (0, 5, 10):
-            d.line([x, 0, x, 7], fill=shade(hexc(base), 0.55))
+            d.line([x, 0, x, 7.5], fill=dark)
         for x in (2, 7, 12):
-            d.line([x, 8, x, 15], fill=shade(hexc(base), 0.55))
-    return paint
+            d.line([x, 8, x, 15], fill=dark)
+        for cx in (2.5, 7.5, 12.5):
+            d.point((cx, 4), fill=shade(b, 0.75))
+        for cx in (4.5, 9.5, 14):
+            d.point((cx, 12), fill=shade(b, 0.75))
+    return _kind(paint, "paint")
 
 
 def p_tube_end(base):
     def paint(t, rng):
         p_flat(base, 5)(t, rng)
-        d = ImageDraw.Draw(t)
-        d.ellipse([2, 2, 13, 13], fill=hexc("#16180f"), outline=shade(hexc(base), 0.6))
+        d = SD(t)
+        d.ellipse([2, 2, 13, 13], fill=hexc("#16180f"), outline=shade(hexc(base), 0.55))
+        d.ellipse([2.6, 2.6, 12.4, 12.4], outline=shade(hexc(base), 1.2), width=0.4)
         d.ellipse([5, 5, 10, 10], fill=hexc("#0a0b07"))
-    return paint
+    return _kind(paint, "paint")
 
 
 def build_armor():
@@ -2036,9 +2434,7 @@ def build_remote_icons():
     S = 32
 
     def save(name, im):
-        im.save(path(ASSETS, "textures", "item", name + ".png"))
-        save_json({"parent": "item/generated", "textures": {"layer0": f"{MODID}:item/{name}"}},
-                  ASSETS, "models", "item", name + ".json")
+        save_icon(name, im)
 
     def gimbal(d, cx, cy, r, ring, well, stick):
         d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=ring)
