@@ -3,6 +3,7 @@ package com.qwarwin.fpvdrones.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.qwarwin.fpvdrones.client.ModModels;
 import com.qwarwin.fpvdrones.entity.KornetEntity;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
@@ -27,6 +28,13 @@ public class KornetRenderer extends EntityRenderer<KornetEntity> {
         ms.mulPose(Vector3f.YP.rotationDegrees(-e.yRot));
         Parts.draw(ModModels.KORNET_TRIPOD, ms, buf, light, SCALE);
         ms.popPose();
+
+        // the gunner's eye sits right where the launcher is; drawing it would just put a wall in front of the sight
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && e.hasPassenger(mc.player) && mc.options.getCameraType().isFirstPerson()) {
+            super.render(e, entityYaw, partial, ms, buf, light);
+            return;
+        }
 
         Vector3d p = KornetEntity.PIVOT;
         Vector3d t = KornetEntity.TRUNNION;

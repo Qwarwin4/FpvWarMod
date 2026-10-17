@@ -224,7 +224,18 @@ public final class GunnerHud {
         }
         boolean guiding = false;
         for (Entity e : mc.level.getEntities(k, k.getBoundingBox().inflate(900), e -> e instanceof MissileEntity)) {
-            guiding |= ((MissileEntity) e).isGuided() && ((MissileEntity) e).getMissileType().isBeamRiding();
+            MissileEntity m = (MissileEntity) e;
+            if (!m.isGuided() || !m.getMissileType().isBeamRiding()) {
+                continue;
+            }
+            guiding = true;
+            // show where our missile is, so it's easy to see it settle onto the crosshair
+            int[] mp = Projection.toScreen(m.position(), w, h);
+            if (mp != null) {
+                box(ms, mp[0], mp[1], 3, AMBER);
+                String d = Math.round(m.distanceTo(k)) + "м";
+                font.drawShadow(ms, d, mp[0] + 6, mp[1] - 4, AMBER);
+            }
         }
         String state = guiding ? "НАВЕДЕНИЕ — ДЕРЖИ ЦЕЛЬ" : k.getAmmo() > 0 ? "ГОТОВ — [ЛКМ] ПУСК" : "ПЕРЕЗАРЯДКА";
         int col = guiding ? (blink ? AMBER : GREEN) : k.getAmmo() > 0 ? GREEN : AMBER;

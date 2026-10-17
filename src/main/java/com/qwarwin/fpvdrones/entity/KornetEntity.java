@@ -53,7 +53,8 @@ public class KornetEntity extends MountedWeaponEntity {
 
     @Override
     protected Vector3d sightOffset() {
-        return new Vector3d(0.24, 0.26, -0.55);
+        // straight above the tube, so the crosshair and the missile's line agree
+        return new Vector3d(0, 0.42, -0.25);
     }
 
     @Override
