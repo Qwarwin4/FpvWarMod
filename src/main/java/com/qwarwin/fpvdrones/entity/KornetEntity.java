@@ -58,7 +58,8 @@ public class KornetEntity extends MountedWeaponEntity {
 
     @Override
     protected float traverseSpeed() {
-        return 5F;
+        // light launcher on a tripod head: follows the eye, the sight is what matters
+        return 25F;
     }
 
     @Override

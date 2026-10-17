@@ -3,6 +3,7 @@ package com.qwarwin.fpvdrones.network;
 import com.qwarwin.fpvdrones.entity.AbstractDroneEntity;
 import com.qwarwin.fpvdrones.entity.LaunchTruckEntity;
 import com.qwarwin.fpvdrones.entity.MavicEntity;
+import com.qwarwin.fpvdrones.item.JavelinItem;
 import com.qwarwin.fpvdrones.launch.Launches;
 import com.qwarwin.fpvdrones.session.SessionManager;
 import net.minecraft.entity.Entity;
@@ -20,6 +21,7 @@ public class DroneActionPacket {
     public static final int PRIMARY = 1;
     public static final int VEHICLE_MENU = 2;
     public static final int RETURN_HOME = 3;
+    public static final int JAVELIN_FIRE = 4;
 
     private final int action;
     // what the camera was pointed at when H was pressed
@@ -79,6 +81,11 @@ public class DroneActionPacket {
                     }
                     break;
                 }
+                case JAVELIN_FIRE:
+                    if (p.isUsingItem() && p.getUseItem().getItem() instanceof JavelinItem) {
+                        ((JavelinItem) p.getUseItem().getItem()).fire(p);
+                    }
+                    break;
                 case VEHICLE_MENU:
                     if (p.getVehicle() instanceof LaunchTruckEntity) {
                         Launches.openMenu(p, (LaunchTruckEntity) p.getVehicle());

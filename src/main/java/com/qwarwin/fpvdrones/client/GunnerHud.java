@@ -40,6 +40,24 @@ public final class GunnerHud {
 
     // scroll zoom while sitting at a sight
     public static float zoom = 1F;
+    // Kornet: RMB held = looking through the sight, which has its own magnification
+    public static boolean aiming;
+    public static float sightZoom = 8F;
+
+    public static void zoomBy(float k) {
+        if (aiming) {
+            sightZoom = MathHelper.clamp(sightZoom * k, 3F, 16F);
+        } else {
+            zoom = MathHelper.clamp(zoom * k, 1F, 12F);
+        }
+    }
+
+    public static float viewZoom(MountedWeaponEntity gun) {
+        if (gun instanceof KornetEntity) {
+            return aiming ? sightZoom : 1F;
+        }
+        return zoom;
+    }
 
     public static void render(MatrixStack ms, MountedWeaponEntity gun, float pt) {
         Minecraft mc = Minecraft.getInstance();
@@ -48,6 +66,11 @@ public final class GunnerHud {
         int h = mc.getWindow().getGuiScaledHeight();
         int cx = w / 2, cy = h / 2;
         boolean blink = (mc.player.tickCount / 8) % 2 == 0;
+
+        if (gun instanceof KornetEntity && !aiming) {
+            kornetIdle(ms, font, (KornetEntity) gun, w, h);
+            return;
+        }
 
         // where the barrel points right now; the turret lags behind the view
         Vector3d muzzleDir = Vector3d.directionFromRotation(gun.getGunPitch(pt), gun.getTurretYaw(pt));
@@ -68,7 +91,7 @@ public final class GunnerHud {
         double range = rangefinder(mc, gun);
         String r = range < 0 ? "Д ----" : String.format(Locale.ROOT, "Д %04d", Math.round(range));
         font.drawShadow(ms, r, cx + 26, cy + 4, GREEN);
-        String z = String.format(Locale.ROOT, "%.1fx", zoom);
+        String z = String.format(Locale.ROOT, "%.1fx", viewZoom(gun));
         font.drawShadow(ms, z, cx + 26, cy - 12, GREEN_DIM);
 
         // hull integrity
@@ -172,29 +195,62 @@ public final class GunnerHud {
         }
     }
 
+    private static void kornetIdle(MatrixStack ms, FontRenderer font, KornetEntity k, int w, int h) {
+        int cx = w / 2, cy = h / 2;
+        fill(ms, cx - 4, cy, cx + 5, cy + 1, GREEN);
+        fill(ms, cx, cy - 4, cx + 1, cy + 5, GREEN);
+        panel(ms, font, 8, 8, new String[]{
+                "ПТРК «Корнет»",
+                k.getAmmo() > 0 ? "ГОТОВ" : "ПЕРЕЗАРЯДКА",
+                "[ПКМ] прицел  [ЛКМ] пуск"
+        }, k.getAmmo() > 0 ? GREEN : AMBER);
+    }
+
     private static void kornet(MatrixStack ms, Minecraft mc, FontRenderer font, KornetEntity k, int w, int h, boolean blink) {
         int cx = w / 2, cy = h / 2;
-        // tinted sight with the classic broken cross
-        fill(ms, 0, 0, w, h, 0x1430FF70);
-        fill(ms, cx - 80, cy, cx - 6, cy + 1, GREEN);
-        fill(ms, cx + 7, cy, cx + 81, cy + 1, GREEN);
-        fill(ms, cx, cy + 7, cx + 1, cy + 60, GREEN);
-        fill(ms, cx, cy - 40, cx + 1, cy - 6, GREEN_DIM);
+        int r = scopeFrame(ms, w, h);
+        // the broken cross with range stadia under it
+        fill(ms, cx - r + 20, cy, cx - 8, cy + 1, GREEN);
+        fill(ms, cx + 9, cy, cx + r - 20, cy + 1, GREEN);
+        fill(ms, cx, cy + 9, cx + 1, cy + r - 20, GREEN);
+        fill(ms, cx, cy - r + 30, cx + 1, cy - 8, GREEN_DIM);
+        for (int i = 1; i <= 4; i++) {
+            int y = cy + 8 + i * 14;
+            fill(ms, cx - 2 - i, y, cx + 3 + i, y + 1, GREEN);
+        }
         for (int i = 1; i <= 3; i++) {
-            fill(ms, cx - 3, cy + 6 + i * 12, cx + 4, cy + 7 + i * 12, GREEN);
+            fill(ms, cx - 8 - i * 18, cy - 2, cx - 7 - i * 18, cy + 3, GREEN_DIM);
+            fill(ms, cx + 8 + i * 18, cy - 2, cx + 9 + i * 18, cy + 3, GREEN_DIM);
         }
         boolean guiding = false;
         for (Entity e : mc.level.getEntities(k, k.getBoundingBox().inflate(900), e -> e instanceof MissileEntity)) {
             guiding |= ((MissileEntity) e).isGuided() && ((MissileEntity) e).getMissileType().isBeamRiding();
         }
-        String state = guiding ? "НАВЕДЕНИЕ" : k.getAmmo() > 0 ? "ГОТОВ" : "ПЕРЕЗАРЯДКА";
+        String state = guiding ? "НАВЕДЕНИЕ — ДЕРЖИ ЦЕЛЬ" : k.getAmmo() > 0 ? "ГОТОВ — [ЛКМ] ПУСК" : "ПЕРЕЗАРЯДКА";
         int col = guiding ? (blink ? AMBER : GREEN) : k.getAmmo() > 0 ? GREEN : AMBER;
-        font.drawShadow(ms, state, cx - font.width(state) / 2, cy - 54, col);
-        panel(ms, font, 8, 8, new String[]{
-                "ПТРК «Корнет»",
-                "[ЛКМ] пуск, держи прицел на цели",
-                "[колесо] зум"
-        }, GREEN);
+        font.drawShadow(ms, state, cx - font.width(state) / 2, cy + r - 24, col);
+        font.drawShadow(ms, "9П163", cx - r + 8, cy - r + 8, GREEN_DIM);
+    }
+
+    /** Round eyepiece: everything outside is dark, a faint green picture inside. Returns the radius. */
+    private static int scopeFrame(MatrixStack ms, int w, int h) {
+        int cx = w / 2, cy = h / 2;
+        int r = Math.min(w, h) / 2 - 10;
+        int shade = 0xEE050805;
+        fill(ms, 0, 0, w, cy - r, shade);
+        fill(ms, 0, cy + r, w, h, shade);
+        fill(ms, 0, cy - r, cx - r, cy + r, shade);
+        fill(ms, cx + r, cy - r, w, cy + r, shade);
+        // round off the square window
+        for (int y = -r; y < r; y++) {
+            int half = (int) Math.sqrt((double) r * r - (double) y * y);
+            if (half < r) {
+                fill(ms, cx - r, cy + y, cx - half, cy + y + 1, shade);
+                fill(ms, cx + half, cy + y, cx + r, cy + y + 1, shade);
+            }
+        }
+        fill(ms, cx - r, cy - r, cx + r, cy + r, 0x1830FF60);
+        return r;
     }
 
     /** CLU view while the Javelin is raised. */
@@ -204,13 +260,7 @@ public final class GunnerHud {
         int w = mc.getWindow().getGuiScaledWidth();
         int h = mc.getWindow().getGuiScaledHeight();
         int cx = w / 2, cy = h / 2;
-        int r = Math.min(w, h) / 2 - 10;
-        // dark surround, greenish seeker picture
-        fill(ms, 0, 0, w, cy - r, 0xEE050805);
-        fill(ms, 0, cy + r, w, h, 0xEE050805);
-        fill(ms, 0, cy - r, cx - r, cy + r, 0xEE050805);
-        fill(ms, cx + r, cy - r, w, cy + r, 0xEE050805);
-        fill(ms, cx - r, cy - r, cx + r, cy + r, 0x2230FF60);
+        int r = scopeFrame(ms, w, h);
         fill(ms, cx - r, cy, cx - r + 30, cy + 1, GREEN);
         fill(ms, cx + r - 30, cy, cx + r, cy + 1, GREEN);
         fill(ms, cx, cy - r, cx + 1, cy - r + 30, GREEN);
@@ -231,7 +281,7 @@ public final class GunnerHud {
                 font.drawShadow(ms, n, p[0] - font.width(n) / 2, p[1] + s + 4, col);
             }
         }
-        String state = locked ? "ЗАХВАТ — ОТПУСТИ ПКМ" : t != null ? "ЗАХВАТ " + Math.min(99, lock.ticks * 100 / JavelinItem.LOCK_TICKS) + "%" : "ПОИСК";
+        String state = locked ? "ЗАХВАТ — [ЛКМ] ПУСК" : t != null ? "ЗАХВАТ " + Math.min(99, lock.ticks * 100 / JavelinItem.LOCK_TICKS) + "%" : "ПОИСК";
         font.drawShadow(ms, state, cx - font.width(state) / 2, cy + r - 24, locked ? GREEN : AMBER);
         String mode = "ВЕРХ  4x";
         font.drawShadow(ms, mode, cx - r + 8, cy - r + 8, GREEN_DIM);

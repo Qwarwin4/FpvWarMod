@@ -11,6 +11,7 @@ import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.UseAction;
@@ -37,7 +38,7 @@ import java.util.UUID;
 
 /**
  * Fire-and-forget launcher. Hold RMB to look through the seeker and keep the target in the box until it locks,
- * let go to launch. The missile then flies a top-attack arc on its own, the gunner can take cover.
+ * then LMB launches. The missile flies a top-attack arc on its own, the gunner can take cover.
  */
 public class JavelinItem extends Item {
     public static final int LOCK_TICKS = 40;
@@ -132,18 +133,22 @@ public class JavelinItem extends Item {
 
     @Override
     public void releaseUsing(ItemStack stack, World world, LivingEntity user, int timeLeft) {
-        if (!(user instanceof PlayerEntity)) {
+        // lowering the launcher just drops the lock
+        if (user instanceof PlayerEntity) {
+            Lock lock = lockOf((PlayerEntity) user);
+            lock.targetId = -1;
+            lock.ticks = 0;
+        }
+    }
+
+    /** LMB while looking through the seeker. */
+    public void fire(ServerPlayerEntity player) {
+        World world = player.level;
+        if (player.getCooldowns().isOnCooldown(this)) {
             return;
         }
-        PlayerEntity player = (PlayerEntity) user;
         Lock lock = lockOf(player);
-        boolean locked = lock.locked();
-        Entity target = locked ? world.getEntity(lock.targetId) : null;
-        lock.targetId = -1;
-        lock.ticks = 0;
-        if (world.isClientSide) {
-            return;
-        }
+        Entity target = lock.locked() ? world.getEntity(lock.targetId) : null;
         if (target == null || !target.isAlive()) {
             player.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.no_lock").withStyle(TextFormatting.YELLOW), true);
             return;
@@ -151,6 +156,7 @@ public class JavelinItem extends Item {
         if (!player.abilities.instabuild) {
             ItemStack missile = findMissile(player);
             if (missile.isEmpty()) {
+                player.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.no_missiles"), true);
                 return;
             }
             missile.shrink(1);
@@ -169,6 +175,8 @@ public class JavelinItem extends Item {
         Vector3d back = player.getEyePosition(1F).subtract(look.scale(1.5));
         ((ServerWorld) world).sendParticles(ParticleTypes.CLOUD, back.x, back.y, back.z, 12, 0.3, 0.3, 0.3, 0.05);
         player.getCooldowns().addCooldown(this, 60);
+        lock.targetId = -1;
+        lock.ticks = 0;
     }
 
     private static ItemStack findMissile(PlayerEntity player) {

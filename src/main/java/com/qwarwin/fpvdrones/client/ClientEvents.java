@@ -4,6 +4,7 @@ import com.qwarwin.fpvdrones.FpvDrones;
 import com.qwarwin.fpvdrones.control.ControlState;
 import com.qwarwin.fpvdrones.entity.AbstractDroneEntity;
 import com.qwarwin.fpvdrones.entity.DroneKind;
+import com.qwarwin.fpvdrones.entity.KornetEntity;
 import com.qwarwin.fpvdrones.entity.LaunchTruckEntity;
 import com.qwarwin.fpvdrones.entity.MountedWeaponEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
@@ -65,6 +66,7 @@ public final class ClientEvents {
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
+            Sensitivity.restore(mc);
             if (ClientSession.active) {
                 ClientSession.reset();
                 ControlState.reset();
@@ -97,6 +99,13 @@ public final class ClientEvents {
                 gunnerInput(mc);
             } else {
                 lastTrigger = false;
+                GunnerHud.aiming = false;
+                if (aimingJavelin(mc)) {
+                    // RMB holds the seeker up, LMB launches
+                    while (mc.options.keyAttack.consumeClick()) {
+                        Network.CHANNEL.sendToServer(new DroneActionPacket(DroneActionPacket.JAVELIN_FIRE));
+                    }
+                }
                 while (KeyBinds.ACTION.consumeClick()) {
                     if (mc.player.getVehicle() instanceof LaunchTruckEntity) {
                         Network.CHANNEL.sendToServer(new DroneActionPacket(DroneActionPacket.VEHICLE_MENU));
@@ -114,8 +123,22 @@ public final class ClientEvents {
             if (ClientSession.lostTicks > 0) {
                 ClientSession.lostTicks--;
             }
+            Sensitivity.update(mc, currentZoom(mc));
         }
     }
+
+    /** How much the view is magnified right now, for mouse sensitivity. */
+    private static float currentZoom(Minecraft mc) {
+        if (ClientSession.active) {
+            return ClientSession.kind == DroneKind.MAVIC ? ClientSession.zoom : 1F;
+        }
+        if (atGun(mc)) {
+            return GunnerHud.viewZoom((MountedWeaponEntity) mc.player.getVehicle());
+        }
+        return aimingJavelin(mc) ? JAVELIN_ZOOM : 1F;
+    }
+
+    private static final float JAVELIN_ZOOM = 4F;
 
     private static boolean lastTrigger;
 
@@ -124,20 +147,23 @@ public final class ClientEvents {
         GameSettings o = mc.options;
         boolean trigger = mc.screen == null && o.keyAttack.isDown();
         boolean secondary = false, action = false;
+        boolean kornet = mc.player.getVehicle() instanceof KornetEntity;
         while (o.keyAttack.consumeClick()) {
             // handled through isDown
         }
         while (o.keyUse.consumeClick()) {
-            secondary = mc.screen == null;
+            // on the Kornet RMB is "look through the sight", held rather than clicked
+            secondary = mc.screen == null && !kornet;
         }
+        GunnerHud.aiming = kornet && mc.screen == null && o.keyUse.isDown();
         while (KeyBinds.ACTION.consumeClick()) {
             action = true;
         }
         while (KeyBinds.ZOOM_IN.consumeClick()) {
-            GunnerHud.zoom = Math.min(12F, GunnerHud.zoom * 1.5F);
+            GunnerHud.zoomBy(1.5F);
         }
         while (KeyBinds.ZOOM_OUT.consumeClick()) {
-            GunnerHud.zoom = Math.max(1F, GunnerHud.zoom / 1.5F);
+            GunnerHud.zoomBy(1F / 1.5F);
         }
         if (trigger != lastTrigger || secondary || action) {
             lastTrigger = trigger;
@@ -194,7 +220,7 @@ public final class ClientEvents {
     public static void onMouseScroll(InputEvent.MouseScrollEvent event) {
         Minecraft mc = Minecraft.getInstance();
         if (!ClientSession.active && atGun(mc) && mc.screen == null) {
-            GunnerHud.zoom = event.getScrollDelta() > 0 ? Math.min(12F, GunnerHud.zoom * 1.25F) : Math.max(1F, GunnerHud.zoom / 1.25F);
+            GunnerHud.zoomBy(event.getScrollDelta() > 0 ? 1.25F : 1F / 1.25F);
             event.setCanceled(true);
             return;
         }
@@ -264,9 +290,9 @@ public final class ClientEvents {
                 event.setFOV(Math.min(event.getFOV() * 1.2, 120.0));
             }
         } else if (atGun(mc)) {
-            event.setFOV(event.getFOV() / GunnerHud.zoom);
+            event.setFOV(event.getFOV() / GunnerHud.viewZoom((MountedWeaponEntity) mc.player.getVehicle()));
         } else if (aimingJavelin(mc)) {
-            event.setFOV(event.getFOV() / 4.0);
+            event.setFOV(event.getFOV() / JAVELIN_ZOOM);
         }
         Projection.fov = event.getFOV();
     }
@@ -336,6 +362,7 @@ public final class ClientEvents {
 
     @SubscribeEvent
     public static void onLoggedOut(ClientPlayerNetworkEvent.LoggedOutEvent event) {
+        Sensitivity.restore(Minecraft.getInstance());
         ClientSession.reset();
         ControlState.reset();
     }
