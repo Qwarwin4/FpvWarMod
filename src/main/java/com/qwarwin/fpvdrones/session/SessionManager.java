@@ -379,6 +379,14 @@ public final class SessionManager {
         if (SESSIONS.containsKey(p.getUUID())) {
             // leaving on purpose: straight back to the body, no "signal lost" screen
             end(p, null);
+        } else if (p.getCamera() != p || p.getPersistentData().contains(RESTORE_KEY)) {
+            // stuck looking through something with no session behind it (server reload, crash): unstick
+            p.setCamera(p);
+            if (p.getPersistentData().contains(RESTORE_KEY)) {
+                // puts the player back where the session started
+                tickIdle(p);
+            }
+            Network.sendTo(p, SessionStatePacket.stop(""));
         } else if (p.getItemBySlot(EquipmentSlotType.HEAD).getItem() instanceof FpvGogglesItem) {
             connectGoggles(p);
         }

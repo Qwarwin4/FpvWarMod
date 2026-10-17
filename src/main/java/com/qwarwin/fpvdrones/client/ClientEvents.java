@@ -87,17 +87,17 @@ public final class ClientEvents {
                 }
                 if (ClientSession.kind == DroneKind.MAVIC) {
                     mc.player.xRot = MathHelper.clamp(mc.player.xRot, -30F, 90F);
-                    while (KeyBinds.ZOOM_IN.consumeClick()) {
+                    for (int n = KeyBinds.presses(KeyBinds.ZOOM_IN); n > 0; n--) {
                         ClientSession.zoom = Math.min(28F, ClientSession.zoom * 1.5F);
                     }
-                    while (KeyBinds.ZOOM_OUT.consumeClick()) {
+                    for (int n = KeyBinds.presses(KeyBinds.ZOOM_OUT); n > 0; n--) {
                         ClientSession.zoom = Math.max(1F, ClientSession.zoom / 1.5F);
                     }
-                    while (KeyBinds.RETURN_HOME.consumeClick()) {
+                    for (int n = KeyBinds.presses(KeyBinds.RETURN_HOME); n > 0; n--) {
                         Network.CHANNEL.sendToServer(new DroneActionPacket(DroneActionPacket.RETURN_HOME, ClientSession.aim));
                     }
                 }
-                while (KeyBinds.ACTION.consumeClick()) {
+                for (int n = KeyBinds.presses(KeyBinds.ACTION); n > 0; n--) {
                     Network.CHANNEL.sendToServer(new DroneActionPacket(DroneActionPacket.PRIMARY));
                 }
             } else if (mc.player.getVehicle() instanceof MountedWeaponEntity) {
@@ -111,15 +111,16 @@ public final class ClientEvents {
                         Network.CHANNEL.sendToServer(new DroneActionPacket(DroneActionPacket.JAVELIN_FIRE));
                     }
                 }
-                while (KeyBinds.ACTION.consumeClick()) {
+                for (int n = KeyBinds.presses(KeyBinds.ACTION); n > 0; n--) {
                     if (mc.player.getVehicle() instanceof LaunchTruckEntity) {
                         Network.CHANNEL.sendToServer(new DroneActionPacket(DroneActionPacket.VEHICLE_MENU));
                     }
                 }
             }
-            while (KeyBinds.TOGGLE_VIEW.consumeClick()) {
+            if (KeyBinds.pressed(KeyBinds.TOGGLE_VIEW)) {
                 Network.CHANNEL.sendToServer(new DroneActionPacket(DroneActionPacket.TOGGLE_VIEW));
             }
+            KeyBinds.clearRaw();
         } else {
             if (ClientSession.active) {
                 ClientSession.ticks++;
@@ -168,13 +169,13 @@ public final class ClientEvents {
             secondary = mc.screen == null && !kornet;
         }
         GunnerHud.aiming = kornet && mc.screen == null && o.keyUse.isDown();
-        while (KeyBinds.ACTION.consumeClick()) {
+        for (int n = KeyBinds.presses(KeyBinds.ACTION); n > 0; n--) {
             action = true;
         }
-        while (KeyBinds.ZOOM_IN.consumeClick()) {
+        for (int n = KeyBinds.presses(KeyBinds.ZOOM_IN); n > 0; n--) {
             GunnerHud.zoomBy(1.5F);
         }
-        while (KeyBinds.ZOOM_OUT.consumeClick()) {
+        for (int n = KeyBinds.presses(KeyBinds.ZOOM_OUT); n > 0; n--) {
             GunnerHud.zoomBy(1F / 1.5F);
         }
         if (trigger != lastTrigger || secondary || action) {
@@ -226,6 +227,11 @@ public final class ClientEvents {
         if (ClientSession.aim != null && ClientSession.kind == DroneKind.MAVIC) {
             ClientSession.lastAim = ClientSession.aim;
         }
+    }
+
+    @SubscribeEvent
+    public static void onKeyInput(InputEvent.KeyInputEvent event) {
+        KeyBinds.onRawKey(event.getKey(), event.getScanCode(), event.getAction());
     }
 
     @SubscribeEvent
