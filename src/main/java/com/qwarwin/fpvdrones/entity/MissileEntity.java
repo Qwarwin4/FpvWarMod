@@ -2,6 +2,7 @@ package com.qwarwin.fpvdrones.entity;
 
 import com.qwarwin.fpvdrones.Config;
 import com.qwarwin.fpvdrones.client.ClientHooks;
+import com.qwarwin.fpvdrones.util.ChunkTickets;
 import com.qwarwin.fpvdrones.util.Explosions;
 import com.qwarwin.fpvdrones.util.Targeting;
 import net.minecraft.entity.Entity;
@@ -106,6 +107,9 @@ public class MissileEntity extends Entity implements IEntityAdditionalSpawnData 
         if (++life > type.life()) {
             detonate(position(), null);
             return;
+        }
+        if (life % 5 == 1) {
+            ChunkTickets.follow((ServerWorld) level, this, getDeltaMovement(), 40);
         }
         // soft launch, then the sustainer kicks in
         speed = life < 4 ? speed : Math.min(type.speed(), speed + 0.35);

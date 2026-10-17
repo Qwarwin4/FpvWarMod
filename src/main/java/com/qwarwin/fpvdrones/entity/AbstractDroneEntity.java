@@ -79,6 +79,7 @@ public abstract class AbstractDroneEntity extends Entity {
     private float propSpeed;
     private boolean soundStarted;
     private boolean impactSent;
+    private int controlPackets;
 
     protected AbstractDroneEntity(EntityType<? extends AbstractDroneEntity> type, World world) {
         super(type, world);
@@ -390,9 +391,9 @@ public abstract class AbstractDroneEntity extends Entity {
             setBattery(bat - 1F / batteryTicks());
         }
         setPowered(bat > 0F && (piloted || !resting));
-        if (!resting && tickCount % 20 == 0) {
+        if (!resting && tickCount % 5 == 0) {
             // keep the area loaded while it's in the air, otherwise it freezes mid flight
-            ChunkTickets.keep((ServerWorld) level, this, position(), 2);
+            ChunkTickets.follow((ServerWorld) level, this, getDeltaMovement(), 60);
         }
         serverUpdate(piloted, resting);
         if (piloted) {
@@ -423,6 +424,10 @@ public abstract class AbstractDroneEntity extends Entity {
             return;
         }
         setPos(msg.x, msg.y, msg.z);
+        if (++controlPackets % 5 == 0) {
+            // packets arrive even if the drone slipped into a chunk that stopped ticking, so load from here too
+            ChunkTickets.follow(player.getLevel(), this, new Vector3d(msg.vx, msg.vy, msg.vz), 60);
+        }
         yRot = msg.yaw;
         xRot = msg.pitch;
         setDeltaMovement(msg.vx, msg.vy, msg.vz);

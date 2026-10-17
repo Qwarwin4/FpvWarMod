@@ -246,9 +246,8 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
         }
         Vector3d vel = getDeltaMovement();
         if (life % 4 == 1) {
-            ChunkTickets.keep(sw, this, position(), 2);
-            ChunkTickets.keep(sw, this, position().add(vel.scale(16)), 2);
-            ChunkTickets.keep(sw, this, position().add(vel.scale(36)), 2);
+            // generating fresh terrain takes a moment, so ask for it a few seconds before arriving
+            ChunkTickets.follow(sw, this, vel, 80);
         }
 
         double speed = type.speed();
@@ -397,8 +396,7 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
     }
 
     public void primeChunks(ServerWorld world) {
-        ChunkTickets.keep(world, this, position(), 2);
-        ChunkTickets.keep(world, this, position().add(calculateViewVector(xRot, yRot).scale(24)), 2);
+        ChunkTickets.follow(world, this, calculateViewVector(xRot, yRot).scale(type.speed()), 80);
     }
 
     @Override
