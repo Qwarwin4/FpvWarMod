@@ -70,6 +70,8 @@ Jar будет в `build/libs/`.
 python3 tools/gen_assets.py src/main/resources
 ```
 
+Свои рисунки кладутся в `tools/textures/` с тем же путём, что в `assets/fpvdrones/textures/` (например `tools/textures/item/drone_remote.png`): генератор подменит ими сгенерированные.
+
 ## Конфиг
 
 `world/serverconfig/fpvdrones-server.toml` — дальность связи, скорость, время полёта, мощность всех боеприпасов, множитель осколков, скорость и дальность ударных БПЛА, скорость грузовика и БМПТ, урон ПТУР, ломают ли 30-мм снаряды блоки.

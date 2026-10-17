@@ -2871,6 +2871,21 @@ def clean():
                 os.remove(os.path.join(d, f))
 
 
+def apply_overrides():
+    """hand-drawn PNGs in tools/textures/ replace the generated ones, same relative path"""
+    src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "textures")
+    if not os.path.isdir(src):
+        return
+    for root, _, files in os.walk(src):
+        for f in files:
+            if f.endswith(".png"):
+                rel = os.path.relpath(os.path.join(root, f), src)
+                dst = path(ASSETS, "textures", rel)
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+                shutil.copyfile(os.path.join(root, f), dst)
+                print("override:", rel)
+
+
 def main():
     clean()
     props = build_props()
@@ -2901,6 +2916,7 @@ def main():
     recipe_doc()
     sounds_json()
     gen_sounds()
+    apply_overrides()
     print("done:", RES)
 
 
