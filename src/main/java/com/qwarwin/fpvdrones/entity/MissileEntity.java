@@ -15,6 +15,7 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.particles.ParticleTypes;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceContext;
@@ -185,6 +186,21 @@ public class MissileEntity extends Entity implements IEntityAdditionalSpawnData 
         return to.normalize();
     }
 
+    /** Anything that hits it in flight (a 30 mm burst, shrapnel) sets the warhead off where it is. */
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (level.isClientSide || isInvulnerableTo(source) || life < 3) {
+            return false;
+        }
+        detonate(position(), null);
+        return true;
+    }
+
+    @Override
+    public boolean isPickable() {
+        return isAlive();
+    }
+
     private static Vector3d turn(Vector3d cur, Vector3d wanted, float maxDeg) {
         double dot = MathHelper.clamp(cur.dot(wanted), -1.0, 1.0);
         double ang = Math.acos(dot) * RAD2DEG;
@@ -201,7 +217,9 @@ public class MissileEntity extends Entity implements IEntityAdditionalSpawnData 
         }
         Vector3d dir = getDeltaMovement();
         remove();
-        Explosions.atgm(level, owner, pos, dir, direct, Config.ATGM_POWER.get().floatValue(), Config.ATGM_DAMAGE.get().floatValue());
+        float punch = type.punch();
+        Explosions.atgm(level, owner, pos, dir, direct, Config.ATGM_POWER.get().floatValue() * punch,
+                Config.ATGM_DAMAGE.get().floatValue() * punch);
     }
 
     private void clientTick() {

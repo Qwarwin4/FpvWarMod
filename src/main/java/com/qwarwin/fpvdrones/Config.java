@@ -86,8 +86,10 @@ public final class Config {
         b.push("armour");
         SHELLS_BREAK_BLOCKS = b.comment("30 mm impact rounds dig small holes").define("shellsBreakBlocks", false);
         BMPT_SPEED = b.defineInRange("bmptSpeed", 1.0, 0.2, 3.0);
-        ATGM_POWER = b.comment("Blast of an ATGM warhead, the jet is separate").defineInRange("atgmPower", 3.5, 0.5, 20.0);
-        ATGM_DAMAGE = b.comment("Damage of a direct ATGM hit, BMPT has 400 HP").defineInRange("atgmDamage", 140.0, 1.0, 2000.0);
+        ATGM_POWER = b.comment("Base blast of an ATGM warhead, the jet is separate. Kornet x1.6, Javelin x1.5, Ataka x1.4")
+                .defineInRange("atgmPower", 4.0, 0.5, 20.0);
+        ATGM_DAMAGE = b.comment("Base damage of a direct ATGM hit (same multipliers), BMPT has 400 HP")
+                .defineInRange("atgmDamage", 160.0, 1.0, 2000.0);
         b.pop();
 
         SPEC = b.build();

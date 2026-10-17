@@ -1,7 +1,6 @@
 package com.qwarwin.fpvdrones.client;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.qwarwin.fpvdrones.entity.AbstractDroneEntity;
 import com.qwarwin.fpvdrones.entity.AirDefenseGunEntity;
 import com.qwarwin.fpvdrones.entity.KornetEntity;
 import com.qwarwin.fpvdrones.entity.MachineEntity;
@@ -116,8 +115,8 @@ public final class GunnerHud {
         Vector3d eye = gun.sightWorld();
         Entity closest = null;
         double closestScreen = Double.MAX_VALUE;
-        for (Entity e : mc.level.getEntities(gun, new AxisAlignedBB(eye, eye).inflate(220), Targeting::isAirTarget)) {
-            if (e instanceof AbstractDroneEntity && !((AbstractDroneEntity) e).isPowered()) {
+        for (Entity e : mc.level.getEntities(gun, new AxisAlignedBB(eye, eye).inflate(220), Targeting::isAirborne)) {
+            if (e == mc.player || !(gun.getMode() == AirDefenseGunEntity.ALL || Targeting.isAirTarget(e))) {
                 continue;
             }
             int[] p = Projection.toScreen(e.getBoundingBox().getCenter(), w, h);
@@ -146,8 +145,9 @@ public final class GunnerHud {
         panel(ms, font, 8, 8, new String[]{
                 "30-мм ЗБМ",
                 String.format(Locale.ROOT, "ОФЗ-ДВ  %03d/%d", gun.getAmmo(), gun.maxAmmo()),
-                gun.isAuto() ? "РЕЖИМ: АВТО" : "РЕЖИМ: РУЧН",
-                "[ЛКМ] огонь  [" + key(KeyBinds.ACTION) + "] авто  [колесо] зум"
+                gun.getMode() == AirDefenseGunEntity.ALL ? "РЕЖИМ: АВТО — ВСЁ В ВОЗДУХЕ"
+                        : gun.getMode() == AirDefenseGunEntity.AUTO ? "РЕЖИМ: АВТО — ЧУЖИЕ ДРОНЫ" : "РЕЖИМ: РУЧН",
+                "[ЛКМ] огонь  [" + key(KeyBinds.ACTION) + "] режим  [колесо] зум"
         }, gun.getAmmo() == 0 && blink ? RED : GREEN);
     }
 

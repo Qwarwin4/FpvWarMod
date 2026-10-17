@@ -38,8 +38,14 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
     public static final double MUZZLE = 2.55;
     public static final int ROUNDS_PER_BELT = 50;
     private static final double AUTO_RANGE = 140.0;
+    private static final double ALL_RANGE = 170.0;
 
-    private static final DataParameter<Boolean> AUTO = EntityDataManager.defineId(AirDefenseGunEntity.class, DataSerializers.BOOLEAN);
+    /** Manual, auto against other people's drones, auto against anything in the air. */
+    public static final int MANUAL = 0, AUTO = 1, ALL = 2;
+    private static final String[] MODE_MSG = {"msg.fpvdrones.adgun_auto_off", "msg.fpvdrones.adgun_auto_on",
+            "msg.fpvdrones.adgun_all_on"};
+
+    private static final DataParameter<Integer> MODE = EntityDataManager.defineId(AirDefenseGunEntity.class, DataSerializers.INT);
 
     private int targetId = -1;
     private int autoFireCooldown;
@@ -51,15 +57,15 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        entityData.define(AUTO, false);
+        entityData.define(MODE, MANUAL);
     }
 
-    public boolean isAuto() {
-        return entityData.get(AUTO);
+    public int getMode() {
+        return entityData.get(MODE);
     }
 
-    private void setAuto(boolean v) {
-        entityData.set(AUTO, v);
+    private void setMode(int m) {
+        entityData.set(MODE, Math.floorMod(m, 3));
     }
 
     @Override
@@ -127,6 +133,7 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
                 getTurretYaw() + (random.nextFloat() - 0.5F) * spread);
         Entity gunner = getGunner();
         shell.setup(this, gunner != null ? gunner.getUUID() : owner, muzzle, dir.scale(ShellEntity.SPEED), true);
+        shell.setFuseAll(getMode() == ALL);
         level.addFreshEntity(shell);
         setAmmo(getAmmo() - 1);
         level.playSound(null, muzzle.x, muzzle.y, muzzle.z, ModSounds.CANNON_30.get(), SoundCategory.HOSTILE, 5F,
@@ -137,21 +144,23 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
 
     @Override
     protected void onAction(ServerPlayerEntity gunner) {
-        toggleAuto(gunner);
+        cycleMode(gunner);
     }
 
-    private void toggleAuto(PlayerEntity player) {
-        setAuto(!isAuto());
-        player.displayClientMessage(new TranslationTextComponent(isAuto() ? "msg.fpvdrones.adgun_auto_on" : "msg.fpvdrones.adgun_auto_off")
-                .withStyle(isAuto() ? TextFormatting.RED : TextFormatting.GRAY), true);
-        level.playSound(null, getX(), getY(), getZ(), ModSounds.BEEP.get(), SoundCategory.BLOCKS, 0.8F, isAuto() ? 1.3F : 0.8F);
+    private void cycleMode(PlayerEntity player) {
+        setMode(getMode() + 1);
+        int m = getMode();
+        player.displayClientMessage(new TranslationTextComponent(MODE_MSG[m])
+                .withStyle(m == MANUAL ? TextFormatting.GRAY : m == AUTO ? TextFormatting.GOLD : TextFormatting.RED), true);
+        level.playSound(null, getX(), getY(), getZ(), ModSounds.BEEP.get(), SoundCategory.BLOCKS, 0.8F, 0.8F + m * 0.3F);
+        targetId = -1;
     }
 
     // ---- automatic mode
 
     @Override
     protected void idleAim() {
-        if (!isAuto() || getAmmo() <= 0) {
+        if (getMode() == MANUAL || getAmmo() <= 0) {
             targetId = -1;
             return;
         }
@@ -175,24 +184,45 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
         }
     }
 
+    private double range() {
+        return getMode() == ALL ? ALL_RANGE : AUTO_RANGE;
+    }
+
     private boolean isValidTarget(Entity e, Vector3d eye) {
-        if (!e.isAlive() || !Targeting.isAirTarget(e) || e.distanceToSqr(eye) > AUTO_RANGE * AUTO_RANGE) {
+        if (!e.isAlive() || e.distanceToSqr(eye) > range() * range()) {
             return false;
         }
-        if (e instanceof AbstractDroneEntity && !((AbstractDroneEntity) e).isPowered()) {
+        if (getMode() == ALL) {
+            // everything up there except the owner himself
+            return Targeting.isAirborne(e) && !e.getUUID().equals(owner) && Targeting.canSee(level, eye, e);
+        }
+        if (!Targeting.isAirTarget(e) || e instanceof AbstractDroneEntity && !((AbstractDroneEntity) e).isPowered()) {
             return false;
         }
         return !Targeting.isFriendly(level, owner, Targeting.ownerOf(e)) && Targeting.canSee(level, eye, e);
     }
 
+    /** Incoming missiles first, then Shaheds, then drones, then whatever else flies. */
+    private static double priority(Entity e) {
+        if (e instanceof MissileEntity) {
+            return 0.25;
+        }
+        if (e instanceof StrikeDroneEntity) {
+            return 0.5;
+        }
+        return e instanceof AbstractDroneEntity ? 0.75 : 1.0;
+    }
+
     @Nullable
     private Entity findTarget(Vector3d eye) {
         Entity best = null;
-        double bestD = Double.MAX_VALUE;
-        for (Entity e : level.getEntities(this, new AxisAlignedBB(eye, eye).inflate(AUTO_RANGE), Targeting::isAirTarget)) {
-            double d = e.distanceToSqr(eye);
-            if (d < bestD && isValidTarget(e, eye)) {
-                bestD = d;
+        double bestScore = Double.MAX_VALUE;
+        boolean all = getMode() == ALL;
+        for (Entity e : level.getEntities(this, new AxisAlignedBB(eye, eye).inflate(range()),
+                all ? Targeting::isAirborne : Targeting::isAirTarget)) {
+            double score = e.distanceToSqr(eye) * priority(e);
+            if (score < bestScore && isValidTarget(e, eye)) {
+                bestScore = score;
                 best = e;
             }
         }
@@ -225,7 +255,7 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
             if (owner == null) {
                 owner = player.getUUID();
             }
-            toggleAuto(player);
+            cycleMode(player);
         } else if (canAddPassenger(player)) {
             player.startRiding(this);
         } else {
@@ -253,12 +283,12 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
     @Override
     protected void readAdditionalSaveData(CompoundNBT tag) {
         super.readAdditionalSaveData(tag);
-        setAuto(tag.getBoolean("Auto"));
+        setMode(tag.contains("Mode") ? tag.getInt("Mode") : tag.getBoolean("Auto") ? AUTO : MANUAL);
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundNBT tag) {
         super.addAdditionalSaveData(tag);
-        tag.putBoolean("Auto", isAuto());
+        tag.putInt("Mode", getMode());
     }
 }

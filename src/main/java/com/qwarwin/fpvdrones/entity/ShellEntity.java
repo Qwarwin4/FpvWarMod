@@ -39,6 +39,8 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
     private UUID owner;
     private int shooterId = -1;
     private boolean airburst;
+    // "everything" mode: the fuse doesn't care whose it is
+    private boolean fuseAll;
     private int life;
 
     public ShellEntity(EntityType<? extends ShellEntity> type, World world) {
@@ -55,6 +57,10 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
         faceMotion();
         yRotO = yRot;
         xRotO = xRot;
+    }
+
+    public void setFuseAll(boolean v) {
+        fuseAll = v;
     }
 
     public boolean isAirburst() {
@@ -129,8 +135,8 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
         Vector3d best = null;
         double bestD = FUSE_RADIUS * FUSE_RADIUS;
         for (Entity e : level.getEntities(this, new AxisAlignedBB(from, to).inflate(FUSE_RADIUS),
-                Targeting::isAirTarget)) {
-            if (Targeting.isFriendly(level, owner, Targeting.ownerOf(e))) {
+                fuseAll ? Targeting::isAirborne : Targeting::isAirTarget)) {
+            if (fuseAll ? e.getUUID().equals(owner) : Targeting.isFriendly(level, owner, Targeting.ownerOf(e))) {
                 continue;
             }
             Vector3d c = e.getBoundingBox().getCenter();

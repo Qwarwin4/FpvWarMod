@@ -2,10 +2,18 @@ package com.qwarwin.fpvdrones.util;
 
 import com.qwarwin.fpvdrones.entity.AbstractDroneEntity;
 import com.qwarwin.fpvdrones.entity.MachineEntity;
+import com.qwarwin.fpvdrones.entity.MissileEntity;
 import com.qwarwin.fpvdrones.entity.MountedWeaponEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.FlyingEntity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.boss.WitherEntity;
+import net.minecraft.entity.monster.BlazeEntity;
+import net.minecraft.entity.monster.VexEntity;
+import net.minecraft.entity.passive.BatEntity;
+import net.minecraft.entity.passive.BeeEntity;
+import net.minecraft.entity.passive.ParrotEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -57,7 +65,21 @@ public final class Targeting {
     }
 
     public static boolean isAirTarget(Entity e) {
-        return e instanceof StrikeDroneEntity || e instanceof AbstractDroneEntity;
+        return e instanceof StrikeDroneEntity || e instanceof AbstractDroneEntity || e instanceof MissileEntity;
+    }
+
+    /** Everything up in the air: drones, missiles, flying mobs, players on elytra. */
+    public static boolean isAirborne(Entity e) {
+        if (isAirTarget(e)) {
+            return !(e instanceof AbstractDroneEntity) || ((AbstractDroneEntity) e).isPowered();
+        }
+        if (e instanceof FlyingEntity || e instanceof BlazeEntity || e instanceof WitherEntity || e instanceof VexEntity) {
+            return true;
+        }
+        if (e instanceof LivingEntity && ((LivingEntity) e).isFallFlying()) {
+            return true;
+        }
+        return e instanceof BatEntity || e instanceof ParrotEntity && !e.isOnGround() || e instanceof BeeEntity;
     }
 
     /** The player responsible for a drone / machine, if any. */
