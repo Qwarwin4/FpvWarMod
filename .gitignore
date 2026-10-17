@@ -10,3 +10,4 @@ eclipse/
 .classpath
 .project
 .settings/
+__pycache__/
