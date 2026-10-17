@@ -9,9 +9,9 @@ import net.minecraft.util.ResourceLocation;
  */
 public enum MissileType {
     // punch: multiplier on the configured ATGM damage and blast
-    KORNET("kornet_missile", 4.0, 220, 7F, true, 1.6F),
-    ATAKA("ataka_missile", 4.5, 200, 6F, true, 1.4F),
-    JAVELIN("javelin_missile", 3.2, 220, 5F, false, 1.5F);
+    KORNET("kornet_missile", 4.0, 220, 7F, true, 1.8F),
+    ATAKA("ataka_missile", 4.5, 200, 6F, true, 1.6F),
+    JAVELIN("javelin_missile", 3.2, 220, 5F, false, 1.7F);
 
     private final String name;
     private final double speed;

@@ -219,7 +219,7 @@ public class MissileEntity extends Entity implements IEntityAdditionalSpawnData 
         remove();
         float punch = type.punch();
         Explosions.atgm(level, owner, pos, dir, direct, Config.ATGM_POWER.get().floatValue() * punch,
-                Config.ATGM_DAMAGE.get().floatValue() * punch);
+                Config.ATGM_DAMAGE.get().floatValue() * punch, Config.ATGM_PENETRATION.get() * punch);
     }
 
     private void clientTick() {

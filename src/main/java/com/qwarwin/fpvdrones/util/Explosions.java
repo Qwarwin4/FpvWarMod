@@ -2,14 +2,17 @@ package com.qwarwin.fpvdrones.util;
 
 import com.qwarwin.fpvdrones.Config;
 import com.qwarwin.fpvdrones.item.PayloadType;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
@@ -155,9 +158,51 @@ public final class Explosions {
         sw.sendParticles(ParticleTypes.SMOKE, pos.x, pos.y, pos.z, 8, 0.3, 0.3, 0.3, 0.02);
     }
 
-    /** Tandem HEAT: the hit itself, the jet behind it, and a modest blast. */
+    /**
+     * Shaped-charge jet through blocks: clears a narrow tunnel up to {@code length} blocks, slowed by hard blocks,
+     * stopped by obsidian-class ones. Returns where it ran out.
+     */
+    private static Vector3d bore(World level, Vector3d from, Vector3d dir, double length) {
+        if (!Config.EXPLOSIONS_BREAK_BLOCKS.get()) {
+            return from;
+        }
+        double left = length;
+        Vector3d p = from;
+        BlockPos last = null;
+        while (left > 0) {
+            p = p.add(dir.scale(0.4));
+            left -= 0.4;
+            BlockPos bp = new BlockPos(p);
+            if (bp.equals(last)) {
+                continue;
+            }
+            last = bp;
+            BlockState st = level.getBlockState(bp);
+            if (st.isAir(level, bp)) {
+                continue;
+            }
+            float res = st.getExplosionResistance(level, bp, null);
+            if (res >= 1200F || st.getDestroySpeed(level, bp) < 0) {
+                break;
+            }
+            // hard stuff eats more of the jet
+            left -= Math.min(3.0, res / 4.0);
+            level.destroyBlock(bp, false);
+            for (Direction side : Direction.values()) {
+                BlockPos n = bp.relative(side);
+                BlockState ns = level.getBlockState(n);
+                if (!ns.isAir(level, n) && ns.getExplosionResistance(level, n, null) < 10F
+                        && ns.getDestroySpeed(level, n) >= 0 && level.random.nextFloat() < 0.45F) {
+                    level.destroyBlock(n, false);
+                }
+            }
+        }
+        return p;
+    }
+
+    /** Tandem HEAT: the hit itself, the jet through armour and walls, a blast at the surface and one behind it. */
     public static void atgm(World level, @Nullable UUID attackerId, Vector3d pos, Vector3d dir, @Nullable Entity direct,
-                            float power, float directDamage) {
+                            float power, float directDamage, double penetration) {
         if (level.isClientSide) {
             return;
         }
@@ -166,9 +211,15 @@ public final class Explosions {
             direct.invulnerableTime = 0;
             direct.hurt(ModDamageSources.cumulative(attacker), directDamage);
         }
-        jet(level, attacker, pos.subtract(dir.normalize().scale(0.5)), dir, 6.0, directDamage * 0.4F);
+        Vector3d d0 = dir.normalize();
+        jet(level, attacker, pos.subtract(d0.scale(0.5)), dir, penetration + 2.0, directDamage * 0.5F);
+        // the precursor charge blows the surface, the main jet bores a tunnel and the rest goes off at its end
         explode(level, attacker, pos, power, false);
-        fragments(level, attacker, pos, power * 1.5, 10F);
+        Vector3d end = bore(level, pos.subtract(d0.scale(0.3)), d0, penetration);
+        if (end.distanceTo(pos) > 1.5) {
+            explode(level, attacker, end, power * 0.55F, false);
+        }
+        fragments(level, attacker, pos, power * 1.6, 14F);
         ServerWorld sw = (ServerWorld) level;
         Vector3d d = dir.normalize();
         sw.sendParticles(ParticleTypes.FLAME, pos.x, pos.y, pos.z, 30, d.x * 0.5, d.y * 0.5, d.z * 0.5, 0.25);
