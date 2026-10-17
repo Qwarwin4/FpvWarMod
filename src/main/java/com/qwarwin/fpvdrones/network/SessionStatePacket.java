@@ -20,13 +20,16 @@ public class SessionStatePacket {
     public double targetX, targetY, targetZ;
     public String reason = "";
     public float signal = 1F;
+    public boolean handheld;
 
     private SessionStatePacket(int type) {
         this.type = type;
     }
 
-    public static SessionStatePacket start(int entityId, DroneKind kind, double hx, double hy, double hz, Vector3d target) {
+    public static SessionStatePacket start(int entityId, DroneKind kind, double hx, double hy, double hz, Vector3d target,
+                                           boolean handheld) {
         SessionStatePacket p = new SessionStatePacket(START);
+        p.handheld = handheld;
         p.entityId = entityId;
         p.kind = kind;
         p.homeX = hx;
@@ -62,6 +65,7 @@ public class SessionStatePacket {
                 buf.writeDouble(m.targetX);
                 buf.writeDouble(m.targetY);
                 buf.writeDouble(m.targetZ);
+                buf.writeBoolean(m.handheld);
                 break;
             case STOP:
                 buf.writeUtf(m.reason, 128);
@@ -84,6 +88,7 @@ public class SessionStatePacket {
                 m.targetX = buf.readDouble();
                 m.targetY = buf.readDouble();
                 m.targetZ = buf.readDouble();
+                m.handheld = buf.readBoolean();
                 break;
             case STOP:
                 m.reason = buf.readUtf(128);

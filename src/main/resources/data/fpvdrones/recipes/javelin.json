@@ -1,0 +1,27 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "GD",
+    "IF",
+    " I"
+  ],
+  "key": {
+    "G": {
+      "item": "fpvdrones:gimbal_camera"
+    },
+    "D": {
+      "item": "fpvdrones:display"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "F": {
+      "item": "fpvdrones:flight_controller"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:javelin",
+    "count": 1
+  },
+  "soldering": true
+}

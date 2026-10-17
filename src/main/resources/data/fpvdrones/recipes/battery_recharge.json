@@ -1,0 +1,18 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "RDR"
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "D": {
+      "item": "fpvdrones:depleted_battery"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:battery",
+    "count": 1
+  }
+}

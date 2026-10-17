@@ -1,0 +1,27 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    " G ",
+    "IFI",
+    "S S"
+  ],
+  "key": {
+    "G": {
+      "item": "fpvdrones:gimbal_camera"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "F": {
+      "item": "fpvdrones:flight_controller"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:kornet",
+    "count": 1
+  },
+  "soldering": true
+}

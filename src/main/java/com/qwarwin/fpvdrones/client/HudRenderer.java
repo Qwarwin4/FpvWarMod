@@ -2,10 +2,9 @@ package com.qwarwin.fpvdrones.client;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.qwarwin.fpvdrones.entity.AbstractDroneEntity;
 import com.qwarwin.fpvdrones.entity.FpvDroneEntity;
-import com.qwarwin.fpvdrones.entity.MavicEntity;
 import com.qwarwin.fpvdrones.entity.LaunchTruckEntity;
+import com.qwarwin.fpvdrones.entity.MavicEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
 import com.qwarwin.fpvdrones.entity.StrikeType;
 import com.qwarwin.fpvdrones.item.PayloadType;
@@ -61,7 +60,16 @@ public final class HudRenderer {
         if (e instanceof FpvDroneEntity) {
             fpv(ms, mc, (FpvDroneEntity) e, w, h);
         } else if (e instanceof MavicEntity) {
-            mavic(ms, mc, (MavicEntity) e, w, h);
+            if (ClientSession.handheld) {
+                // picture sits inside the DJI RC screen
+                int b = rcBezel(ms, w, h);
+                ms.pushPose();
+                ms.translate(b, b, 0);
+                mavic(ms, mc, (MavicEntity) e, w - 2 * b, h - 2 * b);
+                ms.popPose();
+            } else {
+                mavic(ms, mc, (MavicEntity) e, w, h);
+            }
         } else if (e instanceof StrikeDroneEntity) {
             strike(ms, mc, (StrikeDroneEntity) e, w, h, pt);
         }
@@ -187,8 +195,17 @@ public final class HudRenderer {
         fill(ms, cx, cy, cx + 1, cy + 1, WHITE);
 
         fill(ms, 0, 0, w, 16, 0x99000000);
-        String status = e.isPowered() ? "В ПОЛЁТЕ" : "НА ЗЕМЛЕ";
-        font.drawShadow(ms, "M3  •  " + status, 6, 4, WHITE);
+        String status = e.isReturning() ? "ВОЗВРАТ ДОМОЙ" : e.isPowered() ? "В ПОЛЁТЕ" : "НА ЗЕМЛЕ";
+        font.drawShadow(ms, "M3  •  " + status, 6, 4, e.isReturning() ? YELLOW : WHITE);
+        if (e.isReturning() && blink) {
+            String rth = "RTH";
+            int rw = font.width(rth) + 8;
+            fill(ms, cx - rw / 2, 22, cx + rw / 2, 34, 0xCC9A7A00);
+            font.drawShadow(ms, rth, cx - font.width(rth) / 2, 24, WHITE);
+        } else if (!e.isReturning() && e.isPowered() && e.getBattery() <= MavicEntity.RTH_BATTERY && blink) {
+            String low = "НИЗКИЙ ЗАРЯД";
+            font.drawShadow(ms, low, cx - font.width(low) / 2, 24, RED);
+        }
         String gnss = "GNSS 22   " + bars(sig);
         font.drawShadow(ms, gnss, cx - font.width(gnss) / 2, 4, sig < 0.3F ? YELLOW : WHITE);
         int pct = Math.round(e.getBattery() * 100F);
@@ -218,15 +235,17 @@ public final class HudRenderer {
         Vector3d d = e.getDeltaMovement();
         double hs = Math.sqrt(d.x * d.x + d.z * d.z) * 20.0;
         double vs = d.y * 20.0;
-        double dist = Math.sqrt(sq(e.getX() - ClientSession.homeX) + sq(e.getZ() - ClientSession.homeZ));
-        double hAlt = e.getY() - ClientSession.homeY;
+        Vector3d home = e.hasHome() ? e.getHome() : new Vector3d(ClientSession.homeX, ClientSession.homeY, ClientSession.homeZ);
+        double dist = Math.sqrt(sq(e.getX() - home.x) + sq(e.getZ() - home.z));
+        double hAlt = e.getY() - home.y;
         font.drawShadow(ms, String.format(Locale.ROOT, "H %.1fм   D %dм", hAlt, Math.round(dist)), 6, h - 24, WHITE);
         font.drawShadow(ms, String.format(Locale.ROOT, "HS %.1fм/с   VS %.1fм/с", hs, vs), 6, h - 13, WHITE);
 
         BlockPos aim = ClientSession.aim;
         String aimS = aim == null ? "ЦЕЛЬ: —" : "ЦЕЛЬ: " + aim.getX() + " " + aim.getY() + " " + aim.getZ();
         font.drawShadow(ms, aimS, cx - font.width(aimS) / 2, h - 24, YELLOW);
-        String hint = "[" + key(KeyBinds.ACTION) + "] СБРОС  [колесо] ЗУМ  [" + key(KeyBinds.TOGGLE_VIEW) + "] ВЫХОД";
+        String hint = "[" + key(KeyBinds.ACTION) + "] СБРОС  [" + key(KeyBinds.RETURN_HOME) + "] "
+                + (e.isReturning() ? "ОТМЕНА RTH" : "ДОМОЙ") + "  [колесо] ЗУМ  [" + key(KeyBinds.TOGGLE_VIEW) + "] ВЫХОД";
         font.drawShadow(ms, hint, cx - font.width(hint) / 2, h - 13, GREY);
 
         int sx = w - 8;
@@ -361,6 +380,33 @@ public final class HudRenderer {
         }
         String hint = truck.isFiring() ? "ЗАЛП..." : "[" + key(KeyBinds.ACTION) + "] меню";
         font.drawShadow(ms, hint, x + 74, y + 13, truck.isFiring() ? RED : GREY);
+    }
+
+    /** Light grey DJI RC frame around the screen. Returns its thickness. */
+    private static int rcBezel(MatrixStack ms, int w, int h) {
+        int b = Math.max(10, h / 22);
+        int body = 0xFFB9BCC0, edge = 0xFF8E9296, inner = 0xFF0B0B0C;
+        fill(ms, 0, 0, w, b, body);
+        fill(ms, 0, h - b, w, h, body);
+        fill(ms, 0, b, b, h - b, body);
+        fill(ms, w - b, b, w, h - b, body);
+        fill(ms, b - 2, b - 2, w - b + 2, b, inner);
+        fill(ms, b - 2, h - b, w - b + 2, h - b + 2, inner);
+        fill(ms, b - 2, b, b, h - b, inner);
+        fill(ms, w - b, b, w - b + 2, h - b, inner);
+        fill(ms, 0, 0, w, 1, edge);
+        fill(ms, 0, h - 1, w, h, edge);
+        // rounded-ish corners
+        for (int i = 0; i < 4; i++) {
+            fill(ms, 0, i, 4 - i, i + 1, 0xFF000000);
+            fill(ms, w - 4 + i, i, w, i + 1, 0xFF000000);
+            fill(ms, 0, h - 1 - i, 4 - i, h - i, 0xFF000000);
+            fill(ms, w - 4 + i, h - 1 - i, w, h - i, 0xFF000000);
+        }
+        Minecraft mc = Minecraft.getInstance();
+        String label = "DJI RC";
+        mc.font.draw(ms, label, w / 2F - mc.font.width(label) / 2F, h - b / 2F - 4, 0xFF5A5E62);
+        return b;
     }
 
     private static void noSignal(MatrixStack ms, Minecraft mc, int w, int h, String reason) {

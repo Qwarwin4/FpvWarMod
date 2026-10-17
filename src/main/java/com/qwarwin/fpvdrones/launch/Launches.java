@@ -2,6 +2,7 @@ package com.qwarwin.fpvdrones.launch;
 
 import com.qwarwin.fpvdrones.Config;
 import com.qwarwin.fpvdrones.entity.LaunchTruckEntity;
+import com.qwarwin.fpvdrones.entity.RadioBeaconEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
 import com.qwarwin.fpvdrones.entity.StrikeType;
 import com.qwarwin.fpvdrones.item.StrikeDroneItem;
@@ -9,6 +10,7 @@ import com.qwarwin.fpvdrones.network.Network;
 import com.qwarwin.fpvdrones.network.OpenLauncherPacket;
 import com.qwarwin.fpvdrones.registry.ModEntities;
 import com.qwarwin.fpvdrones.registry.ModSounds;
+import com.qwarwin.fpvdrones.util.ReconData;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -53,13 +55,13 @@ public final class Launches {
         if (slot < 0) {
             return Result.EMPTY;
         }
-        LaunchConfig c = site.getLaunchConfig();
-        if (!c.hasTarget()) {
+        Vector3d target = resolveTarget(site);
+        if (target == null) {
             return Result.NO_TARGET;
         }
         Vector3d from = site.getLaunchPos(slot);
-        double dx = c.getX() + 0.5 - from.x;
-        double dz = c.getZ() + 0.5 - from.z;
+        double dx = target.x + 0.5 - from.x;
+        double dz = target.z + 0.5 - from.z;
         double dist = Math.sqrt(dx * dx + dz * dz);
         if (dist < MIN_RANGE) {
             return Result.TOO_CLOSE;
@@ -68,6 +70,20 @@ public final class Launches {
             return Result.TOO_FAR;
         }
         return Result.OK;
+    }
+
+    /** Beacon position if its code is set and it's still out there, otherwise the typed coordinates. */
+    @Nullable
+    public static Vector3d resolveTarget(LaunchSite site) {
+        LaunchConfig c = site.getLaunchConfig();
+        World world = site.getSiteLevel();
+        if (c.getBeacon() != 0 && world instanceof ServerWorld) {
+            Vector3d b = RadioBeaconEntity.locate((ServerWorld) world, c.getBeacon());
+            if (b != null) {
+                return new Vector3d(b.x - 0.5, b.y, b.z - 0.5);
+            }
+        }
+        return c.hasTarget() ? new Vector3d(c.getX(), c.getY(), c.getZ()) : null;
     }
 
     public static Result fireNext(LaunchSite site, @Nullable UUID owner) {
@@ -90,8 +106,13 @@ public final class Launches {
         }
         Vector3d pos = site.getLaunchPos(slot);
         LaunchConfig c = site.getLaunchConfig();
+        Vector3d target = resolveTarget(site);
+        if (target == null) {
+            return;
+        }
+        boolean onBeacon = c.getBeacon() != 0 && RadioBeaconEntity.locate((ServerWorld) world, c.getBeacon()) != null;
         drone.moveTo(pos.x, pos.y - StrikeDroneEntity.CENTER_HEIGHT, pos.z, site.getLaunchYaw(), site.getLaunchPitch());
-        drone.setup(type, c, pos.y, owner);
+        drone.setup(type, target, c.isAutoY() && !onBeacon, c.getBeacon(), pos.y, owner);
         world.addFreshEntity(drone);
         drone.primeChunks((ServerWorld) world);
 
@@ -142,7 +163,7 @@ public final class Launches {
     }
 
     public static void openMenu(ServerPlayerEntity player, LaunchSite site) {
-        Network.sendTo(player, new OpenLauncherPacket(site));
+        Network.sendTo(player, new OpenLauncherPacket(site, ReconData.getPos(player), ReconData.getBeacon(player)));
     }
 
     public static boolean sameLink(CompoundNBT a, CompoundNBT b) {

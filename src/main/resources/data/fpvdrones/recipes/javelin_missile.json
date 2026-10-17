@@ -1,0 +1,24 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "W",
+    "C",
+    "B"
+  ],
+  "key": {
+    "W": {
+      "item": "fpvdrones:warhead"
+    },
+    "C": {
+      "item": "fpvdrones:fpv_camera"
+    },
+    "B": {
+      "item": "fpvdrones:booster"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:javelin_missile",
+    "count": 1
+  },
+  "soldering": true
+}

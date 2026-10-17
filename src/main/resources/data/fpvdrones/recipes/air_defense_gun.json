@@ -1,0 +1,33 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "G A",
+    "ICI",
+    "BFB"
+  ],
+  "key": {
+    "G": {
+      "item": "fpvdrones:gimbal_camera"
+    },
+    "A": {
+      "item": "fpvdrones:antenna"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "item": "fpvdrones:autocannon"
+    },
+    "B": {
+      "item": "minecraft:iron_block"
+    },
+    "F": {
+      "item": "fpvdrones:flight_controller"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:air_defense_gun",
+    "count": 1
+  },
+  "soldering": true
+}

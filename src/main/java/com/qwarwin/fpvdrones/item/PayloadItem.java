@@ -25,7 +25,8 @@ public class PayloadItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
-        String key = type.fitsFpv() ? "tooltip.fpvdrones.payload_fpv" : "tooltip.fpvdrones.payload_mavic";
+        String key = type == PayloadType.RADIO_BEACON ? "tooltip.fpvdrones.radio_beacon"
+                : type.fitsFpv() ? "tooltip.fpvdrones.payload_fpv" : "tooltip.fpvdrones.payload_mavic";
         tooltip.add(new TranslationTextComponent(key).withStyle(TextFormatting.GRAY));
     }
 }

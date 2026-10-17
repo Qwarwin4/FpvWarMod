@@ -3,6 +3,7 @@ package com.qwarwin.fpvdrones.session;
 import com.qwarwin.fpvdrones.Config;
 import com.qwarwin.fpvdrones.entity.AbstractDroneEntity;
 import com.qwarwin.fpvdrones.entity.DroneKind;
+import com.qwarwin.fpvdrones.entity.MavicEntity;
 import com.qwarwin.fpvdrones.entity.OperatorEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
 import com.qwarwin.fpvdrones.item.DroneRemoteItem;
@@ -14,6 +15,7 @@ import com.qwarwin.fpvdrones.registry.ModSounds;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.DamageSource;
@@ -63,6 +65,8 @@ public final class SessionManager {
         @Nullable
         UUID vehicle;
         boolean viaGoggles;
+        // DJI RC: the remote itself is the screen, no goggles needed
+        boolean handheld;
         boolean obstructed;
         int ticks;
 
@@ -101,6 +105,10 @@ public final class SessionManager {
     }
 
     public static boolean start(ServerPlayerEntity p, Entity target, DroneKind kind, boolean viaGoggles) {
+        return start(p, target, kind, viaGoggles, false);
+    }
+
+    public static boolean start(ServerPlayerEntity p, Entity target, DroneKind kind, boolean viaGoggles, boolean handheld) {
         if (SESSIONS.containsKey(p.getUUID())) {
             p.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.already_viewing"), true);
             return false;
@@ -129,6 +137,7 @@ public final class SessionManager {
         s.mode = p.gameMode.getGameModeForPlayer();
         s.flying = p.abilities.flying;
         s.viaGoggles = viaGoggles;
+        s.handheld = handheld;
 
         OperatorEntity body = ModEntities.OPERATOR.get().create(p.level);
         if (body == null) {
@@ -148,7 +157,7 @@ public final class SessionManager {
         }
 
         Vector3d tgt = target instanceof StrikeDroneEntity ? ((StrikeDroneEntity) target).getTarget() : Vector3d.ZERO;
-        Network.sendTo(p, SessionStatePacket.start(target.getId(), kind, s.x, s.y, s.z, tgt));
+        Network.sendTo(p, SessionStatePacket.start(target.getId(), kind, s.x, s.y, s.z, tgt, handheld));
         p.level.playSound(null, s.x, s.y, s.z, ModSounds.BEEP.get(), SoundCategory.PLAYERS, 0.6F, 1.2F);
         return true;
     }
@@ -263,6 +272,10 @@ public final class SessionManager {
                 return;
             }
         }
+        if (s.handheld && s.ticks % 5 == 0 && !DroneRemoteItem.hasRemoteFor(p, t.getUUID())) {
+            end(p, "reason.fpvdrones.remote_lost");
+            return;
+        }
         if (s.ticks % 20 == 0 && s.ticks > 40) {
             ServerWorld home = p.getServer() == null ? null : p.getServer().getLevel(s.dim);
             if (home != null && home.isLoaded(new BlockPos(s.x, s.y, s.z)) && home.getEntity(s.body) == null) {
@@ -336,6 +349,28 @@ public final class SessionManager {
             return;
         }
         if (start(p, drone, drone.kind(), true)) {
+            p.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.connected", "V"), true);
+        }
+    }
+
+    /** DJI RC with its own screen: RMB with the remote, no goggles. */
+    public static void connectHandheld(ServerPlayerEntity p, ItemStack remote) {
+        UUID id = DroneRemoteItem.getBound(remote);
+        if (id == null) {
+            p.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.rc_unbound"), true);
+            return;
+        }
+        Entity e = p.getLevel().getEntity(id);
+        if (!(e instanceof MavicEntity) || !e.isAlive()) {
+            p.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.drone_not_found"), true);
+            return;
+        }
+        MavicEntity drone = (MavicEntity) e;
+        if (drone.position().distanceTo(p.position()) > drone.signalRange()) {
+            p.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.out_of_range"), true);
+            return;
+        }
+        if (start(p, drone, drone.kind(), false, true)) {
             p.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.connected", "V"), true);
         }
     }

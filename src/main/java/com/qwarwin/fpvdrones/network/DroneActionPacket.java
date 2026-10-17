@@ -2,32 +2,50 @@ package com.qwarwin.fpvdrones.network;
 
 import com.qwarwin.fpvdrones.entity.AbstractDroneEntity;
 import com.qwarwin.fpvdrones.entity.LaunchTruckEntity;
+import com.qwarwin.fpvdrones.entity.MavicEntity;
 import com.qwarwin.fpvdrones.launch.Launches;
 import com.qwarwin.fpvdrones.session.SessionManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.network.NetworkEvent;
 
+import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 public class DroneActionPacket {
     public static final int TOGGLE_VIEW = 0;
     public static final int PRIMARY = 1;
     public static final int VEHICLE_MENU = 2;
+    public static final int RETURN_HOME = 3;
 
     private final int action;
+    // what the camera was pointed at when H was pressed
+    @Nullable
+    private final BlockPos mark;
 
     public DroneActionPacket(int action) {
+        this(action, null);
+    }
+
+    public DroneActionPacket(int action, @Nullable BlockPos mark) {
         this.action = action;
+        this.mark = mark;
     }
 
     public static void encode(DroneActionPacket m, PacketBuffer buf) {
         buf.writeVarInt(m.action);
+        buf.writeBoolean(m.mark != null);
+        if (m.mark != null) {
+            buf.writeBlockPos(m.mark);
+        }
     }
 
     public static DroneActionPacket decode(PacketBuffer buf) {
-        return new DroneActionPacket(buf.readVarInt());
+        int action = buf.readVarInt();
+        return new DroneActionPacket(action, buf.readBoolean() ? buf.readBlockPos() : null);
     }
 
     public static void handle(DroneActionPacket m, Supplier<NetworkEvent.Context> ctx) {
@@ -44,6 +62,20 @@ public class DroneActionPacket {
                     Entity t = SessionManager.getTarget(p);
                     if (t instanceof AbstractDroneEntity) {
                         ((AbstractDroneEntity) t).primaryAction(p);
+                    }
+                    break;
+                }
+                case RETURN_HOME: {
+                    Entity t = SessionManager.getTarget(p);
+                    if (t instanceof MavicEntity) {
+                        MavicEntity mavic = (MavicEntity) t;
+                        if (mavic.isReturning()) {
+                            mavic.cancelReturn(p);
+                        } else if (!mavic.hasHome()) {
+                            p.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.rth_no_home"), true);
+                        } else {
+                            mavic.startReturn(p, m.mark, "msg.fpvdrones.rth_manual");
+                        }
                     }
                     break;
                 }

@@ -1,12 +1,18 @@
 package com.qwarwin.fpvdrones.registry;
 
 import com.qwarwin.fpvdrones.FpvDrones;
+import com.qwarwin.fpvdrones.entity.AirDefenseGunEntity;
 import com.qwarwin.fpvdrones.entity.FpvDroneEntity;
+import com.qwarwin.fpvdrones.entity.KornetEntity;
 import com.qwarwin.fpvdrones.entity.LaunchTruckEntity;
 import com.qwarwin.fpvdrones.entity.MavicEntity;
+import com.qwarwin.fpvdrones.entity.MissileEntity;
 import com.qwarwin.fpvdrones.entity.MunitionEntity;
 import com.qwarwin.fpvdrones.entity.OperatorEntity;
+import com.qwarwin.fpvdrones.entity.RadioBeaconEntity;
+import com.qwarwin.fpvdrones.entity.ShellEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
+import com.qwarwin.fpvdrones.entity.TerminatorEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
@@ -34,11 +40,37 @@ public final class ModEntities {
 
     public static final RegistryObject<EntityType<LaunchTruckEntity>> LAUNCH_TRUCK = register("launch_truck",
             EntityType.Builder.<LaunchTruckEntity>of(LaunchTruckEntity::new, EntityClassification.MISC)
-                    .sized(3.0F, 2.6F).setTrackingRange(16).setUpdateInterval(1));
+                    .sized(3.0F, 3.1F).setTrackingRange(16).setUpdateInterval(1));
 
     public static final RegistryObject<EntityType<MunitionEntity>> MUNITION = register("munition",
             EntityType.Builder.<MunitionEntity>of(MunitionEntity::new, EntityClassification.MISC)
                     .sized(0.25F, 0.25F).setTrackingRange(10).setUpdateInterval(1).setShouldReceiveVelocityUpdates(true));
+
+    public static final RegistryObject<EntityType<RadioBeaconEntity>> RADIO_BEACON = register("radio_beacon",
+            EntityType.Builder.<RadioBeaconEntity>of(RadioBeaconEntity::new, EntityClassification.MISC)
+                    .sized(0.3F, 0.3F).setTrackingRange(10).setUpdateInterval(2));
+
+    public static final RegistryObject<EntityType<TerminatorEntity>> TERMINATOR = register("terminator",
+            EntityType.Builder.<TerminatorEntity>of(TerminatorEntity::new, EntityClassification.MISC)
+                    .sized(3.4F, 2.7F).setTrackingRange(16).setUpdateInterval(1).fireImmune());
+
+    public static final RegistryObject<EntityType<AirDefenseGunEntity>> AIR_DEFENSE_GUN = register("air_defense_gun",
+            EntityType.Builder.<AirDefenseGunEntity>of(AirDefenseGunEntity::new, EntityClassification.MISC)
+                    .sized(1.4F, 2.0F).setTrackingRange(16).setUpdateInterval(1));
+
+    public static final RegistryObject<EntityType<KornetEntity>> KORNET = register("kornet",
+            EntityType.Builder.<KornetEntity>of(KornetEntity::new, EntityClassification.MISC)
+                    .sized(0.9F, 1.1F).setTrackingRange(12).setUpdateInterval(1));
+
+    public static final RegistryObject<EntityType<ShellEntity>> SHELL = register("shell",
+            EntityType.Builder.<ShellEntity>of(ShellEntity::new, EntityClassification.MISC)
+                    .sized(0.2F, 0.2F).setTrackingRange(16).setUpdateInterval(20).setShouldReceiveVelocityUpdates(false)
+                    .noSave());
+
+    public static final RegistryObject<EntityType<MissileEntity>> MISSILE = register("missile",
+            EntityType.Builder.<MissileEntity>of(MissileEntity::new, EntityClassification.MISC)
+                    .sized(0.3F, 0.3F).setTrackingRange(16).setUpdateInterval(1).setShouldReceiveVelocityUpdates(true)
+                    .fireImmune());
 
     public static final RegistryObject<EntityType<OperatorEntity>> OPERATOR = register("operator",
             EntityType.Builder.<OperatorEntity>of(OperatorEntity::new, EntityClassification.MISC)

@@ -1,6 +1,7 @@
 package com.qwarwin.fpvdrones.entity;
 
 import com.qwarwin.fpvdrones.item.PayloadType;
+import com.qwarwin.fpvdrones.registry.ModEntities;
 import com.qwarwin.fpvdrones.util.Explosions;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -19,13 +20,15 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.UUID;
 
-/** Dropped grenade. VOG goes off on impact, RGD-5 has a ~3.5 s fuse and bounces around. */
+/** Something dropped from a Mavic. VOG goes off on impact, RGD-5 has a ~3.5 s fuse, a radio beacon just lands. */
 public class MunitionEntity extends Entity {
     private static final DataParameter<Integer> TYPE = EntityDataManager.defineId(MunitionEntity.class, DataSerializers.INT);
 
     private int fuse = 400;
+    private int beaconCode;
     @Nullable
     private UUID owner;
 
@@ -39,6 +42,10 @@ public class MunitionEntity extends Entity {
         entityData.set(TYPE, type.ordinal());
         fuse = type == PayloadType.RGD5 ? 70 : 400;
         this.owner = owner;
+    }
+
+    public void setBeaconCode(int code) {
+        beaconCode = code;
     }
 
     public PayloadType getPayloadType() {
@@ -81,11 +88,31 @@ public class MunitionEntity extends Entity {
             }
             return;
         }
+        if (type == PayloadType.RADIO_BEACON) {
+            List<Entity> hit = level.getEntities(this, getBoundingBox().inflate(0.15),
+                    e -> e.isAlive() && !e.isSpectator() && (e instanceof LivingEntity || e instanceof LaunchTruckEntity));
+            if (horizontalCollision || verticalCollision || !hit.isEmpty() || --fuse <= 0) {
+                plantBeacon(hit.isEmpty() ? null : hit.get(0));
+            }
+            return;
+        }
         boolean hitEntity = !level.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(0.1),
                 e -> e.isAlive() && !e.isSpectator()).isEmpty();
         if (horizontalCollision || verticalCollision || hitEntity || --fuse <= 0) {
             explode();
         }
+    }
+
+    private void plantBeacon(@Nullable Entity stuckTo) {
+        RadioBeaconEntity beacon = ModEntities.RADIO_BEACON.get().create(level);
+        remove();
+        if (beacon == null) {
+            return;
+        }
+        beacon.moveTo(getX(), getY(), getZ(), yRot, 0F);
+        beacon.setup(beaconCode, owner, stuckTo);
+        level.addFreshEntity(beacon);
+        beacon.reportToOwner();
     }
 
     private void explode() {
@@ -102,6 +129,7 @@ public class MunitionEntity extends Entity {
     protected void readAdditionalSaveData(CompoundNBT tag) {
         entityData.set(TYPE, tag.getInt("Type"));
         fuse = tag.getInt("Fuse");
+        beaconCode = tag.getInt("Beacon");
         owner = tag.hasUUID("Owner") ? tag.getUUID("Owner") : null;
     }
 
@@ -109,6 +137,7 @@ public class MunitionEntity extends Entity {
     protected void addAdditionalSaveData(CompoundNBT tag) {
         tag.putInt("Type", entityData.get(TYPE));
         tag.putInt("Fuse", fuse);
+        tag.putInt("Beacon", beaconCode);
         if (owner != null) {
             tag.putUUID("Owner", owner);
         }

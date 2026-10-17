@@ -12,12 +12,14 @@ public final class KeyBinds {
 
     public static final KeyBinding TOGGLE_VIEW = new KeyBinding("key.fpvdrones.toggle_view", GLFW.GLFW_KEY_V, CAT);
     public static final KeyBinding ACTION = new KeyBinding("key.fpvdrones.action", GLFW.GLFW_KEY_G, CAT);
+    public static final KeyBinding RETURN_HOME = new KeyBinding("key.fpvdrones.return_home", GLFW.GLFW_KEY_H, CAT);
     public static final KeyBinding ZOOM_IN = new KeyBinding("key.fpvdrones.zoom_in", GLFW.GLFW_KEY_EQUAL, CAT);
     public static final KeyBinding ZOOM_OUT = new KeyBinding("key.fpvdrones.zoom_out", GLFW.GLFW_KEY_MINUS, CAT);
 
     public static void register() {
         ClientRegistry.registerKeyBinding(TOGGLE_VIEW);
         ClientRegistry.registerKeyBinding(ACTION);
+        ClientRegistry.registerKeyBinding(RETURN_HOME);
         ClientRegistry.registerKeyBinding(ZOOM_IN);
         ClientRegistry.registerKeyBinding(ZOOM_OUT);
     }

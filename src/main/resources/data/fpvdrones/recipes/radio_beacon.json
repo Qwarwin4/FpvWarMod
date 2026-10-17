@@ -1,0 +1,24 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "A",
+    "T",
+    "N"
+  ],
+  "key": {
+    "A": {
+      "item": "fpvdrones:antenna"
+    },
+    "T": {
+      "item": "minecraft:redstone_torch"
+    },
+    "N": {
+      "item": "minecraft:iron_nugget"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:radio_beacon",
+    "count": 2
+  },
+  "soldering": true
+}

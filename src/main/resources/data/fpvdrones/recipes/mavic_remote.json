@@ -1,0 +1,30 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "A A",
+    "SDS",
+    "IRI"
+  ],
+  "key": {
+    "A": {
+      "item": "fpvdrones:antenna"
+    },
+    "S": {
+      "item": "minecraft:light_gray_dye"
+    },
+    "D": {
+      "item": "fpvdrones:display"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "R": {
+      "item": "fpvdrones:receiver"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:mavic_remote",
+    "count": 1
+  },
+  "soldering": true
+}

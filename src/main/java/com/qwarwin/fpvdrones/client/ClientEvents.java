@@ -5,9 +5,12 @@ import com.qwarwin.fpvdrones.control.ControlState;
 import com.qwarwin.fpvdrones.entity.AbstractDroneEntity;
 import com.qwarwin.fpvdrones.entity.DroneKind;
 import com.qwarwin.fpvdrones.entity.LaunchTruckEntity;
+import com.qwarwin.fpvdrones.entity.MountedWeaponEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
+import com.qwarwin.fpvdrones.item.JavelinItem;
 import com.qwarwin.fpvdrones.network.DroneActionPacket;
 import com.qwarwin.fpvdrones.network.Network;
+import com.qwarwin.fpvdrones.network.WeaponInputPacket;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
@@ -83,11 +86,17 @@ public final class ClientEvents {
                     while (KeyBinds.ZOOM_OUT.consumeClick()) {
                         ClientSession.zoom = Math.max(1F, ClientSession.zoom / 1.5F);
                     }
+                    while (KeyBinds.RETURN_HOME.consumeClick()) {
+                        Network.CHANNEL.sendToServer(new DroneActionPacket(DroneActionPacket.RETURN_HOME, ClientSession.aim));
+                    }
                 }
                 while (KeyBinds.ACTION.consumeClick()) {
                     Network.CHANNEL.sendToServer(new DroneActionPacket(DroneActionPacket.PRIMARY));
                 }
+            } else if (mc.player.getVehicle() instanceof MountedWeaponEntity) {
+                gunnerInput(mc);
             } else {
+                lastTrigger = false;
                 while (KeyBinds.ACTION.consumeClick()) {
                     if (mc.player.getVehicle() instanceof LaunchTruckEntity) {
                         Network.CHANNEL.sendToServer(new DroneActionPacket(DroneActionPacket.VEHICLE_MENU));
@@ -106,6 +115,42 @@ public final class ClientEvents {
                 ClientSession.lostTicks--;
             }
         }
+    }
+
+    private static boolean lastTrigger;
+
+    /** Sitting at a gun: LMB is the trigger, RMB the second weapon, G the mode switch. */
+    private static void gunnerInput(Minecraft mc) {
+        GameSettings o = mc.options;
+        boolean trigger = mc.screen == null && o.keyAttack.isDown();
+        boolean secondary = false, action = false;
+        while (o.keyAttack.consumeClick()) {
+            // handled through isDown
+        }
+        while (o.keyUse.consumeClick()) {
+            secondary = mc.screen == null;
+        }
+        while (KeyBinds.ACTION.consumeClick()) {
+            action = true;
+        }
+        while (KeyBinds.ZOOM_IN.consumeClick()) {
+            GunnerHud.zoom = Math.min(12F, GunnerHud.zoom * 1.5F);
+        }
+        while (KeyBinds.ZOOM_OUT.consumeClick()) {
+            GunnerHud.zoom = Math.max(1F, GunnerHud.zoom / 1.5F);
+        }
+        if (trigger != lastTrigger || secondary || action) {
+            lastTrigger = trigger;
+            Network.CHANNEL.sendToServer(new WeaponInputPacket(trigger, secondary, action));
+        }
+    }
+
+    private static boolean atGun(Minecraft mc) {
+        return mc.player != null && mc.player.getVehicle() instanceof MountedWeaponEntity;
+    }
+
+    private static boolean aimingJavelin(Minecraft mc) {
+        return mc.player != null && mc.player.isUsingItem() && mc.player.getUseItem().getItem() instanceof JavelinItem;
     }
 
     private static void swallowVanillaKeys(GameSettings o) {
@@ -147,7 +192,13 @@ public final class ClientEvents {
 
     @SubscribeEvent
     public static void onMouseScroll(InputEvent.MouseScrollEvent event) {
-        if (!ClientSession.active || Minecraft.getInstance().screen != null) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!ClientSession.active && atGun(mc) && mc.screen == null) {
+            GunnerHud.zoom = event.getScrollDelta() > 0 ? Math.min(12F, GunnerHud.zoom * 1.25F) : Math.max(1F, GunnerHud.zoom / 1.25F);
+            event.setCanceled(true);
+            return;
+        }
+        if (!ClientSession.active || mc.screen != null) {
             return;
         }
         if (ClientSession.kind == DroneKind.MAVIC) {
@@ -160,7 +211,7 @@ public final class ClientEvents {
 
     @SubscribeEvent
     public static void onClickInput(InputEvent.ClickInputEvent event) {
-        if (ClientSession.active) {
+        if (ClientSession.active || atGun(Minecraft.getInstance())) {
             event.setCanceled(true);
             event.setSwingHand(false);
         }
@@ -205,18 +256,28 @@ public final class ClientEvents {
 
     @SubscribeEvent
     public static void onFov(EntityViewRenderEvent.FOVModifier event) {
-        if (!ClientSession.active) {
-            return;
+        Minecraft mc = Minecraft.getInstance();
+        if (ClientSession.active) {
+            if (ClientSession.kind == DroneKind.MAVIC) {
+                event.setFOV(event.getFOV() / ClientSession.zoom);
+            } else if (ClientSession.kind == DroneKind.FPV) {
+                event.setFOV(Math.min(event.getFOV() * 1.2, 120.0));
+            }
+        } else if (atGun(mc)) {
+            event.setFOV(event.getFOV() / GunnerHud.zoom);
+        } else if (aimingJavelin(mc)) {
+            event.setFOV(event.getFOV() / 4.0);
         }
-        if (ClientSession.kind == DroneKind.MAVIC) {
-            event.setFOV(event.getFOV() / ClientSession.zoom);
-        } else if (ClientSession.kind == DroneKind.FPV) {
-            event.setFOV(Math.min(event.getFOV() * 1.2, 120.0));
-        }
+        Projection.fov = event.getFOV();
     }
 
     @SubscribeEvent
     public static void onOverlayPre(RenderGameOverlayEvent.Pre event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (event.getType() == RenderGameOverlayEvent.ElementType.CROSSHAIRS && (atGun(mc) || aimingJavelin(mc))) {
+            event.setCanceled(true);
+            return;
+        }
         if (!ClientSession.active && ClientSession.lostTicks <= 0) {
             return;
         }
@@ -249,6 +310,10 @@ public final class ClientEvents {
             HudRenderer.render(event.getMatrixStack(), event.getPartialTicks());
         } else if (mc.player != null && mc.player.getVehicle() instanceof LaunchTruckEntity) {
             HudRenderer.renderTruck(event.getMatrixStack(), (LaunchTruckEntity) mc.player.getVehicle());
+        } else if (atGun(mc)) {
+            GunnerHud.render(event.getMatrixStack(), (MountedWeaponEntity) mc.player.getVehicle(), event.getPartialTicks());
+        } else if (aimingJavelin(mc)) {
+            GunnerHud.javelin(event.getMatrixStack(), mc.player);
         }
     }
 
@@ -256,12 +321,15 @@ public final class ClientEvents {
     public static void onRenderPlayer(RenderPlayerEvent.Pre event) {
         if (ClientSession.active && event.getPlayer() == Minecraft.getInstance().player) {
             event.setCanceled(true);
+        } else if (event.getPlayer().getVehicle() instanceof MountedWeaponEntity) {
+            // the crew sits inside, only the optics stick out
+            event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
-        if (ClientSession.active) {
+        if (ClientSession.active || atGun(Minecraft.getInstance())) {
             event.setCanceled(true);
         }
     }

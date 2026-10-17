@@ -22,10 +22,10 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class LauncherScreen extends Screen {
     private static final int W = 236;
-    private static final int H = 206;
+    private static final int H = 232;
 
     private final OpenLauncherPacket data;
-    private TextFieldWidget fx, fy, fz, ffreq;
+    private TextFieldWidget fx, fy, fz, ffreq, fbeacon;
     private int left, top;
 
     public LauncherScreen(OpenLauncherPacket data) {
@@ -53,16 +53,24 @@ public class LauncherScreen extends Screen {
         ffreq.setValue(LaunchConfig.formatFreq(c.getFrequency()));
         addButton(ffreq);
 
-        addButton(new Button(left + 114, top + 95, 108, 20, new TranslationTextComponent("screen.fpvdrones.mavic_point"), b -> {
-            BlockPos aim = ClientSession.lastAim;
+        fbeacon = new TextFieldWidget(font, left + 114, top + 96, 50, 18, new StringTextComponent("beacon"));
+        fbeacon.setMaxLength(4);
+        fbeacon.setFilter(s -> s.matches("\\d{0,4}"));
+        fbeacon.setValue(c.getBeacon() == 0 ? "" : String.valueOf(c.getBeacon()));
+        addButton(fbeacon);
+
+        // whatever the Mavic marked last: the point it turned home from or a beacon it dropped
+        addButton(new Button(left + 14, top + 120, 208, 20, new TranslationTextComponent("screen.fpvdrones.mavic_point"), b -> {
+            BlockPos aim = data.recon != null ? data.recon : ClientSession.lastAim;
             if (aim != null) {
                 fx.setValue(String.valueOf(aim.getX()));
                 fy.setValue(String.valueOf(aim.getY()));
                 fz.setValue(String.valueOf(aim.getZ()));
             }
+            fbeacon.setValue(data.recon != null && data.reconBeacon != 0 ? String.valueOf(data.reconBeacon) : "");
         }));
 
-        int y = top + 152;
+        int y = top + 178;
         addButton(new Button(left + 14, y, 100, 20, new TranslationTextComponent("screen.fpvdrones.save"),
                 b -> send(LauncherUpdatePacket.SAVE)));
         addButton(new Button(left + 122, y, 100, 20, new TranslationTextComponent("screen.fpvdrones.unload"),
@@ -111,6 +119,8 @@ public class LauncherScreen extends Screen {
         Integer x = parse(fx.getValue()), y = parse(fy.getValue()), z = parse(fz.getValue());
         LaunchConfig c = new LaunchConfig();
         c.set(x != null && z != null, x == null ? 0 : x, y == null ? 0 : y, z == null ? 0 : z, y == null, parseFreq());
+        Integer code = parse(fbeacon.getValue());
+        c.setBeacon(code == null ? 0 : code);
         Network.CHANNEL.sendToServer(new LauncherUpdatePacket(data.site, c, action));
         if (action != LauncherUpdatePacket.SAVE) {
             onClose();
@@ -123,6 +133,7 @@ public class LauncherScreen extends Screen {
         fy.tick();
         fz.tick();
         ffreq.tick();
+        fbeacon.tick();
     }
 
     @Override
@@ -145,9 +156,11 @@ public class LauncherScreen extends Screen {
         font.draw(ms, "Z", left + 154, top + 36, 0xFF8FA088);
         font.draw(ms, new TranslationTextComponent("screen.fpvdrones.y_hint"), left + 14, top + 68, 0xFF6F7A60);
         font.draw(ms, new TranslationTextComponent("screen.fpvdrones.freq"), left + 14, top + 84, 0xFFCFD8B8);
+        font.draw(ms, new TranslationTextComponent("screen.fpvdrones.beacon"), left + 114, top + 84, 0xFFCFD8B8);
+        font.draw(ms, new TranslationTextComponent("screen.fpvdrones.beacon_hint"), left + 168, top + 101, 0xFF6F7A60);
 
         for (int i = 0; i < data.slots.length; i++) {
-            int sx = left + 14 + i * 22, sy = top + 124;
+            int sx = left + 14 + i * 22, sy = top + 150;
             AbstractGui.fill(ms, sx - 1, sy - 1, sx + 19, sy + 19, 0xFF5A6340);
             AbstractGui.fill(ms, sx, sy, sx + 18, sy + 18, 0xFF0E110B);
             StrikeType t = data.slots[i] < 0 ? null : StrikeType.byIdOrNull(data.slots[i]);
@@ -159,7 +172,7 @@ public class LauncherScreen extends Screen {
         if (x != null && z != null) {
             double dx = x + 0.5 - (o.getX() + 0.5), dz = z + 0.5 - (o.getZ() + 0.5);
             String dist = new TranslationTextComponent("screen.fpvdrones.distance", Math.round(Math.sqrt(dx * dx + dz * dz))).getString();
-            font.draw(ms, dist, left + W - 14 - font.width(dist), top + 129, 0xFFCFD8B8);
+            font.draw(ms, dist, left + W - 14 - font.width(dist), top + 155, 0xFFCFD8B8);
         }
         super.render(ms, mouseX, mouseY, partial);
     }

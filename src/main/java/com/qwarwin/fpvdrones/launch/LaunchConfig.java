@@ -11,6 +11,8 @@ public class LaunchConfig {
     private int x, y, z;
     private boolean autoY = true;
     private int frequency = DEFAULT_FREQ;
+    // radio beacon code to home on, 0 = none
+    private int beacon;
 
     public boolean hasTarget() {
         return hasTarget;
@@ -36,6 +38,14 @@ public class LaunchConfig {
         return frequency;
     }
 
+    public int getBeacon() {
+        return beacon;
+    }
+
+    public void setBeacon(int beacon) {
+        this.beacon = Math.max(0, Math.min(9999, beacon));
+    }
+
     public void set(boolean hasTarget, int x, int y, int z, boolean autoY, int frequency) {
         this.hasTarget = hasTarget;
         this.x = x;
@@ -47,6 +57,7 @@ public class LaunchConfig {
 
     public void copyFrom(LaunchConfig o) {
         set(o.hasTarget, o.x, o.y, o.z, o.autoY, o.frequency);
+        setBeacon(o.beacon);
     }
 
     public void load(CompoundNBT tag) {
@@ -56,6 +67,7 @@ public class LaunchConfig {
         z = tag.getInt("TZ");
         autoY = !tag.contains("AutoY") || tag.getBoolean("AutoY");
         frequency = tag.contains("Freq") ? tag.getInt("Freq") : DEFAULT_FREQ;
+        beacon = tag.getInt("Beacon");
     }
 
     public CompoundNBT save(CompoundNBT tag) {
@@ -65,6 +77,7 @@ public class LaunchConfig {
         tag.putInt("TZ", z);
         tag.putBoolean("AutoY", autoY);
         tag.putInt("Freq", frequency);
+        tag.putInt("Beacon", beacon);
         return tag;
     }
 
@@ -75,6 +88,7 @@ public class LaunchConfig {
         buf.writeInt(z);
         buf.writeBoolean(autoY);
         buf.writeVarInt(frequency);
+        buf.writeVarInt(beacon);
     }
 
     public static LaunchConfig read(PacketBuffer buf) {
@@ -85,6 +99,7 @@ public class LaunchConfig {
         c.z = buf.readInt();
         c.autoY = buf.readBoolean();
         c.frequency = buf.readVarInt();
+        c.beacon = buf.readVarInt();
         return c;
     }
 

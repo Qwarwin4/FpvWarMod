@@ -1,11 +1,17 @@
 package com.qwarwin.fpvdrones.client;
 
 import com.qwarwin.fpvdrones.FpvDrones;
+import com.qwarwin.fpvdrones.client.render.AirDefenseGunRenderer;
 import com.qwarwin.fpvdrones.client.render.DroneRenderer;
+import com.qwarwin.fpvdrones.client.render.KornetRenderer;
 import com.qwarwin.fpvdrones.client.render.LauncherRenderer;
+import com.qwarwin.fpvdrones.client.render.MissileRenderer;
 import com.qwarwin.fpvdrones.client.render.MunitionRenderer;
 import com.qwarwin.fpvdrones.client.render.OperatorRenderer;
+import com.qwarwin.fpvdrones.client.render.RadioBeaconRenderer;
+import com.qwarwin.fpvdrones.client.render.ShellRenderer;
 import com.qwarwin.fpvdrones.client.render.StrikeDroneRenderer;
+import com.qwarwin.fpvdrones.client.render.TerminatorRenderer;
 import com.qwarwin.fpvdrones.client.render.TruckRenderer;
 import com.qwarwin.fpvdrones.client.screen.AssemblyScreen;
 import com.qwarwin.fpvdrones.registry.ModBlocks;
@@ -36,6 +42,12 @@ public final class ClientSetup {
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.LAUNCH_TRUCK.get(), TruckRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.MUNITION.get(), MunitionRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.OPERATOR.get(), OperatorRenderer::new);
+        RenderingRegistry.registerEntityRenderingHandler(ModEntities.RADIO_BEACON.get(), RadioBeaconRenderer::new);
+        RenderingRegistry.registerEntityRenderingHandler(ModEntities.TERMINATOR.get(), TerminatorRenderer::new);
+        RenderingRegistry.registerEntityRenderingHandler(ModEntities.AIR_DEFENSE_GUN.get(), AirDefenseGunRenderer::new);
+        RenderingRegistry.registerEntityRenderingHandler(ModEntities.KORNET.get(), KornetRenderer::new);
+        RenderingRegistry.registerEntityRenderingHandler(ModEntities.SHELL.get(), ShellRenderer::new);
+        RenderingRegistry.registerEntityRenderingHandler(ModEntities.MISSILE.get(), MissileRenderer::new);
         ClientRegistry.bindTileEntityRenderer(ModTileEntities.LAUNCHER.get(), LauncherRenderer::new);
         event.enqueueWork(() -> {
             RenderTypeLookup.setRenderLayer(ModBlocks.LAUNCHER.get(), RenderType.cutout());

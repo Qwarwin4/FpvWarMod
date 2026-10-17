@@ -3,6 +3,7 @@ package com.qwarwin.fpvdrones.client;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import com.qwarwin.fpvdrones.FpvDrones;
+import com.qwarwin.fpvdrones.entity.MissileType;
 import com.qwarwin.fpvdrones.entity.StrikeType;
 import com.qwarwin.fpvdrones.item.PayloadType;
 import net.minecraft.client.Minecraft;
@@ -30,6 +31,19 @@ public final class ModModels {
     public static final ResourceLocation TRUCK = FpvDrones.id("entity/truck");
     public static final ResourceLocation TRUCK_WHEEL = FpvDrones.id("entity/truck_wheel");
     public static final ResourceLocation TRUCK_RACK = FpvDrones.id("entity/truck_rack");
+    public static final ResourceLocation ADGUN_BASE = FpvDrones.id("entity/adgun_base");
+    public static final ResourceLocation ADGUN_TURRET = FpvDrones.id("entity/adgun_turret");
+    public static final ResourceLocation ADGUN_GUN = FpvDrones.id("entity/adgun_gun");
+    public static final ResourceLocation BMPT_HULL = FpvDrones.id("entity/bmpt_hull");
+    public static final ResourceLocation BMPT_WHEEL = FpvDrones.id("entity/bmpt_wheel");
+    public static final ResourceLocation BMPT_TURRET = FpvDrones.id("entity/bmpt_turret");
+    public static final ResourceLocation BMPT_GUNS = FpvDrones.id("entity/bmpt_guns");
+    public static final ResourceLocation ATAKA_CAP = FpvDrones.id("entity/ataka_cap");
+    public static final ResourceLocation KORNET_TRIPOD = FpvDrones.id("entity/kornet_tripod");
+    public static final ResourceLocation KORNET_HEAD = FpvDrones.id("entity/kornet_head");
+    public static final ResourceLocation KORNET_SIGHT = FpvDrones.id("entity/kornet_sight");
+    public static final ResourceLocation KORNET_TUBE = FpvDrones.id("entity/kornet_tube");
+    public static final ResourceLocation TRACER = FpvDrones.id("entity/tracer");
 
     private static final Random RANDOM = new Random();
 
@@ -42,6 +56,22 @@ public final class ModModels {
         list.add(TRUCK);
         list.add(TRUCK_WHEEL);
         list.add(TRUCK_RACK);
+        list.add(ADGUN_BASE);
+        list.add(ADGUN_TURRET);
+        list.add(ADGUN_GUN);
+        list.add(BMPT_HULL);
+        list.add(BMPT_WHEEL);
+        list.add(BMPT_TURRET);
+        list.add(BMPT_GUNS);
+        list.add(ATAKA_CAP);
+        list.add(KORNET_TRIPOD);
+        list.add(KORNET_HEAD);
+        list.add(KORNET_SIGHT);
+        list.add(KORNET_TUBE);
+        list.add(TRACER);
+        for (MissileType t : MissileType.values()) {
+            list.add(t.model());
+        }
         for (StrikeType t : StrikeType.values()) {
             list.add(t.model());
         }

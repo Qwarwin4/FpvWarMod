@@ -6,14 +6,16 @@ import com.qwarwin.fpvdrones.entity.StrikeType;
 import com.qwarwin.fpvdrones.item.DroneItem;
 import com.qwarwin.fpvdrones.item.DroneRemoteItem;
 import com.qwarwin.fpvdrones.item.FpvGogglesItem;
+import com.qwarwin.fpvdrones.item.JavelinItem;
 import com.qwarwin.fpvdrones.item.LaunchRemoteItem;
+import com.qwarwin.fpvdrones.item.MachineItem;
+import com.qwarwin.fpvdrones.item.MavicRemoteItem;
 import com.qwarwin.fpvdrones.item.PartItem;
 import com.qwarwin.fpvdrones.item.PayloadItem;
 import com.qwarwin.fpvdrones.item.PayloadType;
 import com.qwarwin.fpvdrones.item.SolderingIronItem;
 import com.qwarwin.fpvdrones.item.StrikeDroneItem;
 import com.qwarwin.fpvdrones.item.TabletItem;
-import com.qwarwin.fpvdrones.item.TruckItem;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
@@ -37,6 +39,8 @@ public final class ModItems {
             () -> new FpvGogglesItem(props().stacksTo(1)));
     public static final RegistryObject<Item> DRONE_REMOTE = ITEMS.register("drone_remote",
             () -> new DroneRemoteItem(props().stacksTo(1)));
+    public static final RegistryObject<Item> MAVIC_REMOTE = ITEMS.register("mavic_remote",
+            () -> new MavicRemoteItem(props().stacksTo(1)));
     public static final RegistryObject<Item> FPV_DRONE = ITEMS.register("fpv_drone",
             () -> new DroneItem(DroneKind.FPV, props().stacksTo(1)));
     public static final RegistryObject<Item> MAVIC = ITEMS.register("mavic3",
@@ -51,7 +55,19 @@ public final class ModItems {
     public static final RegistryObject<Item> GERAN5 = ITEMS.register("geran5",
             () -> new StrikeDroneItem(StrikeType.GERAN_5, props().stacksTo(5).rarity(Rarity.EPIC)));
     public static final RegistryObject<Item> LAUNCH_TRUCK = ITEMS.register("launch_truck",
-            () -> new TruckItem(props().stacksTo(1).rarity(Rarity.RARE)));
+            () -> new MachineItem(ModEntities.LAUNCH_TRUCK, "tooltip.fpvdrones.truck", props().stacksTo(1).rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> TERMINATOR = ITEMS.register("terminator",
+            () -> new MachineItem(ModEntities.TERMINATOR, "tooltip.fpvdrones.terminator", props().stacksTo(1).rarity(Rarity.EPIC)));
+    public static final RegistryObject<Item> AIR_DEFENSE_GUN = ITEMS.register("air_defense_gun",
+            () -> new MachineItem(ModEntities.AIR_DEFENSE_GUN, "tooltip.fpvdrones.air_defense_gun", props().stacksTo(1).rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> KORNET = ITEMS.register("kornet",
+            () -> new MachineItem(ModEntities.KORNET, "tooltip.fpvdrones.kornet", props().stacksTo(1).rarity(Rarity.UNCOMMON)));
+    public static final RegistryObject<Item> JAVELIN = ITEMS.register("javelin",
+            () -> new JavelinItem(props().stacksTo(1).rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> AMMO_30MM = ammo("ammo_30mm", 16);
+    public static final RegistryObject<Item> KORNET_MISSILE = ammo("kornet_missile", 4);
+    public static final RegistryObject<Item> ATAKA_MISSILE = ammo("ataka_missile", 4);
+    public static final RegistryObject<Item> JAVELIN_MISSILE = ammo("javelin_missile", 4);
 
     public static final RegistryObject<Item> TABLET = ITEMS.register("tablet", () -> new TabletItem(props().stacksTo(1)));
     public static final RegistryObject<Item> LAUNCH_REMOTE = ITEMS.register("launch_remote",
@@ -62,6 +78,7 @@ public final class ModItems {
     public static final RegistryObject<Item> CANISTER = payload("explosive_canister", PayloadType.CANISTER, 4);
     public static final RegistryObject<Item> RGD5 = payload("rgd5", PayloadType.RGD5, 16);
     public static final RegistryObject<Item> VOG17M = payload("vog17m", PayloadType.VOG17M, 32);
+    public static final RegistryObject<Item> RADIO_BEACON = payload("radio_beacon", PayloadType.RADIO_BEACON, 16);
 
     // parts
     public static final RegistryObject<Item> FRAME = part("frame");
@@ -71,6 +88,7 @@ public final class ModItems {
     public static final RegistryObject<Item> FLIGHT_CONTROLLER = part("flight_controller");
     public static final RegistryObject<Item> FLIGHT_STACK = part("flight_stack");
     public static final RegistryObject<Item> BATTERY = part("battery");
+    public static final RegistryObject<Item> DEPLETED_BATTERY = part("depleted_battery");
     public static final RegistryObject<Item> FPV_CAMERA = part("fpv_camera");
     public static final RegistryObject<Item> VTX = part("vtx");
     public static final RegistryObject<Item> RECEIVER = part("receiver");
@@ -83,6 +101,7 @@ public final class ModItems {
     public static final RegistryObject<Item> SMALL_JET_ENGINE = part("small_jet_engine");
     public static final RegistryObject<Item> WARHEAD = part("warhead");
     public static final RegistryObject<Item> BOOSTER = part("booster");
+    public static final RegistryObject<Item> AUTOCANNON = part("autocannon");
 
     public static final RegistryObject<Item> SOLDERING_IRON = ITEMS.register("soldering_iron",
             () -> new SolderingIronItem(props().durability(256)));
@@ -101,6 +120,10 @@ public final class ModItems {
 
     private static RegistryObject<Item> payload(String name, PayloadType type, int stack) {
         return ITEMS.register(name, () -> new PayloadItem(type, props().stacksTo(stack)));
+    }
+
+    private static RegistryObject<Item> ammo(String name, int stack) {
+        return ITEMS.register(name, () -> new PartItem("tooltip.fpvdrones." + name, props().stacksTo(stack)));
     }
 
     private static RegistryObject<Item> part(String name) {

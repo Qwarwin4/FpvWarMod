@@ -7,6 +7,8 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
@@ -33,7 +35,7 @@ public final class Explosions {
     }
 
     public static void payload(World level, @Nullable UUID attackerId, Vector3d pos, PayloadType type, Vector3d dir) {
-        if (level.isClientSide || type == PayloadType.NONE) {
+        if (level.isClientSide || !type.isExplosive()) {
             return;
         }
         LivingEntity attacker = player(level, attackerId);
@@ -109,17 +111,68 @@ public final class Explosions {
         Vector3d end = pos.add(d.scale(length));
         AxisAlignedBB box = new AxisAlignedBB(pos, end).inflate(1.0);
         float mul = Config.FRAGMENT_DAMAGE.get().floatValue();
-        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, box, LivingEntity::isAlive)) {
+        for (Entity e : level.getEntities((Entity) null, box, e -> e.isAlive() && Targeting.isShootable(e))) {
             Vector3d c = e.getBoundingBox().getCenter();
             double t = c.subtract(pos).dot(d);
             if (t < -0.5 || t > length) {
                 continue;
             }
-            if (pos.add(d.scale(Math.max(0, t))).distanceTo(c) < 1.3) {
+            double reach = 1.0 + Math.max(e.getBbWidth(), e.getBbHeight()) * 0.5;
+            if (pos.add(d.scale(Math.max(0, t))).distanceTo(c) < reach) {
                 e.invulnerableTime = 0;
-                e.hurt(ModDamageSources.cumulative(attacker), damage * mul);
+                // armour is what the jet is for, so machines take it at full strength
+                e.hurt(ModDamageSources.cumulative(attacker), e instanceof LivingEntity ? damage * mul : damage);
             }
         }
+    }
+
+    /** 30 mm HE-frag. With the proximity fuse it bursts next to drones instead of needing a direct hit. */
+    public static void shell(World level, Entity shell, @Nullable UUID attackerId, Vector3d pos, boolean airburst) {
+        if (level.isClientSide) {
+            return;
+        }
+        LivingEntity attacker = player(level, attackerId);
+        ServerWorld sw = (ServerWorld) level;
+        double radius = airburst ? 4.0 : 2.5;
+        for (Entity e : level.getEntities(shell, new AxisAlignedBB(pos, pos).inflate(radius), Targeting::isShootable)) {
+            double d = e.getBoundingBox().getCenter().distanceTo(pos);
+            if (d > radius) {
+                continue;
+            }
+            float dmg = (float) (7.0 * (1.0 - d / radius)) + 2F;
+            if (e instanceof LivingEntity) {
+                e.invulnerableTime = 0;
+                dmg *= Config.FRAGMENT_DAMAGE.get().floatValue();
+            }
+            e.hurt(ModDamageSources.shrapnel(attacker), dmg);
+        }
+        if (Config.SHELLS_BREAK_BLOCKS.get() && !airburst) {
+            level.explode(shell, ModDamageSources.shell(shell, attacker), null, pos.x, pos.y, pos.z, 1.2F, false, Explosion.Mode.BREAK);
+        } else {
+            sw.playSound(null, pos.x, pos.y, pos.z, SoundEvents.GENERIC_EXPLODE, SoundCategory.BLOCKS, 1.6F, 1.6F);
+        }
+        sw.sendParticles(ParticleTypes.EXPLOSION, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
+        sw.sendParticles(ParticleTypes.SMOKE, pos.x, pos.y, pos.z, 8, 0.3, 0.3, 0.3, 0.02);
+    }
+
+    /** Tandem HEAT: the hit itself, the jet behind it, and a modest blast. */
+    public static void atgm(World level, @Nullable UUID attackerId, Vector3d pos, Vector3d dir, @Nullable Entity direct,
+                            float power, float directDamage) {
+        if (level.isClientSide) {
+            return;
+        }
+        LivingEntity attacker = player(level, attackerId);
+        if (direct != null && direct.isAlive()) {
+            direct.invulnerableTime = 0;
+            direct.hurt(ModDamageSources.cumulative(attacker), directDamage);
+        }
+        jet(level, attacker, pos.subtract(dir.normalize().scale(0.5)), dir, 6.0, directDamage * 0.4F);
+        explode(level, attacker, pos, power, false);
+        fragments(level, attacker, pos, power * 1.5, 10F);
+        ServerWorld sw = (ServerWorld) level;
+        Vector3d d = dir.normalize();
+        sw.sendParticles(ParticleTypes.FLAME, pos.x, pos.y, pos.z, 30, d.x * 0.5, d.y * 0.5, d.z * 0.5, 0.25);
+        sw.sendParticles(ParticleTypes.LARGE_SMOKE, pos.x, pos.y, pos.z, 20, 0.6, 0.6, 0.6, 0.03);
     }
 
     private Explosions() {

@@ -1,0 +1,26 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "III",
+    "PBF",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    },
+    "B": {
+      "item": "minecraft:iron_block"
+    },
+    "F": {
+      "item": "minecraft:flint_and_steel"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:autocannon",
+    "count": 1
+  }
+}

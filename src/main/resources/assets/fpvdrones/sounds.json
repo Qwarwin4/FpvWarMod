@@ -88,5 +88,75 @@
         "stream": false
       }
     ]
+  },
+  "cannon_30": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.cannon_30",
+    "sounds": [
+      {
+        "name": "fpvdrones:cannon_30",
+        "stream": false
+      }
+    ]
+  },
+  "atgm_launch": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.atgm_launch",
+    "sounds": [
+      {
+        "name": "fpvdrones:atgm_launch",
+        "stream": false
+      }
+    ]
+  },
+  "missile_motor": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.missile_motor",
+    "sounds": [
+      {
+        "name": "fpvdrones:missile_motor",
+        "stream": false
+      }
+    ]
+  },
+  "reload": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.reload",
+    "sounds": [
+      {
+        "name": "fpvdrones:reload",
+        "stream": false
+      }
+    ]
+  },
+  "seeker_tone": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.seeker_tone",
+    "sounds": [
+      {
+        "name": "fpvdrones:seeker_tone",
+        "stream": false
+      }
+    ]
+  },
+  "lock_tone": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.lock_tone",
+    "sounds": [
+      {
+        "name": "fpvdrones:lock_tone",
+        "stream": false
+      }
+    ]
+  },
+  "tracks": {
+    "category": "neutral",
+    "subtitle": "subtitles.fpvdrones.tracks",
+    "sounds": [
+      {
+        "name": "fpvdrones:tracks",
+        "stream": false
+      }
+    ]
   }
 }

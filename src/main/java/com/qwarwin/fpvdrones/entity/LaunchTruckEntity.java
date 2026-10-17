@@ -18,16 +18,12 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.IPacket;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
@@ -36,32 +32,29 @@ import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
 
 /**
- * 6x6 truck with a five-rail rack on the bed. Driven like a boat: the driver's client moves it and
+ * KamAZ-style cab-over 6x6 with a five-rail rack on the bed. Driven like a boat: the driver's client moves it and
  * vanilla syncs the position. Drones leave the rack backwards and up.
  */
-public class LaunchTruckEntity extends Entity implements LaunchSite {
+public class LaunchTruckEntity extends MachineEntity implements LaunchSite {
     public static final int CAPACITY = 5;
     public static final float RACK_ANGLE = 22.5F;
-    public static final Vector3d RACK_PIVOT = new Vector3d(0, 1.2, 1.2);
+    public static final Vector3d RACK_PIVOT = new Vector3d(0, 1.2, 0.35);
     public static final double RACK_DRONE_Z = -1.75;
     public static final double RACK_STEP = 0.5;
     public static final double RACK_FIRST = 0.328;
     public static final float DRONE_SCALE = 1.1F;
-    public static final Vector3d SEAT = new Vector3d(0.55, 1.45, 2.3);
+    // driver sits in the cab over the front axle, head under the roof
+    public static final Vector3d SEAT = new Vector3d(0.55, 1.40, 2.25);
     public static final double[][] WHEELS = {
-            {-1.059, 2.1}, {1.059, 2.1}, {-1.059, -0.956}, {1.059, -0.956}, {-1.059, -2.044}, {1.059, -2.044}};
-    public static final double WHEEL_RADIUS = 0.55;
+            {-1.0, 2.35}, {1.0, 2.35}, {-1.0, -1.0}, {1.0, -1.0}, {-1.0, -2.3}, {1.0, -2.3}};
+    public static final double WHEEL_RADIUS = 0.62;
 
     private static final DataParameter<Integer> SLOTS = EntityDataManager.defineId(LaunchTruckEntity.class, DataSerializers.INT);
-    private static final DataParameter<Float> HEALTH = EntityDataManager.defineId(LaunchTruckEntity.class, DataSerializers.FLOAT);
-    private static final float MAX_HEALTH = 80F;
-    private static final float DEG = (float) (Math.PI / 180.0);
 
     private final LaunchConfig config = new LaunchConfig();
     @Nullable
@@ -85,8 +78,18 @@ public class LaunchTruckEntity extends Entity implements LaunchSite {
 
     @Override
     protected void defineSynchedData() {
+        super.defineSynchedData();
         entityData.define(SLOTS, 0);
-        entityData.define(HEALTH, MAX_HEALTH);
+    }
+
+    @Override
+    public float getMaxHealth() {
+        return 80F;
+    }
+
+    @Override
+    protected float damageFactor(DamageSource source) {
+        return isShell(source) ? 0.6F : 1F;
     }
 
     // ---- LaunchSite
@@ -125,10 +128,6 @@ public class LaunchTruckEntity extends Entity implements LaunchSite {
         double y = RACK_FIRST + slot * RACK_STEP;
         double z = RACK_DRONE_Z;
         return RACK_PIVOT.add(0, y * Math.cos(a) - z * Math.sin(a), y * Math.sin(a) + z * Math.cos(a));
-    }
-
-    public Vector3d toWorld(Vector3d local) {
-        return position().add(local.yRot(-yRot * DEG));
     }
 
     @Override
@@ -361,91 +360,34 @@ public class LaunchTruckEntity extends Entity implements LaunchSite {
     }
 
     @Override
-    public boolean hurt(DamageSource source, float amount) {
-        if (level.isClientSide) {
-            return true;
-        }
-        if (isInvulnerableTo(source) || !isAlive()) {
-            return false;
-        }
-        if (source.getEntity() instanceof PlayerEntity && ((PlayerEntity) source.getEntity()).abilities.instabuild) {
-            breakApart(false);
-            return true;
-        }
-        float h = entityData.get(HEALTH) - amount;
-        entityData.set(HEALTH, h);
-        level.playSound(null, getX(), getY(), getZ(), SoundEvents.ANVIL_LAND, SoundCategory.NEUTRAL, 0.4F, 1.6F);
-        if (h <= 0F) {
-            breakApart(true);
-        }
-        return true;
-    }
-
-    private void breakApart(boolean survival) {
+    protected void destroy(@Nullable DamageSource cause) {
         int loaded = countLoaded();
         Vector3d center = position().add(0, 1.5, 0);
-        if (survival) {
-            spawnAtLocation(new ItemStack(ModItems.LAUNCH_TRUCK.get()));
-        }
+        ejectPassengers();
         remove();
-        if (survival && loaded > 0) {
-            // whatever was left on the rack cooks off
-            Explosions.strike(level, null, center, 4F + loaded * 2F, true);
+        if (isDismantled(cause)) {
+            spawnAtLocation(new ItemStack(ModItems.LAUNCH_TRUCK.get()));
+        } else if (cause != null) {
+            // fuel and whatever was left on the rack go up together
+            Explosions.strike(level, null, center, 3F + loaded * 2F, true);
         }
-    }
-
-    @Override
-    public boolean isPickable() {
-        return isAlive();
-    }
-
-    @Override
-    public boolean isPushable() {
-        return false;
-    }
-
-    @Override
-    public boolean canBeCollidedWith() {
-        return true;
-    }
-
-    @Override
-    public boolean canChangeDimensions() {
-        return false;
-    }
-
-    @Override
-    public AxisAlignedBB getBoundingBoxForCulling() {
-        return getBoundingBox().inflate(3.5, 2.5, 3.5);
-    }
-
-    @Override
-    public boolean shouldRenderAtSqrDistance(double distSqr) {
-        return distSqr < 192.0 * 192.0;
     }
 
     @Override
     protected void readAdditionalSaveData(CompoundNBT tag) {
+        super.readAdditionalSaveData(tag);
         config.load(tag);
         entityData.set(SLOTS, tag.getInt("Slots"));
-        if (tag.contains("Health")) {
-            entityData.set(HEALTH, tag.getFloat("Health"));
-        }
         lastLaunched = tag.hasUUID("Last") ? tag.getUUID("Last") : null;
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundNBT tag) {
+        super.addAdditionalSaveData(tag);
         config.save(tag);
         tag.putInt("Slots", entityData.get(SLOTS));
-        tag.putFloat("Health", entityData.get(HEALTH));
         if (lastLaunched != null) {
             tag.putUUID("Last", lastLaunched);
         }
-    }
-
-    @Override
-    public IPacket<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
     }
 }

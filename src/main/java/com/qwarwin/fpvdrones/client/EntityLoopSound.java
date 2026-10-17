@@ -3,6 +3,7 @@ package com.qwarwin.fpvdrones.client;
 import com.qwarwin.fpvdrones.entity.AbstractDroneEntity;
 import com.qwarwin.fpvdrones.entity.LaunchTruckEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
+import com.qwarwin.fpvdrones.entity.TerminatorEntity;
 import net.minecraft.client.audio.TickableSound;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.SoundCategory;
@@ -56,6 +57,13 @@ public class EntityLoopSound extends TickableSound {
             float moving = (float) Math.min(1.0, Math.abs(t.getSpeed()) * 3.0 + (t.isVehicle() ? 0.35 : 0.0));
             volume += (baseVolume * moving - volume) * 0.1F;
             pitch = 0.75F + moving * 0.45F;
+        } else if (entity instanceof TerminatorEntity) {
+            TerminatorEntity t = (TerminatorEntity) entity;
+            float moving = (float) Math.min(1.0, Math.abs(t.getSpeed()) * 3.0 + (t.isVehicle() ? 0.4 : 0.0));
+            volume += (baseVolume * moving - volume) * 0.1F;
+            pitch = 0.6F + moving * 0.4F;
+        } else {
+            volume = baseVolume;
         }
     }
 }

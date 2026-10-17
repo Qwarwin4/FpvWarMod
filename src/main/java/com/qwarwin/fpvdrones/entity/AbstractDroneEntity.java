@@ -5,11 +5,13 @@ import com.qwarwin.fpvdrones.client.ClientHooks;
 import com.qwarwin.fpvdrones.control.ControlState;
 import com.qwarwin.fpvdrones.item.DroneItem;
 import com.qwarwin.fpvdrones.item.DroneRemoteItem;
+import com.qwarwin.fpvdrones.item.MavicRemoteItem;
 import com.qwarwin.fpvdrones.item.PayloadItem;
 import com.qwarwin.fpvdrones.item.PayloadType;
 import com.qwarwin.fpvdrones.network.DroneControlPacket;
 import com.qwarwin.fpvdrones.network.DroneCorrectionPacket;
 import com.qwarwin.fpvdrones.network.Network;
+import com.qwarwin.fpvdrones.registry.ModItems;
 import com.qwarwin.fpvdrones.registry.ModSounds;
 import com.qwarwin.fpvdrones.session.SessionManager;
 import com.qwarwin.fpvdrones.util.ChunkTickets;
@@ -125,6 +127,10 @@ public abstract class AbstractDroneEntity extends Entity {
     protected void serverPilotedTick() {
     }
 
+    /** Every server tick, after the battery bookkeeping. */
+    protected void serverUpdate(boolean piloted, boolean resting) {
+    }
+
     protected void onDestroyed(DamageSource source) {
         SessionManager.endAllFor(this, "reason.fpvdrones.target_lost");
         if (level instanceof ServerWorld) {
@@ -190,6 +196,11 @@ public abstract class AbstractDroneEntity extends Entity {
         if (entityData.get(POWERED) != v) {
             entityData.set(POWERED, v);
         }
+    }
+
+    @Nullable
+    public UUID getOperatorId() {
+        return operator;
     }
 
     @Nullable
@@ -383,6 +394,7 @@ public abstract class AbstractDroneEntity extends Entity {
             // keep the area loaded while it's in the air, otherwise it freezes mid flight
             ChunkTickets.keep((ServerWorld) level, this, position(), 2);
         }
+        serverUpdate(piloted, resting);
         if (piloted) {
             serverPilotedTick();
         } else {
@@ -497,6 +509,7 @@ public abstract class AbstractDroneEntity extends Entity {
         boolean handled = (item instanceof DroneRemoteItem && player.isShiftKeyDown())
                 || item instanceof PayloadItem
                 || item == Items.REDSTONE
+                || item == ModItems.BATTERY.get()
                 || (stack.isEmpty() && player.isShiftKeyDown() && hand == Hand.MAIN_HAND);
         if (!handled) {
             return ActionResultType.PASS;
@@ -505,7 +518,9 @@ public abstract class AbstractDroneEntity extends Entity {
             return ActionResultType.SUCCESS;
         }
 
-        if (item instanceof DroneRemoteItem) {
+        if (item instanceof MavicRemoteItem && kind() != DroneKind.MAVIC) {
+            player.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.rc_mavic_only"), true);
+        } else if (item instanceof DroneRemoteItem) {
             DroneRemoteItem.bind(stack, this);
             player.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.remote_bound_drone", shortName()), true);
             level.playSound(null, getX(), getY(), getZ(), ModSounds.BEEP.get(), SoundCategory.PLAYERS, 0.8F, 1.0F);
@@ -520,10 +535,32 @@ public abstract class AbstractDroneEntity extends Entity {
                 level.playSound(null, getX(), getY(), getZ(), ModSounds.BEEP.get(), SoundCategory.PLAYERS, 0.5F, 1.4F);
             }
             player.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.charged", Math.round(getBattery() * 100F)), true);
+        } else if (item == ModItems.BATTERY.get()) {
+            swapBattery(player, stack);
         } else {
             pickUp(player);
         }
         return ActionResultType.CONSUME;
+    }
+
+    /** Fresh pack in, the old one comes back as a depleted battery (or a fresh one if it was barely used). */
+    private void swapBattery(PlayerEntity player, ItemStack stack) {
+        if (getBattery() >= 0.99F) {
+            player.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.battery_full"), true);
+            return;
+        }
+        boolean wasEmpty = getBattery() < 0.5F;
+        setBattery(1F);
+        if (!player.abilities.instabuild) {
+            stack.shrink(1);
+            ItemStack old = new ItemStack(wasEmpty ? ModItems.DEPLETED_BATTERY.get() : ModItems.BATTERY.get());
+            if (!player.inventory.add(old)) {
+                player.drop(old, false);
+            }
+        }
+        level.playSound(null, getX(), getY(), getZ(), SoundEvents.ARMOR_EQUIP_IRON, SoundCategory.PLAYERS, 0.8F, 1.3F);
+        level.playSound(null, getX(), getY(), getZ(), ModSounds.BEEP.get(), SoundCategory.PLAYERS, 0.6F, 1.6F);
+        player.displayClientMessage(new TranslationTextComponent("msg.fpvdrones.battery_swapped"), true);
     }
 
     private void attachFrom(PlayerEntity player, ItemStack stack) {

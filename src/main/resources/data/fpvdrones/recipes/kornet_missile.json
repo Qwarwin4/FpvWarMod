@@ -1,0 +1,24 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "W",
+    "R",
+    "B"
+  ],
+  "key": {
+    "W": {
+      "item": "fpvdrones:warhead"
+    },
+    "R": {
+      "item": "fpvdrones:receiver"
+    },
+    "B": {
+      "item": "fpvdrones:booster"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:kornet_missile",
+    "count": 1
+  },
+  "soldering": true
+}

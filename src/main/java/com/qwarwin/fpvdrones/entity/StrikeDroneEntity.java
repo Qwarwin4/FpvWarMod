@@ -3,7 +3,6 @@ package com.qwarwin.fpvdrones.entity;
 import com.qwarwin.fpvdrones.Config;
 import com.qwarwin.fpvdrones.client.ClientHooks;
 import com.qwarwin.fpvdrones.item.TabletItem;
-import com.qwarwin.fpvdrones.launch.LaunchConfig;
 import com.qwarwin.fpvdrones.session.SessionManager;
 import com.qwarwin.fpvdrones.util.ChunkTickets;
 import com.qwarwin.fpvdrones.util.Explosions;
@@ -42,11 +41,16 @@ import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
 import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
- * Shahed-136 / Geran-2 / Geran-5. Boost off the rail, cruise at a fixed height while hopping
- * over terrain, then dive onto the target. Keeps the chunks ahead of it loaded by itself.
+ * Shahed / Geran. Boost off the rail, cruise at a fixed height while hopping over terrain to its own
+ * entry point, then dive onto the target (or onto a radio beacon). Keeps the chunks ahead loaded by itself.
  */
 public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnData {
     public static final int BOOST = 0, CRUISE = 1, DIVE = 2;
@@ -66,6 +70,13 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
     private double terrainAhead = -999;
     @Nullable
     private UUID owner;
+    // which way it comes in from, so a salvo fans out instead of flying into each other
+    private float approachYaw;
+    private double approachRadius = 60;
+    private int beacon;
+    private long blastShieldUntil;
+
+    private static final Map<UUID, StrikeDroneEntity> FLYING = new HashMap<>();
 
     public float roll, rollO, prop, propO;
     private float lastYaw;
@@ -78,20 +89,65 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
         super(type, world);
     }
 
-    public void setup(StrikeType type, LaunchConfig target, double launchY, @Nullable UUID owner) {
+    public void setup(StrikeType type, Vector3d target, boolean autoY, int beacon, double launchY, @Nullable UUID owner) {
         this.type = type;
         this.owner = owner;
-        this.tx = target.getX();
-        this.tz = target.getZ();
-        this.autoY = target.isAutoY();
-        this.ty = autoY ? launchY : target.getY();
-        double base = autoY ? launchY : Math.max(launchY, ty);
-        this.cruiseY = Math.min(250, base + Config.CRUISE_ALTITUDE.get());
+        this.beacon = beacon;
+        this.tx = target.x;
+        this.tz = target.z;
+        this.autoY = autoY && beacon == 0;
+        this.ty = this.autoY ? launchY : target.y;
         entityData.set(HEALTH, type.getHealth());
+
+        // every drone already heading for (roughly) the same point gets its own sector and altitude
+        int index = 0;
+        for (StrikeDroneEntity other : flyingIn(level)) {
+            if (other != this && Math.abs(other.tx - tx) < 24 && Math.abs(other.tz - tz) < 24) {
+                index++;
+            }
+        }
+        double base = this.autoY ? launchY : Math.max(launchY, ty);
+        cruiseY = Math.min(250, base + Config.CRUISE_ALTITUDE.get() + index * 6);
+        float fromLaunch = (float) (MathHelper.atan2(getZ() - tz, getX() - tx) * RAD2DEG);
+        int side = index % 2 == 1 ? 1 : -1;
+        approachYaw = fromLaunch + side * ((index + 1) / 2) * 50F;
+        approachRadius = (type.isJet() ? 90 : 60) + index * 10;
 
         double dx = tx - getX(), dz = tz - getZ();
         double dist = Math.sqrt(dx * dx + dz * dz);
-        maxLife = (int) (dist / type.speed() * 1.6) + 1200;
+        maxLife = (int) ((dist + approachRadius * 2) / type.speed() * 1.6) + 1200;
+    }
+
+    private double approachX() {
+        return tx + 0.5 + Math.cos(approachYaw / RAD2DEG) * approachRadius;
+    }
+
+    private double approachZ() {
+        return tz + 0.5 + Math.sin(approachYaw / RAD2DEG) * approachRadius;
+    }
+
+    /** Drones in the air in this world. Drops the ones whose chunk got unloaded under them. */
+    private static List<StrikeDroneEntity> flyingIn(World world) {
+        List<StrikeDroneEntity> list = new ArrayList<>();
+        Iterator<StrikeDroneEntity> it = FLYING.values().iterator();
+        while (it.hasNext()) {
+            StrikeDroneEntity e = it.next();
+            if (!e.isAlive() || !(e.level instanceof ServerWorld) || ((ServerWorld) e.level).getEntity(e.getUUID()) != e) {
+                it.remove();
+            } else if (e.level == world) {
+                list.add(e);
+            }
+        }
+        return list;
+    }
+
+    /** Called right before a strike drone blows up so the blast doesn't take out its neighbours. */
+    public static void shieldNear(World world, Vector3d pos, double radius) {
+        for (StrikeDroneEntity e : flyingIn(world)) {
+            if (e.position().distanceToSqr(pos) < radius * radius) {
+                e.blastShieldUntil = world.getGameTime() + 3;
+            }
+        }
     }
 
     public StrikeType getStrikeType() {
@@ -178,7 +234,16 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
 
     private void serverTick() {
         ServerWorld sw = (ServerWorld) level;
+        FLYING.put(getUUID(), this);
         life++;
+        if (beacon != 0 && life % 10 == 0) {
+            Vector3d b = RadioBeaconEntity.locate(sw, beacon);
+            if (b != null) {
+                tx = b.x - 0.5;
+                ty = b.y;
+                tz = b.z - 0.5;
+            }
+        }
         Vector3d vel = getDeltaMovement();
         if (life % 4 == 1) {
             ChunkTickets.keep(sw, this, position(), 2);
@@ -199,9 +264,12 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
                 break;
             }
             case CRUISE: {
-                double dx = tx - getX(), dz = tz - getZ();
+                // fly to this drone's entry point first, then turn in on the target
+                double ax = approachX() - getX(), az = approachZ() - getZ();
+                double toEntry = Math.sqrt(ax * ax + az * az);
+                double dx = tx + 0.5 - getX(), dz = tz + 0.5 - getZ();
                 double hd = Math.sqrt(dx * dx + dz * dz);
-                yRot = approachDeg(yRot, (float) (MathHelper.atan2(dz, dx) * RAD2DEG) - 90F, type.isJet() ? 2.5F : 3.5F);
+                yRot = approachDeg(yRot, (float) (MathHelper.atan2(az, ax) * RAD2DEG) - 90F, type.isJet() ? 2.5F : 3.5F);
                 if (life % 10 == 0) {
                     sampleTerrain();
                 }
@@ -213,9 +281,7 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
                         ty = h;
                     }
                 }
-                // start the dive a bit earlier for the jet, it turns worse
-                double diveAt = Math.max(24, getY() - ty) * (type.isJet() ? 1.6 : 1.0);
-                if (hd < diveAt) {
+                if (toEntry < (type.isJet() ? 20 : 12) || hd < approachRadius * 0.6) {
                     setPhase(DIVE);
                     level.playSound(null, getX(), getY(), getZ(), SoundEvents.PHANTOM_SWOOP, SoundCategory.HOSTILE, 4.0F, 0.6F);
                 }
@@ -268,8 +334,7 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
             return false;
         }
         if (e instanceof StrikeDroneEntity) {
-            // salvo neighbours
-            return life > 100 && ((StrikeDroneEntity) e).getLife() > 100;
+            return false;
         }
         if (e instanceof LaunchTruckEntity) {
             return life > 60;
@@ -316,7 +381,19 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
         SessionManager.endAllFor(this, "reason.fpvdrones.target_lost");
         Vector3d pos = position().add(0, CENTER_HEIGHT, 0);
         remove();
+        shieldNear(level, pos, 24);
         Explosions.strike(level, owner, pos, type.power() * mul, Config.STRIKE_FIRE.get());
+    }
+
+    @Override
+    public void remove(boolean keepData) {
+        FLYING.remove(getUUID());
+        super.remove(keepData);
+    }
+
+    @Nullable
+    public UUID getOwner() {
+        return owner;
     }
 
     public void primeChunks(ServerWorld world) {
@@ -331,6 +408,9 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
         }
         if (level.isClientSide) {
             return true;
+        }
+        if (source.isExplosion() && level.getGameTime() <= blastShieldUntil) {
+            return false;
         }
         float h = entityData.get(HEALTH) - amount;
         entityData.set(HEALTH, h);
@@ -412,6 +492,11 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
             entityData.set(HEALTH, tag.getFloat("Health"));
         }
         owner = tag.hasUUID("Owner") ? tag.getUUID("Owner") : null;
+        approachYaw = tag.getFloat("ApproachYaw");
+        if (tag.contains("ApproachR")) {
+            approachRadius = tag.getDouble("ApproachR");
+        }
+        beacon = tag.getInt("Beacon");
     }
 
     @Override
@@ -430,6 +515,9 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
         if (owner != null) {
             tag.putUUID("Owner", owner);
         }
+        tag.putFloat("ApproachYaw", approachYaw);
+        tag.putDouble("ApproachR", approachRadius);
+        tag.putInt("Beacon", beacon);
     }
 
     @Override

@@ -14,7 +14,8 @@ public enum PayloadType {
     OG7("og7", true, false, 0.12F),
     CANISTER("explosive_canister", true, false, 0.17F),
     RGD5("rgd5", false, true, 0.17F),
-    VOG17M("vog17m", false, true, 0.21F);
+    VOG17M("vog17m", false, true, 0.21F),
+    RADIO_BEACON("radio_beacon", false, true, 0.12F);
 
     private final String name;
     private final boolean fpv;
@@ -53,6 +54,10 @@ public enum PayloadType {
         return "item." + FpvDrones.MODID + "." + name;
     }
 
+    public boolean isExplosive() {
+        return this != NONE && this != RADIO_BEACON;
+    }
+
     public float power() {
         switch (this) {
             case PG7VS:
@@ -82,6 +87,8 @@ public enum PayloadType {
                 return ModItems.RGD5.get();
             case VOG17M:
                 return ModItems.VOG17M.get();
+            case RADIO_BEACON:
+                return ModItems.RADIO_BEACON.get();
             default:
                 return Items.AIR;
         }

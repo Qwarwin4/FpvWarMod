@@ -1,0 +1,77 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "t": "fpvdrones:entity/armor",
+    "particle": "fpvdrones:entity/armor"
+  },
+  "elements": [
+    {
+      "from": [
+        3.84,
+        -4.16,
+        8.0
+      ],
+      "to": [
+        12.16,
+        4.16,
+        9.6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.06,
+            4.06,
+            9.94,
+            5.94
+          ],
+          "texture": "#t"
+        },
+        "south": {
+          "uv": [
+            8.06,
+            6.06,
+            9.94,
+            7.94
+          ],
+          "texture": "#t"
+        },
+        "east": {
+          "uv": [
+            8.06,
+            4.06,
+            9.94,
+            5.94
+          ],
+          "texture": "#t"
+        },
+        "west": {
+          "uv": [
+            8.06,
+            4.06,
+            9.94,
+            5.94
+          ],
+          "texture": "#t"
+        },
+        "up": {
+          "uv": [
+            8.06,
+            4.06,
+            9.94,
+            5.94
+          ],
+          "texture": "#t"
+        },
+        "down": {
+          "uv": [
+            8.06,
+            4.06,
+            9.94,
+            5.94
+          ],
+          "texture": "#t"
+        }
+      }
+    }
+  ]
+}

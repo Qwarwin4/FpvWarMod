@@ -34,6 +34,10 @@ public final class Config {
     public static final ForgeConfigSpec.IntValue CRUISE_ALTITUDE;
 
     public static final ForgeConfigSpec.DoubleValue TRUCK_SPEED;
+    public static final ForgeConfigSpec.BooleanValue SHELLS_BREAK_BLOCKS;
+    public static final ForgeConfigSpec.DoubleValue BMPT_SPEED;
+    public static final ForgeConfigSpec.DoubleValue ATGM_POWER;
+    public static final ForgeConfigSpec.DoubleValue ATGM_DAMAGE;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -77,6 +81,13 @@ public final class Config {
 
         b.push("truck");
         TRUCK_SPEED = b.defineInRange("speed", 1.0, 0.2, 3.0);
+        b.pop();
+
+        b.push("armour");
+        SHELLS_BREAK_BLOCKS = b.comment("30 mm impact rounds dig small holes").define("shellsBreakBlocks", false);
+        BMPT_SPEED = b.defineInRange("bmptSpeed", 1.0, 0.2, 3.0);
+        ATGM_POWER = b.comment("Blast of an ATGM warhead, the jet is separate").defineInRange("atgmPower", 3.5, 0.5, 20.0);
+        ATGM_DAMAGE = b.comment("Damage of a direct ATGM hit, BMPT has 400 HP").defineInRange("atgmDamage", 140.0, 1.0, 2000.0);
         b.pop();
 
         SPEC = b.build();

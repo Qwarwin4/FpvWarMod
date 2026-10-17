@@ -11,6 +11,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.network.NetworkEvent;
 
+import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 public class OpenLauncherPacket {
@@ -19,8 +20,14 @@ public class OpenLauncherPacket {
     public final BlockPos origin;
     // StrikeType ordinal per slot, -1 for empty
     public final int[] slots;
+    // last point marked from the player's Mavic, if any
+    @Nullable
+    public final BlockPos recon;
+    public final int reconBeacon;
 
-    public OpenLauncherPacket(LaunchSite site) {
+    public OpenLauncherPacket(LaunchSite site, @Nullable BlockPos recon, int reconBeacon) {
+        this.recon = recon;
+        this.reconBeacon = reconBeacon;
         this.site = SiteRef.of(site);
         this.config = site.getLaunchConfig();
         Vector3d o = site.getLaunchPos(0);
@@ -32,7 +39,10 @@ public class OpenLauncherPacket {
         }
     }
 
-    private OpenLauncherPacket(SiteRef site, LaunchConfig config, BlockPos origin, int[] slots) {
+    private OpenLauncherPacket(SiteRef site, LaunchConfig config, BlockPos origin, int[] slots,
+                               @Nullable BlockPos recon, int reconBeacon) {
+        this.recon = recon;
+        this.reconBeacon = reconBeacon;
         this.site = site;
         this.config = config;
         this.origin = origin;
@@ -44,10 +54,20 @@ public class OpenLauncherPacket {
         m.config.write(buf);
         buf.writeBlockPos(m.origin);
         buf.writeVarIntArray(m.slots);
+        buf.writeBoolean(m.recon != null);
+        if (m.recon != null) {
+            buf.writeBlockPos(m.recon);
+        }
+        buf.writeVarInt(m.reconBeacon);
     }
 
     public static OpenLauncherPacket decode(PacketBuffer buf) {
-        return new OpenLauncherPacket(SiteRef.read(buf), LaunchConfig.read(buf), buf.readBlockPos(), buf.readVarIntArray(8));
+        SiteRef site = SiteRef.read(buf);
+        LaunchConfig config = LaunchConfig.read(buf);
+        BlockPos origin = buf.readBlockPos();
+        int[] slots = buf.readVarIntArray(8);
+        BlockPos recon = buf.readBoolean() ? buf.readBlockPos() : null;
+        return new OpenLauncherPacket(site, config, origin, slots, recon, buf.readVarInt());
     }
 
     public static void handle(OpenLauncherPacket m, Supplier<NetworkEvent.Context> ctx) {

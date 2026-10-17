@@ -1,0 +1,20 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "IGI",
+    "IGI",
+    "IGI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "G": {
+      "item": "minecraft:gunpowder"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:ammo_30mm",
+    "count": 2
+  }
+}

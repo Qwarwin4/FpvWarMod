@@ -12,12 +12,19 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public class PartItem extends Item {
+    private final String tooltip;
+
     public PartItem(Properties props) {
+        this("tooltip.fpvdrones.part", props);
+    }
+
+    public PartItem(String tooltip, Properties props) {
         super(props);
+        this.tooltip = tooltip;
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
-        tooltip.add(new TranslationTextComponent("tooltip.fpvdrones.part").withStyle(TextFormatting.DARK_GRAY));
+    public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> lines, ITooltipFlag flag) {
+        lines.add(new TranslationTextComponent(tooltip).withStyle(TextFormatting.DARK_GRAY));
     }
 }

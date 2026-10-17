@@ -1,0 +1,33 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "CIC",
+    "GEF",
+    "BBB"
+  ],
+  "key": {
+    "C": {
+      "item": "fpvdrones:autocannon"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "G": {
+      "item": "fpvdrones:gimbal_camera"
+    },
+    "E": {
+      "item": "fpvdrones:piston_engine"
+    },
+    "F": {
+      "item": "fpvdrones:flight_controller"
+    },
+    "B": {
+      "item": "minecraft:iron_block"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:terminator",
+    "count": 1
+  },
+  "soldering": true
+}

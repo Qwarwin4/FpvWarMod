@@ -10,7 +10,7 @@ import net.minecraftforge.fml.network.simple.SimpleChannel;
 import java.util.Optional;
 
 public final class Network {
-    private static final String PROTOCOL = "1";
+    private static final String PROTOCOL = "2";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             FpvDrones.id("main"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
@@ -33,6 +33,8 @@ public final class Network {
                 SessionStatePacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(id++, DroneCorrectionPacket.class, DroneCorrectionPacket::encode, DroneCorrectionPacket::decode,
                 DroneCorrectionPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, WeaponInputPacket.class, WeaponInputPacket::encode, WeaponInputPacket::decode,
+                WeaponInputPacket::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(id++, OpenLauncherPacket.class, OpenLauncherPacket::encode, OpenLauncherPacket::decode,
                 OpenLauncherPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }

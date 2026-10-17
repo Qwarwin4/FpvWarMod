@@ -48,6 +48,7 @@ public final class ClientPacketHandler {
         ClientSession.active = true;
         ClientSession.entityId = m.entityId;
         ClientSession.kind = m.kind;
+        ClientSession.handheld = m.handheld;
         ClientSession.homeX = m.homeX;
         ClientSession.homeY = m.homeY;
         ClientSession.homeZ = m.homeZ;
