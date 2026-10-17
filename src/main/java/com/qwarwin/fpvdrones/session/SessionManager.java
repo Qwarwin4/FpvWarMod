@@ -199,10 +199,9 @@ public final class SessionManager {
         }
         p.teleportTo(world, x, y, z, yRot, xRot);
         p.setGameMode(mode);
-        if (mode == GameType.CREATIVE && flying) {
-            p.abilities.flying = true;
-            p.onUpdateAbilities();
-        }
+        // spectator leaves flying switched on, and creative would keep it
+        p.abilities.flying = flying && p.abilities.mayfly;
+        p.onUpdateAbilities();
         p.fallDistance = 0F;
         p.invulnerableTime = Math.max(p.invulnerableTime, 10);
     }

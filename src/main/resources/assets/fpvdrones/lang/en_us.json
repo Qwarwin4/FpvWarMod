@@ -163,7 +163,6 @@
   "msg.fpvdrones.rc_mavic_only": "This controller only works with a Mavic",
   "msg.fpvdrones.rth_manual": "Mavic returning home. Point saved: %s",
   "msg.fpvdrones.rth_battery": "Battery at 20%% - Mavic is flying home. Point saved: %s",
-  "msg.fpvdrones.rth_link": "Link lost - Mavic is flying home. Point saved: %s",
   "msg.fpvdrones.rth_cancel": "Return to home cancelled",
   "msg.fpvdrones.rth_landed": "Mavic landed at the home point",
   "msg.fpvdrones.rth_no_home": "No home point recorded",

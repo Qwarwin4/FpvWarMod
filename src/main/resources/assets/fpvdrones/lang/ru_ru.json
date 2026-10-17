@@ -163,7 +163,6 @@
   "msg.fpvdrones.rc_mavic_only": "Этот пульт только для Мавика",
   "msg.fpvdrones.rth_manual": "Мавик возвращается домой. Точка сохранена: %s",
   "msg.fpvdrones.rth_battery": "Заряд 20%% — Мавик сам летит домой. Точка сохранена: %s",
-  "msg.fpvdrones.rth_link": "Нет связи — Мавик возвращается домой. Точка сохранена: %s",
   "msg.fpvdrones.rth_cancel": "Возврат домой отменён",
   "msg.fpvdrones.rth_landed": "Мавик сел на точку взлёта",
   "msg.fpvdrones.rth_no_home": "Точка взлёта не записана",

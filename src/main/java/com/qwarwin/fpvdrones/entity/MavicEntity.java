@@ -28,15 +28,13 @@ import java.util.List;
 
 /**
  * Holds altitude on its own, two hooks under the belly for RGD-5 / VOG-17M / radio beacons.
- * Remembers where it took off and flies back there on H, at 20% battery or after losing its pilot.
+ * Remembers where it took off and flies back there on H or at 20% battery.
  */
 public class MavicEntity extends AbstractDroneEntity {
     public static final int SLOTS = 2;
     public static final double HOOK_X = 0.074;
     public static final float RTH_BATTERY = 0.2F;
     private static final double RTH_CLIMB = 20.0;
-    // after this long without a pilot it gives up hovering and flies home
-    private static final int LINK_LOSS_TICKS = 600;
 
     private static final DataParameter<Float> HOME_X = EntityDataManager.defineId(MavicEntity.class, DataSerializers.FLOAT);
     private static final DataParameter<Float> HOME_Y = EntityDataManager.defineId(MavicEntity.class, DataSerializers.FLOAT);
@@ -45,7 +43,6 @@ public class MavicEntity extends AbstractDroneEntity {
     private static final DataParameter<Boolean> RETURNING = EntityDataManager.defineId(MavicEntity.class, DataSerializers.BOOLEAN);
 
     private boolean lowBatteryHandled;
-    private int unpilotedTicks;
 
     public MavicEntity(EntityType<? extends MavicEntity> type, World world) {
         super(type, world);
@@ -85,7 +82,7 @@ public class MavicEntity extends AbstractDroneEntity {
     }
 
     /**
-     * H key / low battery / lost link. Remembers where the drone turned back from (or what it was looking at)
+     * H key / low battery. Remembers where the drone turned back from (or what it was looking at)
      * so the launcher menu can pick it up as a target.
      */
     public void startReturn(@Nullable ServerPlayerEntity by, @Nullable BlockPos mark, String reason) {
@@ -137,19 +134,14 @@ public class MavicEntity extends AbstractDroneEntity {
                 // home point is wherever it last sat before taking off
                 setHome(position());
             }
-            unpilotedTicks = 0;
             return;
         }
-        unpilotedTicks = piloted ? 0 : unpilotedTicks + 1;
         float bat = getBattery();
         if (bat > 0.3F) {
             lowBatteryHandled = false;
         } else if (bat <= RTH_BATTERY && !lowBatteryHandled) {
             lowBatteryHandled = true;
             startReturn(null, null, "msg.fpvdrones.rth_battery");
-        }
-        if (unpilotedTicks == LINK_LOSS_TICKS) {
-            startReturn(null, null, "msg.fpvdrones.rth_link");
         }
     }
 
