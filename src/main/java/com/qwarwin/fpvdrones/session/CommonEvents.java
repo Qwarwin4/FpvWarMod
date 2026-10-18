@@ -1,12 +1,8 @@
 package com.qwarwin.fpvdrones.session;
 
 import com.qwarwin.fpvdrones.FpvDrones;
-import com.qwarwin.fpvdrones.entity.TerminatorEntity;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.DamageSource;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -26,16 +22,6 @@ public final class CommonEvents {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getPlayer() instanceof ServerPlayerEntity) {
             SessionManager.onLogout((ServerPlayerEntity) event.getPlayer());
-        }
-    }
-
-    /** Inside the BMPT the crew only gets hurt when the vehicle itself goes. */
-    @SubscribeEvent
-    public static void onCrewAttacked(LivingAttackEvent event) {
-        Entity vehicle = event.getEntityLiving().getVehicle();
-        DamageSource src = event.getSource();
-        if (vehicle instanceof TerminatorEntity && vehicle.isAlive() && !src.isBypassInvul()) {
-            event.setCanceled(true);
         }
     }
 

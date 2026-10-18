@@ -12,7 +12,6 @@ import com.qwarwin.fpvdrones.entity.OperatorEntity;
 import com.qwarwin.fpvdrones.entity.RadioBeaconEntity;
 import com.qwarwin.fpvdrones.entity.ShellEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
-import com.qwarwin.fpvdrones.entity.TerminatorEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
@@ -49,10 +48,6 @@ public final class ModEntities {
     public static final RegistryObject<EntityType<RadioBeaconEntity>> RADIO_BEACON = register("radio_beacon",
             EntityType.Builder.<RadioBeaconEntity>of(RadioBeaconEntity::new, EntityClassification.MISC)
                     .sized(0.3F, 0.3F).setTrackingRange(10).setUpdateInterval(2));
-
-    public static final RegistryObject<EntityType<TerminatorEntity>> TERMINATOR = register("terminator",
-            EntityType.Builder.<TerminatorEntity>of(TerminatorEntity::new, EntityClassification.MISC)
-                    .sized(3.4F, 2.7F).setTrackingRange(16).setUpdateInterval(1).fireImmune());
 
     public static final RegistryObject<EntityType<AirDefenseGunEntity>> AIR_DEFENSE_GUN = register("air_defense_gun",
             EntityType.Builder.<AirDefenseGunEntity>of(AirDefenseGunEntity::new, EntityClassification.MISC)

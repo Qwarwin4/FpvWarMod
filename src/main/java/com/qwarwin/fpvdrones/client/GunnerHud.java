@@ -8,7 +8,6 @@ import com.qwarwin.fpvdrones.entity.MissileEntity;
 import com.qwarwin.fpvdrones.entity.MountedWeaponEntity;
 import com.qwarwin.fpvdrones.entity.ShellEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
-import com.qwarwin.fpvdrones.entity.TerminatorEntity;
 import com.qwarwin.fpvdrones.item.JavelinItem;
 import com.qwarwin.fpvdrones.util.Targeting;
 import net.minecraft.client.Minecraft;
@@ -27,7 +26,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.Locale;
 
-/** Gunner sights for the gun mount, the BMPT and the Kornet, and the Javelin seeker view. */
+/** Gunner sights for the gun mount and the Kornet, and the Javelin seeker view. */
 @OnlyIn(Dist.CLIENT)
 public final class GunnerHud {
     private static final int GREEN = 0xFF6CFF8A;
@@ -80,8 +79,6 @@ public final class GunnerHud {
 
         if (gun instanceof AirDefenseGunEntity) {
             airDefense(ms, mc, font, (AirDefenseGunEntity) gun, w, h, blink);
-        } else if (gun instanceof TerminatorEntity) {
-            terminator(ms, mc, font, (TerminatorEntity) gun, w, h, blink, pt);
         } else if (gun instanceof KornetEntity) {
             kornet(ms, mc, font, (KornetEntity) gun, w, h, blink);
         }
@@ -149,50 +146,6 @@ public final class GunnerHud {
                         : gun.getMode() == AirDefenseGunEntity.AUTO ? "РЕЖИМ: АВТО — ЧУЖИЕ ДРОНЫ" : "РЕЖИМ: РУЧН",
                 "[ЛКМ] огонь  [" + key(KeyBinds.ACTION) + "] режим  [колесо] зум"
         }, gun.getAmmo() == 0 && blink ? RED : GREEN);
-    }
-
-    private static void terminator(MatrixStack ms, Minecraft mc, FontRenderer font, TerminatorEntity t, int w, int h, boolean blink,
-                                   float pt) {
-        int cx = w / 2, cy = h / 2;
-        // chevron + stadia
-        for (int i = 0; i < 9; i++) {
-            fill(ms, cx - i, cy + i, cx - i + 1, cy + i + 1, GREEN);
-            fill(ms, cx + i, cy + i, cx + i + 1, cy + i + 1, GREEN);
-        }
-        fill(ms, cx - 60, cy, cx - 14, cy + 1, GREEN);
-        fill(ms, cx + 15, cy, cx + 61, cy + 1, GREEN);
-        for (int i = 1; i <= 4; i++) {
-            fill(ms, cx - 14 - i * 10, cy - 3, cx - 13 - i * 10, cy + 4, GREEN_DIM);
-            fill(ms, cx + 14 + i * 10, cy - 3, cx + 15 + i * 10, cy + 4, GREEN_DIM);
-        }
-
-        // hull vs turret: little tank icon bottom centre
-        float rel = MathHelper.wrapDegrees(t.getTurretYaw(pt) - t.yRot);
-        int ix = cx, iy = h - 30;
-        fill(ms, ix - 5, iy - 8, ix + 6, iy + 9, 0x6644FF66);
-        double a = Math.toRadians(-rel);
-        for (int i = 0; i < 12; i++) {
-            int px = ix + (int) Math.round(Math.sin(a) * i);
-            int py = iy - (int) Math.round(Math.cos(a) * i);
-            fill(ms, px, py, px + 1, py + 1, WHITE);
-        }
-
-        boolean guiding = false;
-        for (Entity e : mc.level.getEntities(t, t.getBoundingBox().inflate(900), e -> e instanceof MissileEntity)) {
-            guiding |= ((MissileEntity) e).isGuided() && ((MissileEntity) e).getMissileType().isBeamRiding();
-        }
-        boolean driver = !t.getPassengers().isEmpty() && t.getPassengers().get(0) == mc.player;
-        panel(ms, font, 8, 8, new String[]{
-                "БМПТ «Терминатор»",
-                String.format(Locale.ROOT, "2А42 х2  %03d/%d", t.getAmmo(), t.maxAmmo()),
-                String.format(Locale.ROOT, "ПТУР «Атака»  %d/%d", t.getAmmo2(), t.maxAmmo2()),
-                String.format(Locale.ROOT, "СКОРОСТЬ %d км/ч", Math.round(Math.abs(t.getSpeed()) * 20 * 3.6)),
-                "[ЛКМ] пушки  [ПКМ] ПТУР  [колесо] зум" + (driver ? "  [WASD] ход" : "")
-        }, GREEN);
-        if (guiding) {
-            String g = "НАВЕДЕНИЕ — ДЕРЖИ ЦЕЛЬ";
-            font.drawShadow(ms, g, cx - font.width(g) / 2, cy + 30, blink ? AMBER : GREEN);
-        }
     }
 
     private static void kornetIdle(MatrixStack ms, FontRenderer font, KornetEntity k, int w, int h) {

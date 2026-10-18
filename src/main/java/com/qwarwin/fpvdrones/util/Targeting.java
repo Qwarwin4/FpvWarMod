@@ -1,11 +1,13 @@
 package com.qwarwin.fpvdrones.util;
 
+import com.qwarwin.fpvdrones.FpvDrones;
 import com.qwarwin.fpvdrones.entity.AbstractDroneEntity;
 import com.qwarwin.fpvdrones.entity.MachineEntity;
 import com.qwarwin.fpvdrones.entity.MissileEntity;
 import com.qwarwin.fpvdrones.entity.MountedWeaponEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.FlyingEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.boss.WitherEntity;
@@ -16,6 +18,8 @@ import net.minecraft.entity.passive.BeeEntity;
 import net.minecraft.entity.passive.ParrotEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
+import net.minecraft.tags.EntityTypeTags;
+import net.minecraft.tags.ITag;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
@@ -29,6 +33,13 @@ import java.util.function.Predicate;
 
 /** Hit tests, friend-or-foe and lead calculation shared by the guns and missiles. */
 public final class Targeting {
+    /**
+     * Other mods' aircraft for the gun's proximity fuse and "everything airborne" mode. Ships with Military Tech's
+     * planes as optional entries, so nothing breaks without it.
+     */
+    public static final ITag.INamedTag<EntityType<?>> AIR_TARGETS = EntityTypeTags.createOptional(FpvDrones.id("air_targets"));
+    /** Other mods' vehicles that guns, ATGMs and payloads should hit even though they aren't living things. */
+    public static final ITag.INamedTag<EntityType<?>> SHOOTABLE = EntityTypeTags.createOptional(FpvDrones.id("shootable"));
 
     public static final class Hit {
         public final Entity entity;
@@ -61,11 +72,12 @@ public final class Targeting {
 
     /** Things worth shooting a gun or missile at. */
     public static boolean isShootable(Entity e) {
-        return e instanceof LivingEntity || e instanceof MachineEntity || isAirTarget(e);
+        return e instanceof LivingEntity || e instanceof MachineEntity || isAirTarget(e) || e.getType().is(SHOOTABLE);
     }
 
     public static boolean isAirTarget(Entity e) {
-        return e instanceof StrikeDroneEntity || e instanceof AbstractDroneEntity || e instanceof MissileEntity;
+        return e instanceof StrikeDroneEntity || e instanceof AbstractDroneEntity || e instanceof MissileEntity
+                || e.getType().is(AIR_TARGETS) && !e.isOnGround();
     }
 
     /** Everything up in the air: drones, missiles, flying mobs, players on elytra. */

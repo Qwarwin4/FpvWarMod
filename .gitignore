@@ -11,3 +11,4 @@ eclipse/
 .project
 .settings/
 __pycache__/
+tools/_build/

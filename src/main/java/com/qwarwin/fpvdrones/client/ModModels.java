@@ -34,11 +34,6 @@ public final class ModModels {
     public static final ResourceLocation ADGUN_BASE = FpvDrones.id("entity/adgun_base");
     public static final ResourceLocation ADGUN_TURRET = FpvDrones.id("entity/adgun_turret");
     public static final ResourceLocation ADGUN_GUN = FpvDrones.id("entity/adgun_gun");
-    public static final ResourceLocation BMPT_HULL = FpvDrones.id("entity/bmpt_hull");
-    public static final ResourceLocation BMPT_WHEEL = FpvDrones.id("entity/bmpt_wheel");
-    public static final ResourceLocation BMPT_TURRET = FpvDrones.id("entity/bmpt_turret");
-    public static final ResourceLocation BMPT_GUNS = FpvDrones.id("entity/bmpt_guns");
-    public static final ResourceLocation ATAKA_CAP = FpvDrones.id("entity/ataka_cap");
     public static final ResourceLocation KORNET_TRIPOD = FpvDrones.id("entity/kornet_tripod");
     public static final ResourceLocation KORNET_HEAD = FpvDrones.id("entity/kornet_head");
     public static final ResourceLocation KORNET_SIGHT = FpvDrones.id("entity/kornet_sight");
@@ -59,11 +54,6 @@ public final class ModModels {
         list.add(ADGUN_BASE);
         list.add(ADGUN_TURRET);
         list.add(ADGUN_GUN);
-        list.add(BMPT_HULL);
-        list.add(BMPT_WHEEL);
-        list.add(BMPT_TURRET);
-        list.add(BMPT_GUNS);
-        list.add(ATAKA_CAP);
         list.add(KORNET_TRIPOD);
         list.add(KORNET_HEAD);
         list.add(KORNET_SIGHT);

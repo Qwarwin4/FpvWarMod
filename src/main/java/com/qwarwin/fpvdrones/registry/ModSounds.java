@@ -24,7 +24,6 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> RELOAD = reg("reload");
     public static final RegistryObject<SoundEvent> SEEKER_TONE = reg("seeker_tone");
     public static final RegistryObject<SoundEvent> LOCK_TONE = reg("lock_tone");
-    public static final RegistryObject<SoundEvent> TRACKS = reg("tracks");
 
     private static RegistryObject<SoundEvent> reg(String name) {
         return SOUNDS.register(name, () -> new SoundEvent(FpvDrones.id(name)));

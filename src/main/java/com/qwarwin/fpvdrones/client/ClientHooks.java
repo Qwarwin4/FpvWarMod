@@ -5,7 +5,6 @@ import com.qwarwin.fpvdrones.entity.DroneKind;
 import com.qwarwin.fpvdrones.entity.LaunchTruckEntity;
 import com.qwarwin.fpvdrones.entity.MissileEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
-import com.qwarwin.fpvdrones.entity.TerminatorEntity;
 import com.qwarwin.fpvdrones.item.JavelinItem;
 import com.qwarwin.fpvdrones.registry.ModSounds;
 import net.minecraft.client.Minecraft;
@@ -31,10 +30,6 @@ public final class ClientHooks {
 
     public static void onTruckSeen(LaunchTruckEntity truck) {
         Minecraft.getInstance().getSoundManager().play(new EntityLoopSound(truck, ModSounds.TRUCK_ENGINE.get(), 1.4F));
-    }
-
-    public static void onTerminatorSeen(TerminatorEntity bmpt) {
-        Minecraft.getInstance().getSoundManager().play(new EntityLoopSound(bmpt, ModSounds.TRACKS.get(), 1.6F));
     }
 
     public static void onMissileSeen(MissileEntity missile) {

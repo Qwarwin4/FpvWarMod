@@ -14,6 +14,9 @@ import tempfile
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gen_armor  # noqa: E402
+
 MODID = "fpvdrones"
 RES = sys.argv[1] if len(sys.argv) > 1 else "src/main/resources"
 ASSETS = os.path.join(RES, "assets", MODID)
@@ -1139,151 +1142,7 @@ def build_payloads():
 
 
 # ---------------------------------------------------------------------------
-# truck, a KamAZ-5350 style cab-over 6x6. Model unit = 3/16 block (rendered with scale 3), ground at y=0.
-# boxes are written in truck-local blocks and converted: u = local * 16/3 (+8 on x/z)
-
-TRUCK_WHEELS = [(-1.0, 2.35), (1.0, 2.35), (-1.0, -1.0), (1.0, -1.0), (-1.0, -2.3), (1.0, -2.3)]
-TRUCK_WHEEL_R = 0.62
-TRUCK_RACK_PIVOT = (0, 1.2, 0.35)
-
-
-def tu(v, axis):
-    return round(v * 16 / 3 + (0 if axis == 1 else 8), 3)
-
-
-def build_truck():
-    a = Atlas("truck")
-    a.add("olive", p_flat("#46522f", 7))
-    a.add("olive_panel", p_panel_lines("#4a5633", "#323b20"))
-    a.add("grille", p_stripes("#1c1f16", "#3a4529", 2))
-    a.add("cab_front", p_cab_front("#46522f"))
-    a.add("cab_side", p_window_split("#46522f", glass="#1a2630", glass_rows=6))
-    a.add("cab_back", p_flat("#3f4a2a", 6))
-    a.add("black", p_flat("#18191a", 4))
-    a.add("chassis", p_flat("#222321", 5))
-    a.add("tire", p_tire())
-    a.add("hub", p_hub("#46522f"))
-    a.add("headlight", p_led("#fff4c8", "#18191a"))
-    a.add("taillight", p_led("#d01b1b", "#18191a"))
-    a.add("bumper", p_flat("#3a4428", 5))
-    a.add("tank", p_stripes("#3a4527", "#2c351d", 3, vertical=True))
-    a.add("tarp", p_camo("#4b5634", "#36402a", "#5f6a3e"))
-    a.add("tarp_plain", p_flat("#4d5836", 9))
-    a.add("rail", p_flat("#6c7175", 5, light=1.2))
-    a.add("rail_dark", p_flat("#3d4144", 4))
-    a.add("hazard", p_hazard("#d0b020", "#18191a"))
-    a.add("plate", p_label("#e8e8e8", "#e8e8e8", "#222222"))
-    a.add("dash", p_flat("#141516", 3))
-    a.add("steel", p_flat("#7c8288", 6, light=1.2))
-    a.add("wheel_rim", p_flat("#2a2b2c", 4))
-    a.save()
-
-    body = Model(a)
-
-    def B(x1, y1, z1, x2, y2, z2, faces, rot=None):
-        fr = [tu(x1, 0), tu(y1, 1), tu(z1, 2)]
-        to = [tu(x2, 0), tu(y2, 1), tu(z2, 2)]
-        if rot:
-            o, axis, ang = rot
-            rot = ([tu(o[0], 0), tu(o[1], 1), tu(o[2], 2)], axis, ang)
-        body.box(fr, to, faces, rot=rot)
-
-    def both(x1, y1, z1, x2, y2, z2, faces, rot=None):
-        B(x1, y1, z1, x2, y2, z2, faces, rot)
-        if rot:
-            o, axis, ang = rot
-            rot = ((-o[0], o[1], o[2]), axis, -ang if axis in ("y", "z") else ang)
-        B(-x2, y1, z1, -x1, y2, z2, faces, rot)
-
-    # frame rails and the big front bumper
-    both(0.38, 0.78, -3.7, 0.62, 1.02, 3.2, "chassis")
-    B(-1.25, 0.55, 3.2, 1.25, 1.02, 3.48, {"all": "bumper", "up": "black"})
-    both(0.82, 0.68, 3.48, 1.12, 0.9, 3.52, "headlight")
-    both(0.45, 0.7, 3.48, 0.6, 0.82, 3.52, "taillight")
-    B(-0.32, 0.62, 3.48, 0.32, 0.78, 3.52, "plate")
-    B(-0.2, 0.5, 3.3, 0.2, 0.62, 3.6, "black")
-    # cab-over: flat nose, lower grille, big windscreen
-    B(-1.2, 1.02, 1.8, 1.2, 1.7, 3.2, {"all": "olive", "south": "grille", "up": "olive_panel"})
-    B(-1.2, 1.7, 1.8, 1.2, 2.95, 3.12, {"all": "olive", "south": "cab_front", "east": "cab_side",
-                                        "west": "cab_side", "north": "cab_back", "up": "olive_panel"})
-    B(-1.05, 2.95, 1.9, 1.05, 3.05, 3.0, "olive")
-    # sun visor, mirrors, steps
-    B(-1.15, 2.88, 3.12, 1.15, 2.95, 3.3, "olive")
-    both(1.2, 2.1, 2.9, 1.28, 2.15, 3.15, "black")
-    both(1.28, 1.75, 3.1, 1.34, 2.35, 3.2, "black")
-    both(1.2, 0.72, 2.75, 1.32, 0.78, 3.15, "black")
-    both(1.2, 1.0, 2.75, 1.32, 1.06, 3.15, "black")
-    # front wheel arches
-    both(0.7, 1.02, 1.6, 1.3, 1.12, 3.1, "black")
-    # inside: dashboard and the wheel, only seen from the driver's seat
-    B(-1.1, 1.7, 2.85, 1.1, 2.0, 3.05, "dash")
-    B(0.32, 1.9, 2.55, 0.78, 2.3, 2.6, "dash", rot=((0.55, 2.1, 2.57), "x", 22.5))
-    # snorkel behind the cab
-    B(-1.2, 1.4, 1.62, -1.02, 3.15, 1.8, "black")
-    B(-1.2, 3.0, 1.62, -0.85, 3.18, 1.8, "black")
-    # tanks and battery box between the axles
-    both(0.65, 0.48, 0.15, 1.15, 1.0, 1.4, "tank")
-    # equipment module under a tarp right behind the cab, like the cargo body on the real thing
-    B(-1.25, 1.02, 0.55, 1.25, 1.2, 1.55, {"all": "olive", "up": "olive_panel"})
-    B(-1.25, 1.2, 0.6, 1.25, 2.85, 1.55, {"all": "tarp", "north": "tarp_plain"})
-    B(-1.27, 1.2, 0.6, 1.27, 1.32, 1.57, "olive")
-    for z in (0.75, 1.15):
-        both(1.25, 1.32, z, 1.29, 2.75, z + 0.05, "olive")
-    # flat bed under the rack
-    B(-1.25, 1.02, -3.7, 1.25, 1.2, 0.55, {"all": "olive", "up": "olive_panel"})
-    both(1.18, 1.2, -3.7, 1.25, 1.42, 0.55, "olive")
-    B(-1.25, 1.2, -3.72, 1.25, 1.42, -3.65, {"all": "olive", "north": "hazard"})
-    both(0.9, 1.2, -3.5, 1.2, 1.3, -0.4, "black")
-    # rear mudflaps, lights, hitch
-    both(0.85, 0.35, -3.72, 1.25, 1.02, -3.68, "black")
-    both(0.85, 0.8, -3.73, 1.12, 0.95, -3.7, "taillight")
-    B(-0.32, 0.65, -3.73, 0.32, 0.88, -3.7, "plate")
-    B(-0.15, 0.6, -3.85, 0.15, 0.78, -3.65, "steel")
-    # mudguards over the rear tandem
-    both(0.72, 1.02, -2.95, 1.3, 1.1, -0.35, "black")
-    body.save("truck")
-
-    wheel = Model(a)
-    r = TRUCK_WHEEL_R * 16 / 3
-    w = 0.42 * 16 / 3 / 2
-    for rot in (None, ([8, 8, 8], "x", 45)):
-        wheel.box([8 - w, 8 - r, 8 - r * 0.42], [8 + w, 8 + r, 8 + r * 0.42], {"all": "tire", "east": "hub", "west": "hub"}, rot=rot)
-        wheel.box([8 - w, 8 - r * 0.42, 8 - r], [8 + w, 8 + r * 0.42, 8 + r], {"all": "tire", "east": "hub", "west": "hub"}, rot=rot)
-    wheel.box([8 - w - 0.15, 7.0, 7.0], [8 + w + 0.15, 9.0, 9.0], "hub")
-    wheel.save("truck_wheel")
-
-    # rack: pivot (front bottom) at model (8, 0, 24), extends back to z ~5.6
-    rack = Model(a)
-    rack.box([1.6, 0, 5.6], [2.8, 0.8, 24], "rail_dark")
-    rack.box([13.2, 0, 5.6], [14.4, 0.8, 24], "rail_dark")
-    for z in (5.6, 14.4, 23.0):
-        rack.box([1.6, 0, z], [2.4, 14.4, z + 1.0], "rail")
-        rack.box([13.6, 0, z], [14.4, 14.4, z + 1.0], "rail")
-    for i in range(5):
-        y = 0.8 + i * 2.667
-        rack.box([7.2, y, 5.6], [8.8, y + 0.4, 24], "rail")
-        rack.box([1.6, y, 23.0], [14.4, y + 0.4, 24], "hazard" if i == 0 else "rail_dark")
-        rack.box([1.6, y, 5.6], [14.4, y + 0.4, 6.4], "rail_dark")
-    rack.box([1.6, 14.0, 5.6], [14.4, 14.4, 24], {"all": "rail_dark", "up": "tarp"})
-    rack.save("truck_rack")
-
-    # item icon: body + wheels + rack in one model
-    icon = Model(a)
-    icon.elements = list(body.elements)
-    for wx, wz in TRUCK_WHEELS:
-        cx, cz = tu(wx, 0), tu(wz, 2)
-        icon.box([cx - w, 0, cz - r], [cx + w, 2 * r, cz + r], {"all": "tire", "east": "hub", "west": "hub"})
-    pivot = (8, tu(TRUCK_RACK_PIVOT[1], 1), tu(TRUCK_RACK_PIVOT[2], 2))
-    for e in rack.elements:
-        e2 = json.loads(json.dumps(e))
-        dz = pivot[2] - 24
-        for v in (e2["from"], e2["to"]):
-            v[1] += pivot[1]
-            v[2] += dz
-        e2["rotation"] = {"origin": list(pivot), "axis": "x", "angle": 22.5}
-        icon.elements.append(e2)
-    icon.save("launch_truck", display(0.3, gui_rot=(25, 135, 0), ground=0.25, hand=0.2, fixed=0.3, gui_tr=(0, -2, 0)),
-              folder="item")
+# the KamAZ launch truck, the 30 mm gun, the Kornet, the Javelin and the ATGMs are in gen_armor.py
 
 
 # ---------------------------------------------------------------------------
@@ -1992,379 +1851,6 @@ def gui_texture():
     im.save(path(ASSETS, "textures", "gui", "assembly_bench.png"))
 
 
-# ---------------------------------------------------------------------------
-# armour: parts are written in blocks relative to their pivot and scaled on save.
-# unit = scale/16 block; model (8, 0, 8) sits on the pivot (see Parts.draw on the Java side)
-
-
-class Part:
-    def __init__(self, atlas):
-        self.atlas = atlas
-        self.boxes = []
-
-    def B(self, x1, y1, z1, x2, y2, z2, faces, rot=None):
-        self.boxes.append(((min(x1, x2), min(y1, y2), min(z1, z2)), (max(x1, x2), max(y1, y2), max(z1, z2)), faces, rot))
-        return self
-
-    def both(self, x1, y1, z1, x2, y2, z2, faces, rot=None):
-        self.B(x1, y1, z1, x2, y2, z2, faces, rot)
-        mrot = None
-        if rot:
-            o, axis, ang = rot
-            mrot = ((-o[0], o[1], o[2]), axis, -ang if axis in ("y", "z") else ang)
-        if isinstance(faces, dict) and ("east" in faces or "west" in faces):
-            faces = dict(faces)
-            faces["east"], faces["west"] = faces.get("west", faces.get("all")), faces.get("east", faces.get("all"))
-        self.B(-x2, y1, z1, -x1, y2, z2, faces, mrot)
-        return self
-
-    def model(self, scale, offset=(0, 0, 0), center_y=False, into=None):
-        m = into or Model(self.atlas)
-        k = 16.0 / scale
-        cy = 8 if center_y else 0
-
-        def u(v, axis):
-            return round((v + offset[axis]) * k + (cy if axis == 1 else 8), 3)
-
-        for fr, to, faces, rot in self.boxes:
-            r = None
-            if rot:
-                o, axis, ang = rot
-                r = ([u(o[0], 0), u(o[1], 1), u(o[2], 2)], axis, ang)
-            m.box([u(fr[0], 0), u(fr[1], 1), u(fr[2], 2)], [u(to[0], 0), u(to[1], 1), u(to[2], 2)], faces, rot=r)
-        return m
-
-
-def p_jacket(base="#3c4434"):
-    """perforated barrel shroud"""
-    def paint(t, rng):
-        p_flat(base, 5)(t, rng)
-        d = SD(t)
-        for x in range(2, 15, 3):
-            d.rounded_rectangle([x, 4, x + 1, 11], radius=0.5, fill=hexc("#0b0d09"))
-            d.line([x + 1.5, 4.2, x + 1.5, 10.8], fill=shade(hexc(base), 1.25), width=0.4)
-    return _kind(paint, "metal")
-
-
-def p_door(base):
-    def paint(t, rng):
-        p_flat(base, 6)(t, rng)
-        d = SD(t)
-        b = hexc(base)
-        d.rectangle([2, 2, 13, 13], outline=shade(b, 0.55))
-        d.rectangle([2.6, 2.6, 13.6, 13.6], outline=shade(b, 1.2), width=0.4)
-        d.rounded_rectangle([11, 6.5, 12.2, 9.5], radius=0.4, fill=hexc("#1c1f18"))
-        d.line([11.2, 6.7, 11.2, 9.3], fill=hexc("#5a6048"), width=0.3)
-        for p in ((3, 3), (12.4, 12.4), (3, 12.4), (12.4, 3)):
-            d.point(p, fill=shade(b, 0.7))
-            d.point((p[0] - 0.15, p[1] - 0.15), fill=shade(b, 1.35))
-        for y in (4, 11):
-            d.rectangle([1.2, y, 2, y + 1.6], fill=shade(b, 0.6))
-    return _kind(paint, "paint")
-
-
-def p_tracks():
-    def paint(t, rng):
-        px = t.load()
-        n = t.width
-        for x, y, u, v in _pixels(t):
-            ph = (v + 0.5) % 4
-            g = 36 + rng.randint(-4, 4)
-            if ph < 0.6:
-                g = 20
-            elif ph < 1.4:
-                g += 24 - int(10 * (ph - 0.6))
-            elif ph > 3.4:
-                g -= 6
-            # centre guide horns
-            if 6.5 < u < 8.5 and 1.0 < ph < 2.6:
-                g += 30
-            if u < 0.6 or u > 14.4:
-                g = 18
-            px[x, y] = (g, g, g + 3, 255)
-    return _kind(paint, "dark")
-
-
-def p_era(base):
-    """bricks of reactive armour"""
-    def paint(t, rng):
-        p_flat(base, 6)(t, rng)
-        d = SD(t)
-        b = hexc(base)
-        dark, hi = shade(b, 0.5), shade(b, 1.22)
-        for y in (0, 8):
-            d.line([0, y, 15, y], fill=dark)
-            d.line([0, y + 0.6, 15, y + 0.6], fill=hi, width=0.4)
-        for x in (0, 5, 10):
-            d.line([x, 0, x, 7.5], fill=dark)
-        for x in (2, 7, 12):
-            d.line([x, 8, x, 15], fill=dark)
-        for cx in (2.5, 7.5, 12.5):
-            d.point((cx, 4), fill=shade(b, 0.75))
-        for cx in (4.5, 9.5, 14):
-            d.point((cx, 12), fill=shade(b, 0.75))
-    return _kind(paint, "paint")
-
-
-def p_tube_end(base):
-    def paint(t, rng):
-        p_flat(base, 5)(t, rng)
-        d = SD(t)
-        d.ellipse([2, 2, 13, 13], fill=hexc("#16180f"), outline=shade(hexc(base), 0.55))
-        d.ellipse([2.6, 2.6, 12.4, 12.4], outline=shade(hexc(base), 1.2), width=0.4)
-        d.ellipse([5, 5, 10, 10], fill=hexc("#0a0b07"))
-    return _kind(paint, "paint")
-
-
-def build_armor():
-    a = Atlas("armor")
-    a.add("olive", p_flat("#4f5a3a", 7))
-    a.add("olive_dark", p_flat("#3b4430", 6))
-    a.add("olive_panel", p_panel_lines("#525d3c", "#384128"))
-    a.add("door", p_door("#525d3c"))
-    a.add("grey", p_flat("#6b726a", 6))
-    a.add("dark", p_flat("#1e211b", 4))
-    a.add("black", p_flat("#141414", 3))
-    a.add("steel", p_flat("#7c8288", 6, light=1.2))
-    a.add("jacket", p_jacket())
-    a.add("muzzle", p_vent("#2b3027", "#0d0f0b"))
-    a.add("lens", p_lens(rim="#1b1d18", glass="#283a6a", glint="#b8d4ff", bg="#2a2f25"))
-    a.add("lens_amber", p_lens(rim="#1b1d18", glass="#6a4a18", glint="#ffd27a", bg="#2a2f25"))
-    a.add("tracks", p_tracks())
-    a.add("tire", p_tire())
-    a.add("hub", p_hub("#4f5a3a"))
-    a.add("era", p_era("#56603f"))
-    a.add("grille", p_stripes("#1c1f16", "#3a4529", 2))
-    a.add("tube", p_flat("#5a6440", 6))
-    a.add("tube_end", p_tube_end("#5a6440"))
-    a.add("tube_green", p_flat("#3d5a2e", 7))
-    a.add("cap", p_flat("#b0821c", 8, light=1.2))
-    a.add("hazard", p_hazard("#d0b020", "#18191a"))
-    a.add("headlight", p_led("#fff4c8", "#18191a"))
-    a.add("taillight", p_led("#d01b1b", "#18191a"))
-    a.add("drum", p_stripes("#3e4630", "#2f3624", 2, vertical=True))
-    a.add("tracer", p_flat("#ffb347", 4, border=1.0, light=1.0))
-    a.add("tracer_core", p_flat("#fff2c0", 2, border=1.0, light=1.0))
-    a.add("missile", p_flat("#5d6b45", 6))
-    a.add("missile_nose", p_flat("#3a3f33", 5, light=1.25))
-    a.add("missile_band", p_stripes("#b8962e", "#8a6f20", 2))
-    a.add("fin", p_flat("#2e3329", 4))
-    a.add("jav_body", p_flat("#6b6f4e", 6))
-    a.add("jav_dome", p_lens(rim="#2a2b2e", glass="#5a5f63", glint="#e8eef2", bg="#6b6f4e"))
-    a.add("plume", p_flat("#ff8a2a", 4, border=1.0, light=1.0))
-    a.add("tan", p_flat("#8c8156", 7))
-    a.add("tan_dark", p_flat("#6c6440", 6))
-    a.add("strap", p_flat("#2f3226", 4))
-    a.save()
-
-    # -- 30 mm remote weapon station on a pedestal (scale 2)
-    base = Part(a)
-    base.B(-0.68, 0, -0.68, 0.68, 0.08, 0.68, "olive_dark")
-    base.B(-0.55, 0.08, -0.55, 0.55, 1.05, 0.55, {"all": "door", "up": "olive", "down": "olive_dark"})
-    base.B(-0.6, 1.05, -0.6, 0.6, 1.12, 0.6, "olive_dark")
-    base.B(-0.42, 1.12, -0.42, 0.42, 1.15, 0.42, "dark")
-    base.both(0.55, 0.45, -0.1, 0.59, 0.5, 0.1, "dark")
-    base.B(-0.1, 0.45, 0.55, 0.1, 0.5, 0.59, "dark")
-    for x in (-0.62, 0.58):
-        base.B(x, 0.0, -0.62, x + 0.04, 0.12, -0.58, "steel")
-        base.B(x, 0.0, 0.58, x + 0.04, 0.12, 0.62, "steel")
-    base.model(2).save("adgun_base")
-
-    tur = Part(a)
-    # armoured boxes either side of the gun, faceted fronts
-    tur.both(0.3, 0.02, -0.52, 0.76, 0.6, 0.32, {"all": "olive_panel", "up": "olive", "down": "olive_dark",
-                                                 "south": "olive"})
-    tur.both(0.3, 0.06, 0.28, 0.66, 0.52, 0.48, "olive", rot=((0.48, 0.3, 0.38), "y", 22.5))
-    tur.both(0.76, 0.12, -0.42, 0.8, 0.5, 0.2, "door")
-    tur.B(-0.3, 0.02, -0.52, 0.3, 0.2, 0.3, "olive_dark")
-    tur.B(-0.3, 0.2, -0.52, 0.3, 0.62, -0.3, "olive_panel")
-    tur.B(-0.32, 0.02, -0.55, 0.32, 0.08, 0.35, "dark")
-    # optics block on a short mast, top left
-    tur.B(0.46, 0.6, -0.05, 0.58, 0.72, 0.12, "dark")
-    tur.B(0.4, 0.72, -0.12, 0.66, 0.94, 0.22, {"all": "grey", "south": "lens", "up": "olive_dark"})
-    tur.B(0.42, 0.94, -0.05, 0.64, 0.97, 0.15, "dark")
-    # little sensor box on the right
-    tur.B(-0.62, 0.6, -0.2, -0.42, 0.72, 0.05, {"all": "olive_dark", "south": "lens_amber"})
-    tur.model(2).save("adgun_turret")
-
-    gun = Part(a)
-    gun.B(-0.17, -0.15, -0.5, 0.17, 0.15, 0.55, {"all": "olive_panel", "south": "dark"})
-    gun.B(-0.12, 0.15, -0.35, 0.12, 0.22, 0.5, "olive_dark")
-    gun.B(-0.2, -0.05, -0.1, -0.17, 0.08, 0.3, "dark")
-    gun.B(-0.088, -0.088, 0.55, 0.088, 0.088, 2.05, {"all": "jacket", "south": "dark", "north": "dark"})
-    gun.B(-0.05, -0.05, 2.05, 0.05, 0.05, 2.35, "black")
-    gun.B(-0.085, -0.085, 2.35, 0.085, 0.085, 2.6, {"all": "muzzle", "south": "black"})
-    gun.B(-0.1, -0.1, 0.55, 0.1, 0.1, 0.68, "olive_dark")
-    gun.model(2).save("adgun_gun")
-
-    icon = base.model(2)
-    tur.model(2, offset=(0, 1.15, 0), into=icon)
-    gun.model(2, offset=(-0.05, 1.15 + 0.42, 0.15), into=icon)
-    icon.save("air_defense_gun", display(0.55, gui_rot=(25, 210, 0), ground=0.3, hand=0.3, fixed=0.5, gui_tr=(0, -3, 0)),
-              folder="item")
-
-    # -- Kornet on a tripod (scale 1)
-    tri = Part(a)
-    tri.B(-0.06, 0.45, -0.06, 0.06, 0.78, 0.06, "dark")
-    tri.B(-0.1, 0.62, -0.1, 0.1, 0.7, 0.1, "olive_dark")
-    # three legs splayed out from the hub: front, left, right
-    tri.B(-0.03, 0.0, 0.05, 0.03, 0.72, 0.11, "olive_dark", rot=((0, 0.7, 0.08), "x", -22.5))
-    tri.B(0.05, 0.0, -0.03, 0.11, 0.72, 0.03, "olive_dark", rot=((0.08, 0.7, 0), "z", 22.5))
-    tri.B(-0.11, 0.0, -0.03, -0.05, 0.72, 0.03, "olive_dark", rot=((-0.08, 0.7, 0), "z", -22.5))
-    for x, z in ((0, 0.36), (0.36, 0), (-0.36, 0)):
-        tri.B(x - 0.05, 0, z - 0.05, x + 0.05, 0.03, z + 0.05, "dark")
-    tri.model(1).save("kornet_tripod")
-
-    head = Part(a)
-    head.B(-0.1, 0, -0.12, 0.1, 0.06, 0.12, "olive_dark")
-    head.both(0.08, 0.02, -0.04, 0.11, 0.17, 0.04, "olive_dark")
-    head.model(1).save("kornet_head")
-
-    sight = Part(a)
-    sight.B(-0.07, -0.15, -0.3, 0.07, -0.09, 0.42, "dark")
-    sight.B(0.11, -0.1, -0.32, 0.33, 0.12, 0.16, {"all": "olive", "south": "lens", "up": "olive_panel"})
-    sight.B(0.18, -0.03, -0.44, 0.27, 0.06, -0.32, "black")
-    sight.B(0.15, 0.12, -0.2, 0.29, 0.16, 0.05, "olive_dark")
-    sight.B(0.07, -0.08, -0.05, 0.11, 0.0, 0.05, "dark")
-    sight.model(1).save("kornet_sight")
-
-    tube = Part(a)
-    tube.B(-0.09, -0.09, -0.45, 0.09, 0.09, 0.75, {"all": "tube_green", "south": "tube_end", "north": "tube_end"})
-    tube.B(-0.1, -0.1, 0.62, 0.1, 0.1, 0.68, "olive_dark")
-    tube.B(-0.1, -0.1, -0.4, 0.1, 0.1, -0.34, "olive_dark")
-    tube.B(-0.02, 0.09, 0.05, 0.02, 0.12, 0.3, "strap")
-    tube.model(1).save("kornet_tube")
-
-    icon = tri.model(1)
-    head.model(1, offset=(0, 0.78, 0), into=icon)
-    sight.model(1, offset=(0, 0.92, 0), into=icon)
-    tube.model(1, offset=(0, 0.92, 0), into=icon)
-    icon.save("kornet", display(0.7, gui_rot=(25, 210, 0), ground=0.4, hand=0.4, fixed=0.6, gui_tr=(0, -3, 0)),
-              folder="item")
-
-    # -- BMPT "Terminator" (scale 3)
-    hull = Part(a)
-    hull.B(-1.12, 0.45, -3.1, 1.12, 1.4, 2.25, {"all": "olive", "up": "olive_panel"})
-    hull.B(-1.12, 0.45, 2.25, 1.12, 1.15, 3.0, "olive")
-    # upper glacis with ERA, and the lower nose plate
-    hull.B(-1.15, 1.05, 2.0, 1.15, 1.2, 3.25, {"all": "era", "down": "olive_dark"}, rot=((0, 1.12, 2.2), "x", 22.5))
-    hull.B(-1.1, 0.4, 2.95, 1.1, 0.95, 3.1, "olive_dark", rot=((0, 0.68, 3.0), "x", -22.5))
-    hull.both(0.9, 0.62, 3.0, 1.08, 0.74, 3.08, "headlight")
-    hull.B(-0.25, 1.4, 1.8, 0.25, 1.48, 2.3, {"all": "dark", "up": "olive_dark"})
-    hull.B(-0.12, 1.48, 2.18, 0.12, 1.56, 2.28, "lens")
-    # track shelves and side skirts with reactive armour
-    hull.both(1.12, 1.18, -3.2, 1.66, 1.26, 3.1, "olive_dark")
-    hull.both(1.62, 0.72, -2.9, 1.68, 1.22, 2.9, {"all": "era", "up": "olive_dark"})
-    # tracks: bottom run, top run, drive sprocket at the back, idler at the front
-    hull.both(1.18, 0.0, -2.95, 1.6, 0.14, 2.85, "tracks")
-    hull.both(1.18, 0.98, -3.05, 1.6, 1.1, 2.95, "tracks")
-    hull.both(1.18, 0.14, -3.05, 1.6, 0.98, -2.82, {"all": "tracks", "east": "hub", "west": "hub"})
-    hull.both(1.18, 0.2, 2.75, 1.6, 0.95, 2.98, {"all": "tracks", "east": "hub", "west": "hub"})
-    hull.both(1.12, 0.3, -2.8, 1.18, 1.0, 2.75, "dark")
-    # engine deck, exhaust, fuel drums on the back
-    hull.B(-1.0, 1.4, -3.0, 1.0, 1.46, -1.4, "grille")
-    hull.B(1.25, 1.26, -2.2, 1.6, 1.34, -1.7, "black")
-    hull.both(0.25, 1.15, -3.45, 1.0, 1.55, -3.1, {"all": "drum", "north": "olive_dark", "south": "olive_dark"})
-    hull.both(0.95, 0.55, -3.14, 1.08, 0.7, -3.1, "taillight")
-    hull.B(-0.4, 0.5, -3.16, 0.4, 0.62, -3.1, "steel")
-    hull.model(3).save("bmpt_hull")
-
-    wheel = Part(a)
-    r, wdt = 0.42, 0.15
-    for rot in (None, ((0, 0, 0), "x", 45)):
-        wheel.B(-wdt, -r, -r * 0.42, wdt, r, r * 0.42, {"all": "tire", "east": "hub", "west": "hub"}, rot=rot)
-        wheel.B(-wdt, -r * 0.42, -r, wdt, r * 0.42, r, {"all": "tire", "east": "hub", "west": "hub"}, rot=rot)
-    wheel.B(-wdt - 0.02, -0.12, -0.12, wdt + 0.02, 0.12, 0.12, "hub")
-    wheel.model(0.5).save("bmpt_wheel")
-
-    tr = Part(a)
-    tr.B(-1.0, 0.0, -1.2, 1.0, 0.42, 0.9, {"all": "olive", "up": "olive_panel"})
-    tr.B(-0.95, 0.02, 0.9, 0.95, 0.38, 1.25, "era", rot=((0, 0.2, 1.0), "x", -22.5))
-    tr.both(0.95, 0.04, -1.1, 1.08, 0.4, 0.8, "era")
-    tr.B(-0.9, 0.0, -1.55, 0.9, 0.35, -1.2, {"all": "olive_dark", "north": "door"})
-    tr.both(0.48, 0.42, 0.25, 0.56, 0.86, 0.85, "olive_dark")
-    tr.B(-0.85, 0.42, 0.1, -0.42, 0.95, 0.55, {"all": "olive_panel", "south": "lens", "up": "olive_dark"})
-    tr.B(0.42, 0.42, -0.75, 0.62, 0.8, -0.45, "dark")
-    tr.B(0.36, 0.8, -0.82, 0.68, 1.02, -0.38, {"all": "grey", "south": "lens", "north": "lens", "east": "lens"})
-    tr.B(-0.3, 0.42, -0.9, 0.3, 0.5, -0.4, "dark")
-    tr.model(3).save("bmpt_turret")
-
-    guns = Part(a)
-    guns.B(-0.44, -0.2, -0.6, 0.44, 0.2, 0.85, {"all": "olive_panel", "south": "dark"})
-    guns.B(-0.36, 0.2, -0.45, 0.36, 0.28, 0.7, "olive_dark")
-    for x in (-0.2, 0.2):
-        guns.B(x - 0.06, -0.06, 0.85, x + 0.06, 0.06, 1.15, "dark")
-        guns.B(x - 0.045, -0.045, 1.15, x + 0.045, 0.045, 2.3, "black")
-        guns.B(x - 0.07, -0.07, 2.3, x + 0.07, 0.07, 2.45, {"all": "muzzle", "south": "black"})
-    # ATGM pods on arms
-    guns.both(0.44, -0.06, -0.1, 0.96, 0.06, 0.3, "olive_dark")
-    guns.both(0.96, -0.3, -0.75, 1.3, 0.38, 1.2, {"all": "tube", "south": "tube_end", "north": "olive_dark"})
-    guns.both(0.95, 0.03, -0.75, 1.31, 0.05, 1.2, "olive_dark")
-    guns.model(3).save("bmpt_guns")
-
-    cap = Part(a)
-    cap.B(-0.13, -0.13, 0.0, 0.13, 0.13, 0.05, {"all": "cap", "south": "missile_nose"})
-    cap.model(0.5).save("ataka_cap")
-
-    icon = hull.model(4)
-    for z in (2.25, 1.35, 0.45, -0.45, -1.35, -2.25):
-        for side in (-1, 1):
-            wheel.model(4, offset=(side * 1.38, 0.54, z), into=icon)
-    tr.model(4, offset=(0, 1.4, -0.35), into=icon)
-    guns.model(4, offset=(0, 1.4 + 0.78, -0.35 + 0.55), into=icon)
-    icon.save("terminator", display(0.38, gui_rot=(25, 210, 0), ground=0.25, hand=0.2, fixed=0.35, gui_tr=(0, -2, 0)),
-              folder="item")
-
-    # -- missiles in flight (scale 1, centred)
-    def missile(name, rad, length, body, nose, band=True, mid_fins=False):
-        p = Part(a)
-        half = length / 2
-        p.B(-rad, -rad, -half, rad, rad, half - 0.15, {"all": body, "north": "plume"})
-        p.B(-rad * 0.7, -rad * 0.7, half - 0.15, rad * 0.7, rad * 0.7, half, {"all": nose, "south": "jav_dome" if nose == "jav_dome" else nose})
-        if band:
-            p.B(-rad - 0.005, -rad - 0.005, half - 0.32, rad + 0.005, rad + 0.005, half - 0.27, "missile_band")
-        span = rad * 2.4
-        p.B(-span, -0.008, -half, span, 0.008, -half + 0.16, "fin")
-        p.B(-0.008, -span, -half, 0.008, span, -half + 0.16, "fin")
-        if mid_fins:
-            p.B(-span * 0.8, -0.008, -0.05, span * 0.8, 0.008, 0.12, "fin")
-            p.B(-0.008, -span * 0.8, -0.05, 0.008, span * 0.8, 0.12, "fin")
-        else:
-            p.B(-rad * 2, -0.006, half - 0.42, rad * 2, 0.006, half - 0.36, "fin")
-        p.model(1, center_y=True).save(name + "_flight")
-        return p
-
-    missile("kornet_missile", 0.075, 1.1, "missile", "missile_nose")
-    missile("ataka_missile", 0.085, 1.3, "missile", "missile_nose")
-    missile("javelin_missile", 0.07, 1.0, "jav_body", "jav_dome", band=False, mid_fins=True)
-
-    tracer = Model(a)
-    tracer.box([7.4, 7.4, -8], [8.6, 8.6, 24], "tracer")
-    tracer.box([7.7, 7.7, 12], [8.3, 8.3, 24.5], "tracer_core")
-    tracer.save("tracer")
-
-    # -- Javelin launch tube with the CLU, as a held item (1 unit = 1/16 block)
-    jav = Part(a)
-    jav.B(-0.11, -0.11, -0.62, 0.11, 0.11, 0.62, {"all": "tan", "south": "dark", "north": "dark"})
-    jav.B(-0.13, -0.13, 0.5, 0.13, 0.13, 0.62, "tan_dark")
-    jav.B(-0.13, -0.13, -0.62, 0.13, 0.13, -0.5, "tan_dark")
-    jav.B(-0.3, -0.1, -0.05, -0.1, 0.12, 0.3, {"all": "olive_dark", "south": "lens", "north": "black"})
-    jav.B(-0.26, 0.12, 0.0, -0.14, 0.16, 0.25, "dark")
-    jav.B(-0.02, -0.26, 0.02, 0.04, -0.11, 0.1, "black")
-    jav.B(-0.02, 0.11, -0.4, 0.02, 0.13, 0.4, "strap")
-    jav_m = jav.model(1, center_y=True)
-    jav_m.save("javelin", {
-        "gui": {"rotation": [25, 225, 0], "translation": [0, 0, 0], "scale": [0.75] * 3},
-        "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.5] * 3},
-        "fixed": {"rotation": [0, 90, 0], "translation": [0, 0, 0], "scale": [0.7] * 3},
-        "head": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.7] * 3},
-        "thirdperson_righthand": {"rotation": [0, 0, 0], "translation": [0, 6, 2], "scale": [0.8] * 3},
-        "thirdperson_lefthand": {"rotation": [0, 0, 0], "translation": [0, 6, 2], "scale": [0.8] * 3},
-        "firstperson_righthand": {"rotation": [0, 0, 0], "translation": [2, 2, -2], "scale": [0.8] * 3},
-        "firstperson_lefthand": {"rotation": [0, 0, 0], "translation": [-2, 2, -2], "scale": [0.8] * 3},
-    }, folder="item")
-
-
 def build_weapon_icons():
     pixel_icon("ammo_30mm", [
         "................",
@@ -2384,30 +1870,6 @@ def build_weapon_icons():
         "................",
         "................",
     ], {"y": "#c9b23f", "b": "#d01b1b", "g": "#b98a3a", "c": "#8a6420", "k": "#1d2017", "m": "#4b5320"})
-
-    def missile_icon(name, body, band, cap):
-        pixel_icon(name, [
-            "................",
-            "...........cc...",
-            "..........cbbc..",
-            ".........cbbbbc.",
-            "........kbbbbc..",
-            ".......kbbbbk...",
-            "......kbbbbk....",
-            ".....kbbbbk.....",
-            "....kyyybk......",
-            "...kbbbyk.......",
-            "..kbbbbk........",
-            ".cbbbbk.........",
-            "cbbbbk..........",
-            ".cbbk...........",
-            "..cc............",
-            "................",
-        ], {"b": body, "y": band, "k": "#1a1c15", "c": cap})
-
-    missile_icon("kornet_missile", "#3d5a2e", "#c9b23f", "#22291a")
-    missile_icon("ataka_missile", "#5d6b45", "#d01b1b", "#2e3329")
-    missile_icon("javelin_missile", "#8c8156", "#2f3226", "#5e563a")
 
     pixel_icon("autocannon", [
         "................",
@@ -2664,17 +2126,14 @@ RU = {
     "item.fpvdrones.mavic_remote": "Пульт Мавика (DJI RC)",
     "item.fpvdrones.radio_beacon": "Радиометка",
     "item.fpvdrones.depleted_battery": "Севший АКБ LiPo",
-    "item.fpvdrones.terminator": "БМПТ «Терминатор»",
     "item.fpvdrones.air_defense_gun": "30-мм зенитный боевой модуль",
     "item.fpvdrones.kornet": "ПТРК «Корнет»",
     "item.fpvdrones.javelin": "ПТРК «Javelin»",
     "item.fpvdrones.ammo_30mm": "Лента 30-мм ОФЗ (50 шт.)",
     "item.fpvdrones.kornet_missile": "ПТУР 9М133 «Корнет»",
-    "item.fpvdrones.ataka_missile": "ПТУР 9М120 «Атака»",
     "item.fpvdrones.javelin_missile": "Ракета FGM-148 в ТПК",
     "item.fpvdrones.autocannon": "30-мм пушка 2А42",
     "entity.fpvdrones.radio_beacon": "Радиометка",
-    "entity.fpvdrones.terminator": "БМПТ «Терминатор»",
     "entity.fpvdrones.air_defense_gun": "30-мм зенитный модуль",
     "entity.fpvdrones.kornet": "ПТРК «Корнет»",
     "entity.fpvdrones.shell": "30-мм снаряд",
@@ -2703,13 +2162,11 @@ RU = {
     "msg.fpvdrones.no_lock": "Нет захвата — держи цель в рамке, пока тон не станет высоким",
     "tooltip.fpvdrones.mavic_remote": "Shift+ПКМ по Мавику — привязать. ПКМ — лететь, очки не нужны.",
     "tooltip.fpvdrones.radio_beacon": "Вешается на Мавик. Куда упадёт — туда наведутся Шахеды/Герани.",
-    "tooltip.fpvdrones.terminator": "ПКМ — сесть (1-й водитель, 2-й наводчик). ПКМ лентой/ПТУР — зарядить. Shift+ПКМ — забрать.",
     "tooltip.fpvdrones.air_defense_gun": "ПКМ — сесть за прицел, ЛКМ — огонь. [G] или Shift+ПКМ — режим: ручной / авто по чужим / авто по всему в воздухе.",
     "tooltip.fpvdrones.kornet": "ПКМ — сесть. Зажми ПКМ — прицел, ЛКМ — пуск. Держи перекрестье на цели до попадания.",
     "tooltip.fpvdrones.javelin": "Зажми ПКМ — прицел, держи цель в рамке до захвата, ЛКМ — пуск. Дальше ракета летит сама.",
-    "tooltip.fpvdrones.ammo_30mm": "Для зенитного модуля и БМПТ.",
+    "tooltip.fpvdrones.ammo_30mm": "Для 30-мм зенитного модуля.",
     "tooltip.fpvdrones.kornet_missile": "Для «Корнета». Запасные в инвентаре заряжаются сами.",
-    "tooltip.fpvdrones.ataka_missile": "Для БМПТ «Терминатор», 4 штуки.",
     "tooltip.fpvdrones.javelin_missile": "Для ПТРК «Javelin».",
     "death.attack.fpvdrones.shell": "%1$s разорвало 30-мм снарядом",
     "death.attack.fpvdrones.shell.player": "%1$s разорвало 30-мм снарядом, пока он убегал от %2$s",
@@ -2721,7 +2178,6 @@ RU = {
     "subtitles.fpvdrones.reload": "Перезарядка",
     "subtitles.fpvdrones.seeker_tone": "ГСН ищет цель",
     "subtitles.fpvdrones.lock_tone": "Захват цели",
-    "subtitles.fpvdrones.tracks": "Лязг гусениц",
 }
 
 EN = {
@@ -2867,17 +2323,14 @@ EN = {
     "item.fpvdrones.mavic_remote": "Mavic Controller (DJI RC)",
     "item.fpvdrones.radio_beacon": "Radio Beacon",
     "item.fpvdrones.depleted_battery": "Depleted LiPo Battery",
-    "item.fpvdrones.terminator": "BMPT \"Terminator\"",
     "item.fpvdrones.air_defense_gun": "30 mm Air Defense Station",
     "item.fpvdrones.kornet": "Kornet ATGM",
     "item.fpvdrones.javelin": "Javelin",
     "item.fpvdrones.ammo_30mm": "30 mm HE Belt (50)",
     "item.fpvdrones.kornet_missile": "9M133 Kornet Missile",
-    "item.fpvdrones.ataka_missile": "9M120 Ataka Missile",
     "item.fpvdrones.javelin_missile": "FGM-148 Missile Tube",
     "item.fpvdrones.autocannon": "2A42 30 mm Cannon",
     "entity.fpvdrones.radio_beacon": "Radio Beacon",
-    "entity.fpvdrones.terminator": "BMPT \"Terminator\"",
     "entity.fpvdrones.air_defense_gun": "30 mm Air Defense Station",
     "entity.fpvdrones.kornet": "Kornet ATGM",
     "entity.fpvdrones.shell": "30 mm Shell",
@@ -2906,13 +2359,11 @@ EN = {
     "msg.fpvdrones.no_lock": "No lock - keep the target in the box",
     "tooltip.fpvdrones.mavic_remote": "Shift+RMB a Mavic to bind. RMB to fly, no goggles needed.",
     "tooltip.fpvdrones.radio_beacon": "Hangs under a Mavic. Shaheds/Gerans home on wherever it lands.",
-    "tooltip.fpvdrones.terminator": "RMB to board (1st drives, 2nd shoots). RMB with belts/ATGMs to load. Shift+RMB to pick up.",
     "tooltip.fpvdrones.air_defense_gun": "RMB to take the sight, LMB fires. [G] or Shift+RMB cycles: manual / auto vs hostiles / auto vs everything airborne.",
     "tooltip.fpvdrones.kornet": "RMB to sit. Hold RMB to look through the sight, LMB to launch. Keep the crosshair on target until impact.",
     "tooltip.fpvdrones.javelin": "Hold RMB to aim, keep the target boxed until lock, LMB to launch.",
-    "tooltip.fpvdrones.ammo_30mm": "For the air defense station and the BMPT.",
+    "tooltip.fpvdrones.ammo_30mm": "For the 30 mm air defense station.",
     "tooltip.fpvdrones.kornet_missile": "For the Kornet. Spares in your inventory reload automatically.",
-    "tooltip.fpvdrones.ataka_missile": "For the BMPT \"Terminator\", holds 4.",
     "tooltip.fpvdrones.javelin_missile": "For the Javelin.",
     "death.attack.fpvdrones.shell": "%1$s was blown apart by a 30 mm shell",
     "death.attack.fpvdrones.shell.player": "%1$s was blown apart by a 30 mm shell while fleeing %2$s",
@@ -2924,7 +2375,6 @@ EN = {
     "subtitles.fpvdrones.reload": "Reloading",
     "subtitles.fpvdrones.seeker_tone": "Seeker searching",
     "subtitles.fpvdrones.lock_tone": "Target locked",
-    "subtitles.fpvdrones.tracks": "Tracks clank",
 }
 
 
@@ -3056,15 +2506,11 @@ def recipes():
     bench("air_defense_gun", ["G A", "ICI", "BFB"],
           {"G": "gimbal_camera", "A": "antenna", "I": M + "iron_ingot", "C": "autocannon", "B": M + "iron_block",
            "F": "flight_controller"}, solder=True)
-    bench("terminator", ["CIC", "GEF", "BBB"],
-          {"C": "autocannon", "I": M + "iron_block", "G": "gimbal_camera", "E": "piston_engine",
-           "F": "flight_controller", "B": M + "iron_block"}, solder=True)
     bench("kornet", [" G ", "IFI", "S S"],
           {"G": "gimbal_camera", "I": M + "iron_ingot", "F": "flight_controller", "S": M + "stick"}, solder=True)
     bench("javelin", ["GD", "IF", " I"],
           {"G": "gimbal_camera", "D": "display", "I": M + "iron_ingot", "F": "flight_controller"}, solder=True)
     bench("kornet_missile", ["W", "R", "B"], {"W": "warhead", "R": "receiver", "B": "booster"}, solder=True)
-    bench("ataka_missile", ["W", "A", "B"], {"W": "warhead", "A": "antenna", "B": "booster"}, solder=True)
     bench("javelin_missile", ["W", "C", "B"], {"W": "warhead", "C": "fpv_camera", "B": "booster"}, solder=True)
 
     for block in ("launcher", "launch_pad", "assembly_bench"):
@@ -3114,7 +2560,7 @@ def recipe_doc():
 
 SOUNDS = ["fpv_motor", "mavic_motor", "shahed_engine", "jet_engine", "shahed_launch", "truck_engine",
           "release", "beep", "static", "cannon_30", "atgm_launch", "missile_motor", "reload", "seeker_tone",
-          "lock_tone", "tracks"]
+          "lock_tone"]
 
 
 def sounds_json():
@@ -3252,13 +2698,6 @@ def gen_sounds():
     t11 = np.arange(n11) / sr
     write("lock_tone", np.sin(2 * np.pi * 1320 * t11) * np.minimum(1, (0.2 - t11) * 40) * np.minimum(1, t11 * 200))
 
-    # diesel + track links slapping, whole periods so it loops
-    f0 = 30.0
-    phase = (t2 * f0) % 1.0
-    diesel = np.exp(-phase * 5.0)
-    links = ((t2 * 12) % 1.0 < 0.04).astype(float) * rng.normal(size=n2)
-    write("tracks", np.tanh((diesel - diesel.mean() + 0.5 * loop_noise(n2, 700) + 0.6 * links) * 1.6))
-
 
 def clean():
     # drop generated files that no longer exist in the generator
@@ -3294,15 +2733,15 @@ def main():
     build_geran5()
     build_shahed238()
     build_payloads()
-    build_truck()
     block_textures()
     build_launcher()
     build_launch_pad()
     build_icons()
     build_part_icons()
     build_jet_engine()
-    build_armor()
     build_weapon_icons()
+    gen_armor.RES, gen_armor.ASSETS = RES, ASSETS
+    gen_armor.main()
     build_remote_icons()
     build_beacon_and_battery()
     build_bench()

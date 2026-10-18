@@ -56,8 +56,6 @@ public final class ModItems {
             () -> new StrikeDroneItem(StrikeType.GERAN_5, props().stacksTo(5).rarity(Rarity.EPIC)));
     public static final RegistryObject<Item> LAUNCH_TRUCK = ITEMS.register("launch_truck",
             () -> new MachineItem(ModEntities.LAUNCH_TRUCK, "tooltip.fpvdrones.truck", props().stacksTo(1).rarity(Rarity.RARE)));
-    public static final RegistryObject<Item> TERMINATOR = ITEMS.register("terminator",
-            () -> new MachineItem(ModEntities.TERMINATOR, "tooltip.fpvdrones.terminator", props().stacksTo(1).rarity(Rarity.EPIC)));
     public static final RegistryObject<Item> AIR_DEFENSE_GUN = ITEMS.register("air_defense_gun",
             () -> new MachineItem(ModEntities.AIR_DEFENSE_GUN, "tooltip.fpvdrones.air_defense_gun", props().stacksTo(1).rarity(Rarity.RARE)));
     public static final RegistryObject<Item> KORNET = ITEMS.register("kornet",
@@ -66,7 +64,6 @@ public final class ModItems {
             () -> new JavelinItem(props().stacksTo(1).rarity(Rarity.RARE)));
     public static final RegistryObject<Item> AMMO_30MM = ammo("ammo_30mm", 16);
     public static final RegistryObject<Item> KORNET_MISSILE = ammo("kornet_missile", 4);
-    public static final RegistryObject<Item> ATAKA_MISSILE = ammo("ataka_missile", 4);
     public static final RegistryObject<Item> JAVELIN_MISSILE = ammo("javelin_missile", 4);
 
     public static final RegistryObject<Item> TABLET = ITEMS.register("tablet", () -> new TabletItem(props().stacksTo(1)));

@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Supplier;
 
-/** Puts a truck / BMPT / gun mount down where you click, facing the way you look. */
+/** Puts a truck / gun mount / Kornet down where you click, facing the way you look. */
 public class MachineItem extends Item {
     private final Supplier<? extends EntityType<? extends MachineEntity>> type;
     private final String tooltip;

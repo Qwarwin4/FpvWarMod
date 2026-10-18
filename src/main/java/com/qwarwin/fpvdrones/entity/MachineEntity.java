@@ -22,7 +22,7 @@ import net.minecraftforge.fml.network.NetworkHooks;
 import javax.annotation.Nullable;
 
 /**
- * Anything big and steel that gets shot at: the launch truck, the BMPT, the gun mount, the Kornet.
+ * Anything big and steel that gets shot at: the launch truck, the gun mount, the Kornet.
  * Takes damage by type, so a rifle does next to nothing to armour and a shaped charge does a lot.
  */
 public abstract class MachineEntity extends Entity {

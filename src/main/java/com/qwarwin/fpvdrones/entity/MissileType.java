@@ -4,13 +4,12 @@ import com.qwarwin.fpvdrones.FpvDrones;
 import net.minecraft.util.ResourceLocation;
 
 /**
- * KORNET and ATAKA ride the operator's line of sight (SACLOS): the missile goes wherever the sight points.
+ * KORNET rides the operator's line of sight (SACLOS): the missile goes wherever the sight points.
  * JAVELIN is fire-and-forget: locked before launch, flies a top-attack arc on its own.
  */
 public enum MissileType {
     // punch: multiplier on the configured ATGM damage and blast
     KORNET("kornet_missile", 4.0, 220, 7F, true, 1.8F),
-    ATAKA("ataka_missile", 4.5, 200, 6F, true, 1.6F),
     JAVELIN("javelin_missile", 3.2, 220, 5F, false, 1.7F);
 
     private final String name;

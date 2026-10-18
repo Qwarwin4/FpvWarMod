@@ -148,15 +148,5 @@
         "stream": false
       }
     ]
-  },
-  "tracks": {
-    "category": "neutral",
-    "subtitle": "subtitles.fpvdrones.tracks",
-    "sounds": [
-      {
-        "name": "fpvdrones:tracks",
-        "stream": false
-      }
-    ]
   }
 }

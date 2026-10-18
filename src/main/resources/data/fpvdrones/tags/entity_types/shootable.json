@@ -1,0 +1,45 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "militarytech:t72b3",
+      "required": false
+    },
+    {
+      "id": "militarytech:t80u",
+      "required": false
+    },
+    {
+      "id": "militarytech:t90m",
+      "required": false
+    },
+    {
+      "id": "militarytech:bmpt",
+      "required": false
+    },
+    {
+      "id": "militarytech:bmp1",
+      "required": false
+    },
+    {
+      "id": "militarytech:grad",
+      "required": false
+    },
+    {
+      "id": "militarytech:oreshnik",
+      "required": false
+    },
+    {
+      "id": "militarytech:su25",
+      "required": false
+    },
+    {
+      "id": "militarytech:su34",
+      "required": false
+    },
+    {
+      "id": "militarytech:mig25",
+      "required": false
+    }
+  ]
+}

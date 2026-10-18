@@ -11,7 +11,6 @@ import com.qwarwin.fpvdrones.client.render.OperatorRenderer;
 import com.qwarwin.fpvdrones.client.render.RadioBeaconRenderer;
 import com.qwarwin.fpvdrones.client.render.ShellRenderer;
 import com.qwarwin.fpvdrones.client.render.StrikeDroneRenderer;
-import com.qwarwin.fpvdrones.client.render.TerminatorRenderer;
 import com.qwarwin.fpvdrones.client.render.TruckRenderer;
 import com.qwarwin.fpvdrones.client.screen.AssemblyScreen;
 import com.qwarwin.fpvdrones.registry.ModBlocks;
@@ -43,7 +42,6 @@ public final class ClientSetup {
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.MUNITION.get(), MunitionRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.OPERATOR.get(), OperatorRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.RADIO_BEACON.get(), RadioBeaconRenderer::new);
-        RenderingRegistry.registerEntityRenderingHandler(ModEntities.TERMINATOR.get(), TerminatorRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.AIR_DEFENSE_GUN.get(), AirDefenseGunRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.KORNET.get(), KornetRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.SHELL.get(), ShellRenderer::new);

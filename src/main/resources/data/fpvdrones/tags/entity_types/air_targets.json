@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "militarytech:su25",
+      "required": false
+    },
+    {
+      "id": "militarytech:su34",
+      "required": false
+    },
+    {
+      "id": "militarytech:mig25",
+      "required": false
+    }
+  ]
+}
