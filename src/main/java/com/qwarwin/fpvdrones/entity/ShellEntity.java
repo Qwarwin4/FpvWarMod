@@ -1,5 +1,6 @@
 package com.qwarwin.fpvdrones.entity;
 
+import com.qwarwin.fpvdrones.Config;
 import com.qwarwin.fpvdrones.util.Explosions;
 import com.qwarwin.fpvdrones.util.ModDamageSources;
 import com.qwarwin.fpvdrones.util.Targeting;
@@ -33,7 +34,10 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
     public static final double SPEED = 9.0;
     public static final double GRAVITY = 0.03;
     private static final int LIFE = 70;
-    private static final double FUSE_RADIUS = 2.6;
+    /** The fuse sees further around a big target than around a small quadcopter. */
+    private static final double FUSE_BASE = 0.7;
+    private static final double FUSE_PER_WIDTH = 0.8;
+    private static final double FUSE_MAX = 3.0;
 
     @Nullable
     private UUID owner;
@@ -51,7 +55,8 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
     public void setup(Entity shooter, @Nullable UUID owner, Vector3d pos, Vector3d velocity, boolean airburst) {
         this.shooterId = shooter.getId();
         this.owner = owner;
-        this.airburst = airburst;
+        // a fair share of programmable fuses is set wrong or simply fails: that round can only score a direct hit
+        this.airburst = airburst && shooter.level.random.nextDouble() < Config.AIRBURST_RELIABILITY.get();
         setPos(pos.x, pos.y, pos.z);
         setDeltaMovement(velocity);
         faceMotion();
@@ -133,8 +138,8 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
         Vector3d seg = to.subtract(from);
         double len2 = seg.dot(seg);
         Vector3d best = null;
-        double bestD = FUSE_RADIUS * FUSE_RADIUS;
-        for (Entity e : level.getEntities(this, new AxisAlignedBB(from, to).inflate(FUSE_RADIUS),
+        double bestD = Double.MAX_VALUE;
+        for (Entity e : level.getEntities(this, new AxisAlignedBB(from, to).inflate(FUSE_MAX),
                 fuseAll ? Targeting::isAirborne : Targeting::isAirTarget)) {
             if (fuseAll ? e.getUUID().equals(owner) : Targeting.isFriendly(level, owner, Targeting.ownerOf(e))) {
                 continue;
@@ -142,8 +147,9 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
             Vector3d c = e.getBoundingBox().getCenter();
             double t = len2 < 1e-6 ? 0 : MathHelper.clamp(c.subtract(from).dot(seg) / len2, 0, 1);
             Vector3d p = from.add(seg.scale(t));
+            double fuse = Math.min(FUSE_MAX, FUSE_BASE + FUSE_PER_WIDTH * e.getBbWidth());
             double d = p.distanceToSqr(c);
-            if (d < bestD) {
+            if (d < fuse * fuse && d < bestD) {
                 bestD = d;
                 best = p;
             }

@@ -124,6 +124,60 @@ class Face:
 
 
 # ---------------------------------------------------------------------------
+# detail maps (tools/detail/, made from CC0 textures by ambientCG): projected onto each face in world space
+
+DETAIL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "detail")
+_DETAIL = {}
+# in-plane world axes of each face: (across, up); "up" is world y on walls so streaks run downwards
+FACE_AXES = {"north": (0, 1), "south": (0, 1), "east": (2, 1), "west": (2, 1), "up": (0, 2), "down": (0, 2)}
+
+
+def detail_map(name):
+    if name not in _DETAIL:
+        path = os.path.join(DETAIL_DIR, name + ".png")
+        if not os.path.exists(path):
+            _DETAIL[name] = None
+        else:
+            im = Image.open(path)
+            arr = np.asarray(im.convert("RGB" if name == "rust" else "L"), dtype=np.float64)
+            _DETAIL[name] = arr if name == "rust" else arr / 255.0
+    return _DETAIL[name]
+
+
+def detail(face, name, tile, shift=0.0):
+    """detail map sampled over the face, one repeat per {tile} blocks; None when the map isn't there"""
+    a = detail_map(name)
+    if a is None:
+        return None
+    ax_u, ax_v = FACE_AXES[face.dir]
+    P = face.P
+    sign = -1.0 if ax_v == 1 else 1.0
+    # faces of different orientation get different offsets so corners don't mirror each other
+    off = {"north": 0.0, "south": 0.31, "east": 0.57, "west": 0.83, "up": 0.13, "down": 0.71}[face.dir] + shift
+    H, W = a.shape[:2]
+    x = ((P[..., ax_u] / tile + off) % 1.0) * W
+    y = ((sign * P[..., ax_v] / tile + off * 1.7) % 1.0) * H
+    x0 = np.floor(x).astype(int)
+    y0 = np.floor(y).astype(int)
+    fx = (x - x0)
+    fy = (y - y0)
+    x0 %= W
+    y0 %= H
+    x1 = (x0 + 1) % W
+    y1 = (y0 + 1) % H
+    if a.ndim == 3:
+        fx = fx[..., None]
+        fy = fy[..., None]
+    top = a[y0, x0] * (1 - fx) + a[y0, x1] * fx
+    bot = a[y1, x0] * (1 - fx) + a[y1, x1] * fx
+    return top * (1 - fy) + bot * fy
+
+
+def _centred(d):
+    return d - d.mean() if d is not None else 0.0
+
+
+# ---------------------------------------------------------------------------
 # material painters: f(face) -> float RGB array (h, w, 3)
 
 def _grain(face, amt):
@@ -143,12 +197,15 @@ def paint_base(face, col, camo=None, mottle=0.07, grain=0.025):
             f3 = n.fbm(face.P + 77.3, 0.55, 4)
             rgb[(f3 > 0.36)] = camo[2]
     lum = 1 + n.fbm(face.P, 1.1, 4) * mottle
+    steel = detail(face, "steel", 5.0)
+    if steel is not None:
+        lum = lum + _centred(steel) * 0.10
     rgb *= (lum * _grain(face, grain))[..., None]
     return rgb
 
 
 def weather(face, rgb, kind="paint"):
-    """dust on top, mud at the bottom, streaks, worn edges, a bit of fake occlusion"""
+    """dust on top, mud at the bottom, grime streaks, scratches, worn edges with chipped paint"""
     n = face.noise
     P = face.P
     sch = face.scheme
@@ -156,16 +213,26 @@ def weather(face, rgb, kind="paint"):
     mud = hexc(sch.get("mud", "#4a3b28"))
     if face.dir == "up":
         k = np.clip(0.12 + 0.22 * n.fbm(P, 0.7, 4), 0, 0.42) * sch.get("dustiness", 1.0)
+        blotch = detail(face, "grime_blotch", 7.0)
+        if blotch is not None:
+            k = np.clip(k * (0.6 + 0.8 * blotch), 0, 0.5)
         rgb = rgb * (1 - k[..., None]) + dust * k[..., None]
     if face.vertical:
-        # rain streaks running down from the top edge
-        sx = n(P * np.array([1.4, 0.06, 1.4]) + 5.1, 2.2)
-        streak = np.clip((sx - 0.6) * 2.0, 0, 1) * 0.12 * (1 - face.v * 0.5)
-        rgb *= (1 - streak)[..., None]
+        streaks = detail(face, "grime_streaks", 4.0)
+        if streaks is not None:
+            # dirt washed down by rain, strongest under the top edge
+            st = np.clip(streaks - 0.25, 0, 1) * 0.32 * (1 - face.v * 0.4)
+        else:
+            sx = n(P * np.array([1.4, 0.06, 1.4]) + 5.1, 2.2)
+            st = np.clip((sx - 0.6) * 2.0, 0, 1) * 0.12 * (1 - face.v * 0.5)
+        rgb *= (1 - st)[..., None]
         # darker towards the bottom of a face, lighter at the top lip
         rgb *= (1.04 - 0.12 * face.v ** 1.5)[..., None]
     elif face.dir == "down":
         rgb *= 0.7
+    blotch = detail(face, "grime_blotch", 9.0, 0.5)
+    if blotch is not None:
+        rgb *= (1 - 0.14 * np.clip(blotch - 0.35, 0, 1))[..., None]
     # mud and dust low down
     low = sch.get("mud_line", 0.9)
     m = np.clip((low - P[..., 1]) / max(0.2, low), 0, 1) ** 1.2
@@ -173,12 +240,25 @@ def weather(face, rgb, kind="paint"):
     m *= sch.get("muddiness", 1.0)
     rgb = rgb * (1 - 0.75 * m[..., None]) + mud * (0.75 * m[..., None])
     if kind == "paint":
-        # chipped paint in clumps along edges, bare primer/steel showing through
         e = face.edge
-        clump = n.fbm(P + 3.3, 4.0, 3)
-        chip = (e < 0.045) & (clump > 0.18)
-        chip |= (e < 0.02) & (clump > 0.0)
-        rgb[chip] = rgb[chip] * 0.5 + np.array([92, 90, 82]) * 0.5
+        chips = detail(face, "chips", 3.0)
+        if chips is not None:
+            # paint flakes off near edges in the shapes of real chipped paint, a few spots in the middle too
+            near = np.clip(1 - e / 0.07, 0, 1)
+            chip_k = np.clip(chips * (0.15 + 1.1 * near) - 0.45, 0, 1)
+            primer = np.array([62, 62, 55], dtype=np.float64)
+            rust = detail(face, "rust", 2.0)
+            bare = primer if rust is None else primer * 0.8 + rust * 0.2
+            a = np.clip(chip_k * 2.2, 0, 0.7)[..., None]
+            rgb = rgb * (1 - a) + bare * a
+        else:
+            clump = n.fbm(P + 3.3, 4.0, 3)
+            chip = (e < 0.045) & (clump > 0.18)
+            chip |= (e < 0.02) & (clump > 0.0)
+            rgb[chip] = rgb[chip] * 0.5 + np.array([92, 90, 82]) * 0.5
+        scratches = detail(face, "scratches", 3.5)
+        if scratches is not None:
+            rgb *= (1 + 0.22 * np.clip(scratches - 0.2, 0, 1))[..., None]
         hi = np.clip(1 - e / 0.03, 0, 1)
         rgb *= (1 + 0.1 * hi)[..., None]
     return rgb
@@ -257,7 +337,12 @@ def mat_tracks():
         rgb = np.stack([g, g * 0.97, g * 0.93], -1)
         # rust and dried mud
         rust = np.clip(n.fbm(face.P + 2.2, 4.0, 3) * 1.6, 0, 1)
-        rgb = rgb * (1 - 0.35 * rust[..., None]) + np.array([92, 62, 38]) * (0.35 * rust[..., None])
+        rust_tex = detail(face, "rust", 2.5)
+        rust_col = np.array([92, 62, 38]) if rust_tex is None else rust_tex * 0.8
+        rgb = rgb * (1 - 0.35 * rust[..., None]) + rust_col * (0.35 * rust[..., None])
+        steel = detail(face, "steel", 3.0)
+        if steel is not None:
+            rgb *= (1 + 0.2 * _centred(steel))[..., None]
         mud = np.clip(n.fbm(face.P + 8.8, 1.5, 3) + 0.2, 0, 1) * 0.5
         rgb = rgb * (1 - mud[..., None]) + np.array([74, 60, 42]) * mud[..., None]
         return rgb
@@ -300,6 +385,12 @@ def mat_metal(color="#7b8086", brushed=True):
         rgb = np.ones((face.h, face.w, 3)) * c
         streak = n(face.P * np.array([0.2, 6.0, 0.2]), 1.0) - 0.5 if brushed else 0
         rgb *= (1 + 0.06 * n.fbm(face.P, 2.0, 3) + 0.08 * streak)[..., None] * _grain(face, 0.05)[..., None]
+        steel = detail(face, "steel", 2.5)
+        if steel is not None:
+            rgb *= (1 + 0.22 * _centred(steel))[..., None]
+        scratches = detail(face, "scratches", 2.0)
+        if scratches is not None:
+            rgb *= (1 + 0.25 * np.clip(scratches - 0.2, 0, 1))[..., None]
         sc = (face.rng.random((face.h, face.w)) < 0.003)
         rgb[sc] = np.minimum(255, rgb[sc] * 1.5)
         return weather(face, rgb, "none")
@@ -309,6 +400,9 @@ def mat_metal(color="#7b8086", brushed=True):
 def mat_rubber():
     def paint(face):
         g = 30 + 6 * face.noise.fbm(face.P, 4.0, 3)
+        rub = detail(face, "rubber", 2.0)
+        if rub is not None:
+            g = g * (1 + 0.35 * _centred(rub))
         rgb = np.stack([g, g, g * 1.04], -1) * _grain(face, 0.08)[..., None]
         return weather(face, rgb, "none")
     return paint
@@ -417,8 +511,12 @@ def mat_canvas(color="#56603d"):
 
     def paint(face):
         rgb = paint_base(face, c, None, 0.12, 0.06)
-        w = ((np.arange(face.w)[None, :] + np.arange(face.h)[:, None]) % 2) * 0.05 + 0.975
-        rgb *= w[..., None]
+        weave = detail(face, "fabric", 1.5)
+        if weave is not None:
+            rgb *= (1 + 0.3 * _centred(weave))[..., None]
+        else:
+            w = ((np.arange(face.w)[None, :] + np.arange(face.h)[:, None]) % 2) * 0.05 + 0.975
+            rgb *= w[..., None]
         fold = np.sin(face.P[..., 0] * 5 + face.P[..., 2] * 3) * 0.05
         rgb *= (1 + fold)[..., None]
         return weather(face, rgb, "none")
@@ -455,7 +553,17 @@ def mat_skin(color_key="base", panel=1.3, camo=True):
         rgb[rivet & ~lines] *= 1.1
         # soot behind the engines and general grime, very light
         grime = np.clip(n.fbm(P + 4, 0.8, 3), 0, 1) * 0.1
+        blotch = detail(face, "grime_blotch", 8.0)
+        if blotch is not None:
+            grime = grime + 0.1 * np.clip(blotch - 0.4, 0, 1)
+        if face.vertical:
+            streaks = detail(face, "grime_streaks", 5.0)
+            if streaks is not None:
+                grime = grime + 0.12 * np.clip(streaks - 0.3, 0, 1)
         rgb *= (1 - grime)[..., None]
+        scratches = detail(face, "scratches", 4.0)
+        if scratches is not None:
+            rgb *= (1 + 0.12 * np.clip(scratches - 0.25, 0, 1))[..., None]
         rgb[face.edge < 0.015] *= 0.88
         return rgb
     return paint

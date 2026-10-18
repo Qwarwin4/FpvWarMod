@@ -35,6 +35,7 @@ public final class Config {
 
     public static final ForgeConfigSpec.DoubleValue TRUCK_SPEED;
     public static final ForgeConfigSpec.BooleanValue SHELLS_BREAK_BLOCKS;
+    public static final ForgeConfigSpec.DoubleValue AIRBURST_RELIABILITY;
     public static final ForgeConfigSpec.DoubleValue ATGM_POWER;
     public static final ForgeConfigSpec.DoubleValue ATGM_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue ATGM_PENETRATION;
@@ -85,6 +86,8 @@ public final class Config {
 
         b.push("armour");
         SHELLS_BREAK_BLOCKS = b.comment("30 mm impact rounds dig small holes").define("shellsBreakBlocks", false);
+        AIRBURST_RELIABILITY = b.comment("Share of 30 mm airburst rounds whose fuse goes off next to a target. Small, fast drones are hard to hit: lower is more realistic, 1.0 is the old arcade behaviour")
+                .defineInRange("airburstReliability", 0.45, 0.0, 1.0);
         ATGM_POWER = b.comment("Base blast of an ATGM warhead (TNT = 4). Kornet x1.8, Javelin x1.7")
                 .defineInRange("atgmPower", 5.0, 0.5, 20.0);
         ATGM_DAMAGE = b.comment("Base damage of a direct ATGM hit (same multipliers)")

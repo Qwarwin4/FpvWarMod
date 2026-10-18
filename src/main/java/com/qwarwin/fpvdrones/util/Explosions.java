@@ -136,10 +136,16 @@ public final class Explosions {
         }
         LivingEntity attacker = player(level, attackerId);
         ServerWorld sw = (ServerWorld) level;
-        double radius = airburst ? 4.0 : 2.5;
+        double radius = airburst ? 3.0 : 2.5;
         for (Entity e : level.getEntities(shell, new AxisAlignedBB(pos, pos).inflate(radius), Targeting::isShootable)) {
             double d = e.getBoundingBox().getCenter().distanceTo(pos);
             if (d > radius) {
+                continue;
+            }
+            // the fragment cone is sparse: the smaller the target and the further away, the likelier it's missed
+            double size = Math.max(e.getBbWidth(), e.getBbHeight());
+            double pHit = Math.min(1.0, 0.25 + size * 0.35) * (1.0 - 0.6 * d / radius);
+            if (level.random.nextDouble() > pHit) {
                 continue;
             }
             float dmg = (float) (7.0 * (1.0 - d / radius)) + 2F;

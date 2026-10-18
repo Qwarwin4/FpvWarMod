@@ -40,6 +40,18 @@
     {
       "id": "militarytech:mig25",
       "required": false
+    },
+    {
+      "id": "militarytech:tos1a",
+      "required": false
+    },
+    {
+      "id": "militarytech:zak",
+      "required": false
+    },
+    {
+      "id": "militarytech:zrk",
+      "required": false
     }
   ]
 }
