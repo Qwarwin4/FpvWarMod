@@ -249,6 +249,10 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
             // generating fresh terrain takes a moment, so ask for it a few seconds before arriving
             ChunkTickets.follow(sw, this, vel, 80);
         }
+        if (life % 20 == 3 && ChunkTickets.watched(sw, this)) {
+            // someone flies it from the tablet: a wide swath ahead, not just the strip under it
+            ChunkTickets.preload(sw, this, vel, 8, 4);
+        }
 
         double speed = type.speed();
         Vector3d v;

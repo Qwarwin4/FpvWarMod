@@ -34,6 +34,37 @@ public final class ChunkTickets {
         }
     }
 
+    public static final TicketType<Integer> PRELOAD = TicketType.create("fpvdrones_preload", Integer::compareTo, 100);
+
+    /**
+     * The world ahead of a drone someone is looking through: loaded (and generated if new) along the next
+     * {@code seconds} of flight, {@code radius} chunks to each side, so the picture doesn't run into the void.
+     * Refresh about once a second.
+     */
+    public static void preload(ServerWorld world, Entity entity, Vector3d velocity, int seconds, int radius) {
+        double speed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+        if (speed < 0.2) {
+            return;
+        }
+        Vector3d dir = new Vector3d(velocity.x / speed, 0, velocity.z / speed);
+        double reach = Math.min(512, speed * 20 * seconds);
+        for (double d = 24; d <= reach; d += 24) {
+            Vector3d at = entity.position().add(dir.scale(d));
+            ChunkPos pos = new ChunkPos(((int) Math.floor(at.x)) >> 4, ((int) Math.floor(at.z)) >> 4);
+            world.getChunkSource().addRegionTicket(PRELOAD, pos, radius, entity.getId());
+        }
+    }
+
+    /** Whether a player is watching through it (drone view, tablet camera). */
+    public static boolean watched(ServerWorld world, Entity entity) {
+        for (net.minecraft.entity.player.ServerPlayerEntity p : world.players()) {
+            if (p.getCamera() == entity) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private ChunkTickets() {
     }
 }

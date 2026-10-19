@@ -428,6 +428,10 @@ public abstract class AbstractDroneEntity extends Entity {
             // packets arrive even if the drone slipped into a chunk that stopped ticking, so load from here too
             ChunkTickets.follow(player.getLevel(), this, new Vector3d(msg.vx, msg.vy, msg.vz), 60);
         }
+        if (controlPackets % 20 == 0) {
+            // the pilot sees as far as his render distance: have the ground ahead generated before he gets there
+            ChunkTickets.preload(player.getLevel(), this, new Vector3d(msg.vx, msg.vy, msg.vz), 6, 4);
+        }
         yRot = msg.yaw;
         xRot = msg.pitch;
         setDeltaMovement(msg.vx, msg.vy, msg.vz);
