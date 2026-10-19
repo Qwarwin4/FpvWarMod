@@ -1469,24 +1469,10 @@ def build_icons():
 
 
 def armor_texture():
-    im = Image.new("RGBA", (64, 32), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    strap, strap_hi = hexc("#1b1c20"), hexc("#33353b")
-    for x0 in (0, 16, 24):
-        d.rectangle([x0, 10, x0 + 7, 12], fill=strap)
-        d.line([x0, 10, x0 + 7, 10], fill=strap_hi)
-    d.rectangle([8, 9, 15, 13], fill=hexc("#24272c"))
-    d.line([8, 9, 15, 9], fill=hexc("#5d646e"))
-    d.line([8, 13, 15, 13], fill=hexc("#0e0f11"))
-    d.rectangle([9, 10, 10, 11], fill=hexc("#3a3f46"))
-    d.rectangle([13, 10, 14, 11], fill=hexc("#3a3f46"))
-    d.point((11, 12), fill=hexc("#2cff6a"))
-    d.rectangle([12, 2, 12, 5], fill=hexc("#202226"))
-    d.point((12, 1), fill=hexc("#ff6a00"))
-    im = finish_icon(scale2x(im), 3)
-    im.save(path(ASSETS, "textures", "models", "armor", "fpv_goggles_layer_1.png"))
-    Image.new("RGBA", (128, 64), (0, 0, 0, 0)).save(
-        path(ASSETS, "textures", "models", "armor", "fpv_goggles_layer_2.png"))
+    # the goggles are a 3D model drawn on the head (client/GogglesLayer, tools/gen_meshes.py): the armour layers
+    # stay empty so the vanilla armour renderer draws nothing over it
+    for n in ("fpv_goggles_layer_1.png", "fpv_goggles_layer_2.png"):
+        Image.new("RGBA", (64, 32), (0, 0, 0, 0)).save(path(ASSETS, "textures", "models", "armor", n))
 
 
 def item_models():
@@ -2705,6 +2691,9 @@ def clean():
         d = os.path.join(ASSETS, sub)
         if os.path.isdir(d):
             for f in os.listdir(d):
+                # the real models (tools/gen_meshes.py: .mesh files, textures/entity/mesh/) aren't ours to drop
+                if f.endswith(".mesh") or os.path.isdir(os.path.join(d, f)):
+                    continue
                 os.remove(os.path.join(d, f))
 
 
@@ -2754,6 +2743,10 @@ def main():
     sounds_json()
     gen_sounds()
     apply_overrides()
+    # icons of the things that have real 3D models are rendered from them
+    import gen_meshes
+    gen_meshes.ASSETS = ASSETS
+    gen_meshes.build_icons()
     print("done:", RES)
 
 

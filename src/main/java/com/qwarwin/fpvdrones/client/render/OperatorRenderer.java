@@ -22,6 +22,7 @@ public class OperatorRenderer extends LivingRenderer<OperatorEntity, PlayerModel
         super(mgr, new PlayerModel<>(0.0F, false), 0.5F);
         addLayer(new BipedArmorLayer<>(this, new BipedModel<>(0.5F), new BipedModel<>(1.0F)));
         addLayer(new HeldItemLayer<>(this));
+        addLayer(new com.qwarwin.fpvdrones.client.GogglesLayer<>(this));
     }
 
     @Override

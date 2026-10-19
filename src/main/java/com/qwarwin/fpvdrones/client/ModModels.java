@@ -28,6 +28,9 @@ public final class ModModels {
     public static final ResourceLocation MAVIC = FpvDrones.id("entity/mavic3");
     public static final ResourceLocation PROP = FpvDrones.id("entity/propeller");
     public static final ResourceLocation PROP_BLUR = FpvDrones.id("entity/prop_blur");
+    /** mesh only (no JSON): the Mavic's folding two-blade and the Shahed's wooden pusher */
+    public static final ResourceLocation PROP_MAVIC = FpvDrones.id("entity/propeller_mavic");
+    public static final ResourceLocation PROP_SHAHED = FpvDrones.id("entity/propeller_shahed");
     public static final ResourceLocation TRUCK = FpvDrones.id("entity/truck");
     public static final ResourceLocation TRUCK_WHEEL = FpvDrones.id("entity/truck_wheel");
     public static final ResourceLocation TRUCK_RACK = FpvDrones.id("entity/truck_rack");
@@ -75,6 +78,15 @@ public final class ModModels {
 
     /** Draws the model with its (8,8,8) centre on the current origin. */
     public static void render(ResourceLocation id, MatrixStack ms, IRenderTypeBuffer buffers, int light) {
+        // a real model of the same name replaces the box one
+        MeshModel mesh = MeshModel.get(id);
+        if (mesh != null) {
+            ms.pushPose();
+            ms.translate(-0.5, -0.5, -0.5);
+            mesh.render(ms, buffers, light);
+            ms.popPose();
+            return;
+        }
         IBakedModel model = Minecraft.getInstance().getModelManager().getModel(id);
         IVertexBuilder vb = buffers.getBuffer(Atlases.translucentCullBlockSheet());
         ms.pushPose();

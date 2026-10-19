@@ -46,7 +46,7 @@ public class StrikeDroneRenderer extends EntityRenderer<StrikeDroneEntity> {
             ms.mulPose(Vector3f.XP.rotationDegrees(90F));
             ms.mulPose(Vector3f.YP.rotationDegrees(propAngle));
             ms.scale(0.55F, 0.55F, 0.55F);
-            ModModels.render(ModModels.PROP, ms, buf, light);
+            ModModels.render(ModModels.PROP_SHAHED, ms, buf, light);
             if (spinning) {
                 ModModels.render(ModModels.PROP_BLUR, ms, buf, light);
             }

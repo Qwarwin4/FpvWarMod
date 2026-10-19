@@ -26,7 +26,8 @@ import javax.annotation.Nullable;
  */
 public class KornetEntity extends MountedWeaponEntity {
     public static final Vector3d PIVOT = new Vector3d(0, 0.78, 0);
-    public static final Vector3d TRUNNION = new Vector3d(0, 0.14, 0);
+    /** the elevation axis runs through the launch tube (tools/gen_meshes.py prints it) */
+    public static final Vector3d TRUNNION = new Vector3d(0, 0.63, 0);
     public static final double TUBE_FRONT = 0.75;
     private static final int RELOAD_TICKS = 50;
 
@@ -54,7 +55,7 @@ public class KornetEntity extends MountedWeaponEntity {
     @Override
     protected Vector3d sightOffset() {
         // straight above the tube, so the crosshair and the missile's line agree
-        return new Vector3d(0, 0.42, -0.25);
+        return new Vector3d(0, 0.22, -0.25);
     }
 
     @Override

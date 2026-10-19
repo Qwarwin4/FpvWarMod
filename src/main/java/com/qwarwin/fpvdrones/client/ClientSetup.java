@@ -52,12 +52,18 @@ public final class ClientSetup {
             RenderTypeLookup.setRenderLayer(ModBlocks.LAUNCH_PAD.get(), RenderType.cutout());
             RenderTypeLookup.setRenderLayer(ModBlocks.ASSEMBLY_BENCH.get(), RenderType.cutout());
             ScreenManager.register(ModContainers.ASSEMBLY.get(), AssemblyScreen::new);
+            // the 3D goggles on players' heads
+            for (net.minecraft.client.renderer.entity.PlayerRenderer r
+                    : net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getSkinMap().values()) {
+                r.addLayer(new GogglesLayer<>(r));
+            }
         });
         KeyBinds.register();
     }
 
     @SubscribeEvent
     public static void onModelRegistry(ModelRegistryEvent event) {
+        MeshModel.clear();
         for (ResourceLocation rl : ModModels.all()) {
             ModelLoader.addSpecialModel(rl);
         }

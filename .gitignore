@@ -12,3 +12,4 @@ eclipse/
 .settings/
 __pycache__/
 tools/_build/
+tools/_preview/

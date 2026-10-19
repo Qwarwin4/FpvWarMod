@@ -74,7 +74,7 @@
 
 Готовый мод — `build/libs/fpvdrones-<версия>.jar`, его кладёшь в `mods`. Папка `build` появляется только после сборки.
 
-Модели, текстуры и звуки генерирует `tools/gen_assets.py` (Pillow + numpy, для звуков ещё ffmpeg). Для сборки мода он не нужен — всё уже сгенерировано и лежит в `src/main/resources`:
+Дроны, «Корнет», грузовик и очки — настоящие 3D-модели (авторы и лицензии в [MODELS.md](MODELS.md)), их готовит `tools/gen_meshes.py`. Остальные модели, текстуры и звуки генерирует `tools/gen_assets.py` (Pillow + numpy, для звуков ещё ffmpeg). Для сборки мода он не нужен — всё уже сгенерировано и лежит в `src/main/resources`:
 
 ```
 python3 tools/gen_assets.py src/main/resources

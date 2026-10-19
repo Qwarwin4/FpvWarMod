@@ -51,8 +51,8 @@ public class LaunchTruckEntity extends MachineEntity implements LaunchSite {
     // driver sits in the cab over the front axle, head under the roof
     public static final Vector3d SEAT = new Vector3d(0.55, 1.40, 2.25);
     public static final double[][] WHEELS = {
-            {-1.0, 2.35}, {1.0, 2.35}, {-1.0, -1.0}, {1.0, -1.0}, {-1.0, -2.3}, {1.0, -2.3}};
-    public static final double WHEEL_RADIUS = 0.62;
+            {-0.99, 2.10}, {0.98, 2.10}, {-0.99, -1.04}, {0.98, -1.04}, {-0.99, -2.27}, {0.98, -2.27}};
+    public static final double WHEEL_RADIUS = 0.595;
 
     private static final DataParameter<Integer> SLOTS = EntityDataManager.defineId(LaunchTruckEntity.class, DataSerializers.INT);
 

@@ -25,12 +25,13 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public class DroneRenderer extends EntityRenderer<AbstractDroneEntity> {
     private static final float FPV_SCALE = 0.9F;
     private static final float FPV_BOTTOM = 6.5F;
-    private static final float[][] FPV_PROPS = {{2, 8.8F, 2}, {14, 8.8F, 2}, {2, 8.8F, 14}, {14, 8.8F, 14}};
+    // on the motors of the real models (tools/gen_meshes.py prints them)
+    private static final float[][] FPV_PROPS = {{2, 8.25F, 2}, {14, 8.25F, 2}, {2, 8.25F, 14}, {14, 8.25F, 14}};
 
     private static final float MAVIC_SCALE = 0.85F;
     private static final float MAVIC_BOTTOM = 6.0F;
     private static final float[][] MAVIC_PROPS = {
-            {2.4F, 9.25F, 12.85F}, {13.6F, 9.25F, 12.85F}, {2.4F, 8.55F, 3.36F}, {13.6F, 8.55F, 3.36F}};
+            {2.63F, 7.69F, 13.33F}, {13.37F, 7.69F, 13.33F}, {2.17F, 7.69F, 2.87F}, {13.83F, 7.69F, 2.87F}};
 
     private final boolean mavic;
 
@@ -72,7 +73,7 @@ public class DroneRenderer extends EntityRenderer<AbstractDroneEntity> {
             ms.mulPose(Vector3f.YP.rotationDegrees((cw ? angle : -angle) + i * 37F));
             float ps = mavic ? 0.32F : 0.5F;
             ms.scale(ps, ps, ps);
-            ModModels.render(ModModels.PROP, ms, buf, light);
+            ModModels.render(mavic ? ModModels.PROP_MAVIC : ModModels.PROP, ms, buf, light);
             if (e.isPowered()) {
                 ModModels.render(ModModels.PROP_BLUR, ms, buf, light);
             }
