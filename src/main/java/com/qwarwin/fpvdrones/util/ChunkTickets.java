@@ -43,12 +43,14 @@ public final class ChunkTickets {
      */
     public static void preload(ServerWorld world, Entity entity, Vector3d velocity, int seconds, int radius) {
         double speed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-        if (speed < 0.2) {
+        if (speed < 0.6) {
             return;
         }
         Vector3d dir = new Vector3d(velocity.x / speed, 0, velocity.z / speed);
-        double reach = Math.min(512, speed * 20 * seconds);
-        for (double d = 24; d <= reach; d += 24) {
+        double reach = Math.min(800, speed * 20 * seconds);
+        // small low-priority tickets starting where the view distance ends: the chunks round the pilot come first
+        double from = Math.max(48, (world.getServer().getPlayerList().getViewDistance() - 2) * 16);
+        for (double d = from; d <= reach; d += 40) {
             Vector3d at = entity.position().add(dir.scale(d));
             ChunkPos pos = new ChunkPos(((int) Math.floor(at.x)) >> 4, ((int) Math.floor(at.z)) >> 4);
             world.getChunkSource().addRegionTicket(PRELOAD, pos, radius, entity.getId());

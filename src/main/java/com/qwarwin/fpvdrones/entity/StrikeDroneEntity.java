@@ -251,7 +251,7 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
         }
         if (life % 20 == 3 && ChunkTickets.watched(sw, this)) {
             // someone flies it from the tablet: a wide swath ahead, not just the strip under it
-            ChunkTickets.preload(sw, this, vel, 8, 4);
+            ChunkTickets.preload(sw, this, vel, 12, 2);
         }
 
         double speed = type.speed();

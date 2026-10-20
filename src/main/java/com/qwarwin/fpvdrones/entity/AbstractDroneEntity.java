@@ -430,7 +430,7 @@ public abstract class AbstractDroneEntity extends Entity {
         }
         if (controlPackets % 20 == 0) {
             // the pilot sees as far as his render distance: have the ground ahead generated before he gets there
-            ChunkTickets.preload(player.getLevel(), this, new Vector3d(msg.vx, msg.vy, msg.vz), 6, 4);
+            ChunkTickets.preload(player.getLevel(), this, new Vector3d(msg.vx, msg.vy, msg.vz), 10, 2);
         }
         yRot = msg.yaw;
         xRot = msg.pitch;
