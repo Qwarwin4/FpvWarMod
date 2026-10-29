@@ -118,13 +118,21 @@ public final class Explosions {
     private static void hull(World level, @Nullable Entity attacker, Vector3d pos, double radius, float damage) {
         for (Entity e : level.getEntities((Entity) null, new AxisAlignedBB(pos, pos).inflate(radius + 4),
                 e -> e.isAlive() && !(e instanceof LivingEntity) && Targeting.isShootable(e) && !Targeting.isAirTarget(e))) {
-            double d = Math.sqrt(e.getBoundingBox().distanceToSqr(pos));
+            double d = boxDistance(e.getBoundingBox(), pos);
             if (d > radius) {
                 continue;
             }
             e.invulnerableTime = 0;
             e.hurt(ModDamageSources.cumulative(attacker), damage * (float) (1.0 - 0.7 * d / radius) * zone(e, pos));
         }
+    }
+
+    /** From a point to the nearest point of a box (0 inside it). */
+    private static double boxDistance(AxisAlignedBB b, Vector3d p) {
+        double dx = Math.max(Math.max(b.minX - p.x, 0), p.x - b.maxX);
+        double dy = Math.max(Math.max(b.minY - p.y, 0), p.y - b.maxY);
+        double dz = Math.max(Math.max(b.minZ - p.z, 0), p.z - b.maxZ);
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     /**
