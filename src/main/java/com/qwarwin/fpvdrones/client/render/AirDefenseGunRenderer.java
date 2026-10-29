@@ -3,6 +3,7 @@ package com.qwarwin.fpvdrones.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.qwarwin.fpvdrones.client.ModModels;
 import com.qwarwin.fpvdrones.entity.AirDefenseGunEntity;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
@@ -28,6 +29,13 @@ public class AirDefenseGunRenderer extends EntityRenderer<AirDefenseGunEntity> {
         ms.mulPose(Vector3f.YP.rotationDegrees(-e.yRot));
         Parts.draw(ModModels.ADGUN_BASE, ms, buf, light, SCALE);
         ms.popPose();
+
+        // the gunner's eye is at the optics head on the turret: drawing it would wall off the sight
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && e.hasPassenger(mc.player) && mc.options.getCameraType().isFirstPerson()) {
+            super.render(e, entityYaw, partial, ms, buf, light);
+            return;
+        }
 
         Vector3d p = AirDefenseGunEntity.PIVOT;
         Vector3d t = AirDefenseGunEntity.TRUNNION;

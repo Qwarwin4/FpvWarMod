@@ -12,10 +12,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.gen.Heightmap;
 import net.minecraftforge.api.distmarker.Dist;
@@ -152,23 +155,30 @@ public final class HudRenderer {
         }
     }
 
-    // warhead nose sticking into the bottom of the frame, like on real FPV footage
+    // the warhead sticking into the bottom of the frame, like on real FPV footage: its real model, seen from the
+    // camera on the frame, nose away and up into the picture
     private static void drawWarhead(MatrixStack ms, int cx, int h, PayloadType p) {
-        int body = p == PayloadType.OG7 ? 0xFF3E4724 : (p == PayloadType.CANISTER ? 0xFFBDB9AE : 0xFF262A20);
-        int hi = p == PayloadType.CANISTER ? 0xFFDAD6CB : 0xFF4A5040;
-        if (p == PayloadType.CANISTER) {
-            fill(ms, cx - 70, h - 14, cx + 70, h, body);
-            fill(ms, cx - 70, h - 14, cx + 70, h - 12, hi);
-            fill(ms, cx - 70, h - 8, cx + 70, h - 5, 0xFF8C8F91);
-            return;
+        Minecraft mc = Minecraft.getInstance();
+        IRenderTypeBuffer.Impl buf = mc.renderBuffers().bufferSource();
+        boolean canister = p == PayloadType.CANISTER;
+        ms.pushPose();
+        ms.translate(cx, h + (canister ? 4 : 10), 150);
+        float s = canister ? 110F : 210F;
+        ms.scale(s, -s, s);
+        if (canister) {
+            // strapped on its side across the frame
+            ms.mulPose(Vector3f.XP.rotationDegrees(-30F));
+            ms.mulPose(Vector3f.ZP.rotationDegrees(90F));
+        } else {
+            ms.mulPose(Vector3f.XP.rotationDegrees(25F));
+            ms.mulPose(Vector3f.YP.rotationDegrees(180F));
         }
-        fill(ms, cx - 22, h - 20, cx + 22, h, body);
-        fill(ms, cx - 16, h - 32, cx + 16, h - 20, body);
-        fill(ms, cx - 9, h - 42, cx + 9, h - 32, body);
-        fill(ms, cx - 3, h - 50, cx + 3, h - 42, 0xFFB8963A);
-        fill(ms, cx - 22, h - 20, cx - 16, h, hi);
-        fill(ms, cx - 16, h - 32, cx - 11, h - 20, hi);
-        fill(ms, cx - 9, h - 42, cx - 6, h - 32, hi);
+        RenderSystem.enableDepthTest();
+        RenderHelper.setupFor3DItems();
+        ModModels.render(p.model(), ms, buf, 0xF000F0);
+        buf.endBatch();
+        RenderSystem.disableDepthTest();
+        ms.popPose();
     }
 
     private static void mavic(MatrixStack ms, Minecraft mc, MavicEntity e, int w, int h) {
