@@ -13,8 +13,15 @@
 | ПТРК «Корнет» | [9M133 Kornet / AT-14 Spriggan](https://sketchfab.com/3d-models/8b1d8e081c9744598b2ec4127d1c72df) | XEPCOH_552 | CC BY 4.0 |
 | Пусковой грузовик (КамАЗ) | [KamAZ-5340](https://sketchfab.com/3d-models/326a0fc70fd1470085b85e2486ca32bc) | 42manako | CC BY 4.0 |
 | FPV-очки | [Rodin FPV Goggles DJI](https://sketchfab.com/3d-models/56197e46626341acb8b7924494f9e8c9) | line-o | CC BY 4.0 |
+| ПГ-7ВС | [low-poly RPG-7 Granades](https://sketchfab.com/3d-models/5ff10c54456343d6b1f65cd20efb80ac) | D.U. | CC BY 4.0 |
+| ОГ-7 | [OG-7B](https://sketchfab.com/3d-models/f6980f8fc24547348d15627d2af99c0c) | Jess1337 | CC BY 4.0 |
+| РГД-5 | [Soviet Hand Grenade RGD-5](https://sketchfab.com/3d-models/822accdc36c0440786500b014fe94571) | Igor Pakov | CC BY 4.0 |
+| Канистра со взрывчаткой | [Old Rusty Soviet Fuel Canister](https://sketchfab.com/3d-models/a2e479f5114246bda975afaa827081d1) | olegolegperepelica | CC BY 4.0 |
+| ВОГ-17М, снаряд 30 мм | [30mm shell 2A42](https://sketchfab.com/3d-models/ba1af848f8d847928ff29c0e46821d40) | dichevk | CC BY 4.0 |
+| Ракета Javelin | [FGM-148 Javelin Missile (Low-Poly)](https://sketchfab.com/3d-models/39b071dbbcbc4a5e9ca1646527b940ef) | GoldbergR | CC BY 4.0 |
 
-Перекрашено: Герань-2 и Герань-5 — в чёрный, «Корнет» — из песочного в армейский зелёный, Mavic — в тёмно-серый.
+Ракета «Корнета» — из той же модели «Корнета». У сбрасываемых боеприпасов дорисованы печатные хвостовики.
+ПГ-7ВС перекрашен в оливковый. Перекрашено: Герань-2 и Герань-5 — в чёрный, «Корнет» — из песочного в армейский зелёный, Mavic — в тёмно-серый.
 
 # Звуки
 

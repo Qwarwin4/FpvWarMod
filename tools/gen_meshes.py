@@ -388,10 +388,12 @@ def build_goggles():
     return ["goggles"]
 
 
-def _parts(name, fn=None):
-    """mesh sections of a model, points mapped by fn (px array (n,3,3) -> anything)"""
+def _parts(name, fn=None, bare=False):
+    """mesh sections of a model, points mapped by fn (px array (n,3,3) -> anything); bare: without add_boxes'"""
     out = []
     for tex, P, UV, N in mk.read_mesh_sections(os.path.join(ASSETS, "models", "entity", name + ".mesh")):
+        if bare and tex.endswith("/parts"):
+            continue
         img = Image.open(os.path.join(ASSETS, "textures", tex.split(":")[1] + ".png")).convert("RGB")
         Q = P * 16
         out.append(((fn(Q) if fn else Q), UV, img, N))
@@ -424,6 +426,120 @@ def _at(hub, k, rot=None):
             R = R @ rot.T
         return R * k + np.asarray(hub)
     return fn
+
+
+def add_boxes(name, boxes):
+    """3D-printed bits the sources don't have (drop tails, fins, exhaust): (from, to, colour) boxes in JSON pixels,
+    added to the mesh as their own section"""
+    path = os.path.join(ASSETS, "models", "entity", name + ".mesh")
+    secs = mk.read_mesh_sections(path)
+    cols = sorted({c for _, _, c in boxes})
+    im = Image.new("RGBA", (16, 16), (0, 0, 0, 255))
+    for i, c in enumerate(cols):
+        im.paste(Image.new("RGBA", (4, 4), tuple(c) + (255,)), ((i % 4) * 4, (i // 4) * 4))
+    im.save(os.path.join(ASSETS, "textures", "entity", "mesh", name, "parts.png"))
+    P, UV, N = [], [], []
+    for a, b, c in boxes:
+        a, b = np.minimum(a, b), np.maximum(a, b)
+        i = cols.index(c)
+        uv = (((i % 4) * 4 + 2) / 16.0, ((i // 4) * 4 + 2) / 16.0)
+        for ax in range(3):
+            for side in (0, 1):
+                n = np.zeros(3)
+                n[ax] = 1 if side else -1
+                u, v = [k for k in range(3) if k != ax]
+                q = []
+                for du, dv in ((0, 0), (1, 0), (1, 1), (0, 1)):
+                    pt = np.array(a, float)
+                    pt[ax] = b[ax] if side else a[ax]
+                    pt[u] = b[u] if du else a[u]
+                    pt[v] = b[v] if dv else a[v]
+                    q.append(pt)
+                if np.dot(np.cross(q[1] - q[0], q[2] - q[0]), n) < 0:
+                    q = q[::-1]
+                for t in ((q[0], q[1], q[2]), (q[0], q[2], q[3])):
+                    P.append(np.array(t) / 16.0)
+                    UV.append(np.full((3, 2), uv))
+                    N.append(np.tile(n, (3, 1)))
+    secs.append((f"{MODID}:entity/mesh/{name}/parts", np.array(P), np.array(UV), np.array(N)))
+    mk.write_mesh_sections(path, secs)
+
+
+def axial(sc, z0, z1, diameter, cut=None, nose_x=-1):
+    """a round of ammunition lying along x with its nose to -x: front part (to {cut}) along +z, nose at z1,
+    tail at z0, made {diameter} px thick (the sources are long and thin, the drop rounds stubby)"""
+    sc = sc.transform(mk.rot("y", 90 * -nose_x))
+    if cut is not None:
+        c = sc.P[:, :, 2].mean(1)
+        lo, hi = sc.bounds()
+        sc = sc.subset(c > hi[2] - (hi[2] - lo[2]) * cut)
+    lo, hi = sc.bounds()
+    kz = (z1 - z0) / (hi[2] - lo[2])
+    kr = diameter / max(hi[0] - lo[0], hi[1] - lo[1])
+    return sc, mk.trans(8 - (lo[0] + hi[0]) / 2 * kr, 8 - (lo[1] + hi[1]) / 2 * kr, z0 - lo[2] * kz) @ np.diag([kr, kr, kz, 1])
+
+
+DROP_TAIL = (40, 41, 43)
+
+
+def drop_tail(z0, z1, span, hub):
+    """the printed tail a drone round gets: a hub and a fin cross"""
+    h, s = hub / 2, span / 2
+    return [((8 - h, 8 - h, z0), (8 + h, 8 + h, z1), DROP_TAIL),
+            ((8 - s, 7.85, z0), (8 + s, 8.15, z0 + (z1 - z0) * 0.55), DROP_TAIL),
+            ((7.85, 8 - s, z0), (8.15, 8 + s, z0 + (z1 - z0) * 0.55), DROP_TAIL)]
+
+
+@builder
+def build_payloads():
+    """drop rounds and missiles: PG-7V and the 30 mm round (2A42 shell's projectile as the VOG-17) by their authors
+    in MODELS.md; the drop ones get printed tails, the missiles their flame"""
+    olive_rpg = {"material": (78, 86, 54)}
+    rpg = load({"src": "rpg_lp"})
+    pg = rpg.subset(select(rpg, lambda i: i["name"] == "Object_4"))
+    sc, M = axial(pg, 4.0, 15.5, 3.3, cut=0.6)
+    export("pg7vs", sc, {"tris": 1500, "recolor": olive_rpg}, M)
+    add_boxes("pg7vs", drop_tail(0.5, 4.6, 3.6, 1.4))
+
+    sc, M = axial(load({"src": "og7b"}), 4.0, 15.5, 2.6, cut=0.62)
+    export("og7", sc, {"tris": 3000}, M)
+    add_boxes("og7", drop_tail(0.5, 4.6, 3.2, 1.3))
+
+    shell = load({"src": "shell30"})
+    k = 7.2 / (1.358 - 0.264)
+    proj = shell.subset(select(shell, lambda i: i["name"] in ("Object_3", "Object_4")))
+    export("vog17m", proj, {"tris": 1200}, mk.trans(8, 5.0 - 0.264 * k, 8) @ mk.scale(k))
+    rx = mk.rot("x", -90)
+    add_boxes("vog17m", [((7.3, 2.2, 7.3), (8.7, 5.0, 8.7), DROP_TAIL), ((6.8, 1.5, 6.8), (9.2, 2.2, 9.2), DROP_TAIL),
+                         ((5.5, 1.5, 7.8), (10.5, 4.2, 8.2), DROP_TAIL), ((7.8, 1.5, 5.5), (8.2, 4.2, 10.5), DROP_TAIL)])
+    k = 2.8 / 0.41
+    export("shell_30mm", shell, {"tris": 1500}, mk.trans(8, 8 - 0.035 * k, 8) @ mk.scale(k))
+
+    g = load({"src": "rgd5"})
+    k = 7.6 / 4.99
+    lo, hi = g.bounds()
+    export("rgd5", g, {"tris": 3000}, mk.trans(8 - (lo[0] + hi[0]) / 2 * k, 4.0 - lo[1] * k, 8 - (lo[2] + hi[2]) / 2 * k) @ mk.scale(k))
+
+    can = load({"src": "canister_b", "rot": [("y", 90)]})
+    lo, hi = can.bounds()
+    k = 12.4 / (hi[1] - lo[1])
+    export("explosive_canister", can, {"tris": 1831},
+           mk.trans(8 - (lo[0] + hi[0]) / 2 * k, 2.0 - lo[1] * k, 8 - (lo[2] + hi[2]) / 2 * k) @ mk.scale(k))
+
+    flame = (255, 196, 96)
+    jav = load({"src": "javelin_m"})
+    lo, hi = jav.bounds()
+    k = 16.0 / (hi[2] - lo[2])
+    export("javelin_missile_flight", jav, {"tris": 1662}, mk.trans(8, 8, -lo[2] * k) @ mk.scale(k))
+    add_boxes("javelin_missile_flight", [((7.44, 7.44, -5.6), (8.56, 8.56, 0.0), flame)])
+
+    kor = load({"src": "kornet"})
+    kor = kor.subset(select(kor, lambda i: i["name"] == "Object_4"))
+    sc, M = axial(kor, -0.8, 16.8, 5.76, nose_x=1)
+    export("kornet_missile_flight", sc, {"tris": 852}, M)
+    add_boxes("kornet_missile_flight", [((7.4, 7.4, -6.4), (8.6, 8.6, -0.8), flame)])
+    return ["pg7vs", "og7", "vog17m", "rgd5", "explosive_canister", "javelin_missile_flight", "kornet_missile_flight",
+            "shell_30mm"]
 
 
 @builder
@@ -460,6 +576,14 @@ def build_icons():
         tr += _parts("truck_wheel", lambda Q, wx=wx, wz=wz: (Q / 16 - 0.5) * 3 + np.array([wx, radius, wz]))
     _icon(tr, "launch_truck", 40, 25)
     _icon(_parts("goggles"), "fpv_goggles", 25, 15)
+    for n in ("pg7vs", "og7"):
+        _icon(_parts(n), n, 135, 35)
+    _icon(_parts("kornet_missile_flight", bare=True), "kornet_missile", 135, 35)
+    _icon(_parts("javelin_missile_flight", bare=True), "javelin_missile", 135, 35)
+    _icon(_parts("vog17m"), "vog17m", 30, 20)
+    _icon(_parts("shell_30mm"), "ammo_30mm", 30, 20)
+    _icon(_parts("rgd5"), "rgd5", 30, 15)
+    _icon(_parts("explosive_canister"), "explosive_canister", 30, 20)
     print("  icons")
     return []
 

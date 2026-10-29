@@ -1,6 +1,6 @@
 {
- "parent": "item/generated",
- "textures": {
-  "layer0": "fpvdrones:item/javelin_missile"
- }
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "fpvdrones:item/javelin_missile"
+  }
 }
