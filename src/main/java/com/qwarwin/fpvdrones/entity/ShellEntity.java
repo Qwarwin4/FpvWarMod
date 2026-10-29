@@ -33,7 +33,10 @@ import java.util.UUID;
 public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
     public static final double SPEED = 9.0;
     public static final double GRAVITY = 0.03;
-    private static final int LIFE = 70;
+    public static final double DRAG = 0.995;
+    private static final int LIFE = 100;
+    /** Fragment cloud of a round burst by its programmed fuse at the computed point. */
+    private static final double CLOUD = 4.0;
     /** The fuse sees further around a big target than around a small quadcopter. */
     private static final double FUSE_BASE = 0.7;
     private static final double FUSE_PER_WIDTH = 0.8;
@@ -46,6 +49,9 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
     // "everything" mode: the fuse doesn't care whose it is
     private boolean fuseAll;
     private int life;
+    /** Programmed fuse: burst after this many blocks of flight (0: none, proximity only). */
+    private double burstAt;
+    private double travelled;
 
     public ShellEntity(EntityType<? extends ShellEntity> type, World world) {
         super(type, world);
@@ -62,6 +68,11 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
         faceMotion();
         yRotO = yRot;
         xRotO = xRot;
+    }
+
+    /** The fire control sets the fuse to go off where the round meets the target's predicted track. */
+    public void programBurst(double distance) {
+        burstAt = airburst ? distance : 0;
     }
 
     public void setFuseAll(boolean v) {
@@ -108,6 +119,14 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
                     impact(burst, null);
                     return;
                 }
+                double step = end.distanceTo(from);
+                if (burstAt > 0 && travelled + step >= burstAt) {
+                    Vector3d at = from.add(end.subtract(from).scale((burstAt - travelled) / Math.max(step, 1e-6)));
+                    remove();
+                    Explosions.shell(level, this, owner, at, true, CLOUD);
+                    return;
+                }
+                travelled += step;
             }
             if (block.getType() != RayTraceResult.Type.MISS) {
                 impact(block.getLocation(), null);
@@ -118,7 +137,7 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
         }
 
         setPos(to.x, to.y, to.z);
-        setDeltaMovement(v.scale(0.995).add(0, -GRAVITY, 0));
+        setDeltaMovement(v.scale(DRAG).add(0, -GRAVITY, 0));
         yRotO = yRot;
         xRotO = xRot;
         faceMotion();
@@ -183,6 +202,8 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
     protected void readAdditionalSaveData(CompoundNBT tag) {
         life = tag.getInt("Life");
         airburst = tag.getBoolean("Airburst");
+        burstAt = tag.getDouble("BurstAt");
+        travelled = tag.getDouble("Travelled");
         owner = tag.hasUUID("Owner") ? tag.getUUID("Owner") : null;
     }
 
@@ -190,6 +211,8 @@ public class ShellEntity extends Entity implements IEntityAdditionalSpawnData {
     protected void addAdditionalSaveData(CompoundNBT tag) {
         tag.putInt("Life", life);
         tag.putBoolean("Airburst", airburst);
+        tag.putDouble("BurstAt", burstAt);
+        tag.putDouble("Travelled", travelled);
         if (owner != null) {
             tag.putUUID("Owner", owner);
         }

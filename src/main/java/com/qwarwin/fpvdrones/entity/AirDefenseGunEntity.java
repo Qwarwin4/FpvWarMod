@@ -30,16 +30,19 @@ import net.minecraft.world.server.ServerWorld;
 import javax.annotation.Nullable;
 
 /**
- * Remote 30 mm weapon station on a pedestal, for shooting down drones. Programmable airburst rounds go off
- * next to a drone, so near misses still count. Left alone in auto mode it engages hostile drones by itself.
+ * ZAK-30 "Tsitadel": automatic 30 mm anti-drone turret on a pedestal, with its own surveillance radar and TV/IR head.
+ * The fire control works out where each round meets the target and programs the fuse to burst there in a cloud
+ * of fragments, so small drones are hit out to about a kilometre (here: {@link #AUTO_RANGE} blocks).
  */
 public class AirDefenseGunEntity extends MountedWeaponEntity {
     public static final Vector3d PIVOT = new Vector3d(0, 1.15, 0);
     public static final Vector3d TRUNNION = new Vector3d(-0.05, 0.42, 0.15);
     public static final double MUZZLE = 2.55;
     public static final int ROUNDS_PER_BELT = 50;
-    private static final double AUTO_RANGE = 140.0;
-    private static final double ALL_RANGE = 170.0;
+    private static final double AUTO_RANGE = 450.0;
+    private static final double ALL_RANGE = 450.0;
+    /** How wide around the crosshair the gunner's laser rangefinder picks a target up, degrees. */
+    private static final double RANGEFINDER_CONE = 3.0;
 
     /** Manual, auto against other people's drones, auto against anything in the air. */
     public static final int MANUAL = 0, AUTO = 1, ALL = 2;
@@ -75,7 +78,7 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
 
     @Override
     public float getMaxHealth() {
-        return 60F;
+        return 120F;
     }
 
     @Override
@@ -118,7 +121,7 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
 
     @Override
     protected int primaryInterval() {
-        return 3;
+        return 2;
     }
 
     @Override
@@ -134,18 +137,49 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
         }
         Vector3d muzzle = gunToWorld(TRUNNION, new Vector3d(0, 0, MUZZLE));
         // barrel whip and mount vibration in a burst
-        float spread = 1.1F;
+        float spread = 0.6F;
         Vector3d dir = Vector3d.directionFromRotation(getGunPitch() + (random.nextFloat() - 0.5F) * spread,
                 getTurretYaw() + (random.nextFloat() - 0.5F) * spread);
         Entity gunner = getGunner();
         shell.setup(this, gunner != null ? gunner.getUUID() : owner, muzzle, dir.scale(ShellEntity.SPEED), true);
         shell.setFuseAll(getMode() == ALL);
+        double fuse = fuseDistance(muzzle, gunner);
+        if (fuse > 0) {
+            // the fuse setter isn't perfect either
+            shell.programBurst(fuse * (1 + (random.nextDouble() - 0.5) * 0.02));
+        }
         level.addFreshEntity(shell);
         setAmmo(getAmmo() - 1);
         level.playSound(null, muzzle.x, muzzle.y, muzzle.z, ModSounds.CANNON_30.get(), SoundCategory.HOSTILE, 5F,
                 0.95F + random.nextFloat() * 0.1F);
         ((ServerWorld) level).sendParticles(ParticleTypes.FLAME, muzzle.x, muzzle.y, muzzle.z, 3, 0.05, 0.05, 0.05, 0.05);
         ((ServerWorld) level).sendParticles(ParticleTypes.POOF, muzzle.x, muzzle.y, muzzle.z, 2, 0.1, 0.1, 0.1, 0.02);
+    }
+
+    /** Distance to program into the fuse: to the tracked target's intercept point, 0 when nothing is tracked. */
+    private double fuseDistance(Vector3d muzzle, @Nullable Entity gunner) {
+        Entity target = null;
+        if (gunner == null) {
+            target = targetId < 0 ? null : level.getEntity(targetId);
+        } else {
+            // laser rangefinder: whatever flies closest to the line of the barrel
+            Vector3d dir = Vector3d.directionFromRotation(getGunPitch(), getTurretYaw());
+            double best = Math.cos(Math.toRadians(RANGEFINDER_CONE));
+            boolean all = getMode() == ALL;
+            for (Entity e : level.getEntities(this, new AxisAlignedBB(muzzle, muzzle).inflate(range()),
+                    all ? Targeting::isAirborne : Targeting::isAirTarget)) {
+                Vector3d to = e.getBoundingBox().getCenter().subtract(muzzle);
+                double c = to.normalize().dot(dir);
+                if (c > best && to.length() < range() && !hasPassenger(e)) {
+                    best = c;
+                    target = e;
+                }
+            }
+        }
+        if (target == null || !target.isAlive()) {
+            return 0;
+        }
+        return Targeting.lead(muzzle, target, ShellEntity.SPEED, ShellEntity.GRAVITY, ShellEntity.DRAG).distanceTo(muzzle);
     }
 
     @Override
@@ -184,13 +218,14 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
             return;
         }
         trackTicks++;
-        // the error wanders more against small, jinking targets and settles a little as the track matures
+        // radar plus the TV/IR tracker: the error wanders more against small, jinking targets and settles as the
+        // track matures
         double size = Math.max(0.3, target.getBbWidth());
-        float wander = (float) (1.6 / size) * (trackTicks < 60 ? 1.0F : 0.6F);
+        float wander = (float) (0.45 / size) * (trackTicks < 40 ? 1.0F : 0.5F);
         errYaw = MathHelper.clamp(errYaw * 0.9F + (random.nextFloat() - 0.5F) * wander, -3F * wander, 3F * wander);
         errPitch = MathHelper.clamp(errPitch * 0.9F + (random.nextFloat() - 0.5F) * wander, -3F * wander, 3F * wander);
         Vector3d muzzle = gunToWorld(TRUNNION, new Vector3d(0, 0, MUZZLE));
-        Vector3d aim = Targeting.lead(muzzle, target, ShellEntity.SPEED, ShellEntity.GRAVITY).subtract(muzzle);
+        Vector3d aim = Targeting.lead(muzzle, target, ShellEntity.SPEED, ShellEntity.GRAVITY, ShellEntity.DRAG).subtract(muzzle);
         float err = slewTo(Targeting.yawTo(aim) + errYaw, Targeting.pitchTo(aim) + errPitch);
         if (autoFireCooldown > 0) {
             autoFireCooldown--;

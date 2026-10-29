@@ -1,6 +1,6 @@
 {
- "parent": "item/generated",
- "textures": {
-  "layer0": "fpvdrones:item/air_defense_gun"
- }
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "fpvdrones:item/air_defense_gun"
+  }
 }

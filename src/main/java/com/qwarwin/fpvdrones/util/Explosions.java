@@ -131,12 +131,15 @@ public final class Explosions {
 
     /** 30 mm HE-frag. With the proximity fuse it bursts next to drones instead of needing a direct hit. */
     public static void shell(World level, Entity shell, @Nullable UUID attackerId, Vector3d pos, boolean airburst) {
+        shell(level, shell, attackerId, pos, airburst, airburst ? 3.0 : 2.5);
+    }
+
+    public static void shell(World level, Entity shell, @Nullable UUID attackerId, Vector3d pos, boolean airburst, double radius) {
         if (level.isClientSide) {
             return;
         }
         LivingEntity attacker = player(level, attackerId);
         ServerWorld sw = (ServerWorld) level;
-        double radius = airburst ? 3.0 : 2.5;
         for (Entity e : level.getEntities(shell, new AxisAlignedBB(pos, pos).inflate(radius), Targeting::isShootable)) {
             double d = e.getBoundingBox().getCenter().distanceTo(pos);
             if (d > radius) {

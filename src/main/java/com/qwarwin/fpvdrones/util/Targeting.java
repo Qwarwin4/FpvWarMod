@@ -147,6 +147,22 @@ public final class Targeting {
         return aim;
     }
 
+    /** Lead for a round that also loses speed to drag (v *= drag every tick). */
+    public static Vector3d lead(Vector3d muzzle, Entity target, double speed, double gravity, double drag) {
+        Vector3d pos = target.getBoundingBox().getCenter();
+        Vector3d vel = target.position().subtract(target.xo, target.yo, target.zo);
+        double k = Math.log(drag);
+        Vector3d aim = pos;
+        for (int i = 0; i < 5; i++) {
+            double d = aim.distanceTo(muzzle);
+            double left = 1 + d * k / speed;
+            // past where it can carry: aim as if it got there at its last speed
+            double t = left > 0.05 ? Math.log(left) / k : d / speed * 3;
+            aim = pos.add(vel.scale(t)).add(0, 0.5 * gravity * t * t * Math.max(0.3, 1 + t * k / 3), 0);
+        }
+        return aim;
+    }
+
     public static float yawTo(Vector3d d) {
         return (float) (Math.atan2(d.z, d.x) * (180.0 / Math.PI)) - 90F;
     }

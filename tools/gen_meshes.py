@@ -543,6 +543,13 @@ def build_payloads():
 
 
 @builder
+def build_citadel():
+    """ZAK-30 Tsitadel, built from primitives in gen_citadel.py"""
+    import gen_citadel
+    return gen_citadel.build(ASSETS, MODID)
+
+
+@builder
 def build_icons():
     """inventory icons rendered from the meshes; the drones' items were 3D box models, now flat icons like the rest"""
     fpv = _parts("fpv_drone")
@@ -576,6 +583,11 @@ def build_icons():
         tr += _parts("truck_wheel", lambda Q, wx=wx, wz=wz: (Q / 16 - 0.5) * 3 + np.array([wx, radius, wz]))
     _icon(tr, "launch_truck", 40, 25)
     _icon(_parts("goggles"), "fpv_goggles", 25, 15)
+    # the Tsitadel stood up: base, turret on the ring (9.2 px), gun on its trunnion, a little elevated
+    up = mk.rot("x", -20)[:3, :3]
+    cit = _parts("adgun_base") + _parts("adgun_turret", lambda Q: Q + np.array([0, 9.2, 0]))
+    cit += _parts("adgun_gun", lambda Q: (Q - np.array([8, 0, 8])) @ up.T + np.array([7.6, 9.2 + 3.36, 9.2]))
+    _icon(cit, "air_defense_gun", 35, 20)
     for n in ("pg7vs", "og7"):
         _icon(_parts(n), n, 135, 35)
     _icon(_parts("kornet_missile_flight", bare=True), "kornet_missile", 135, 35)
