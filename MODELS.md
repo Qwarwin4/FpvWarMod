@@ -15,3 +15,20 @@
 | FPV-очки | [Rodin FPV Goggles DJI](https://sketchfab.com/3d-models/56197e46626341acb8b7924494f9e8c9) | line-o | CC BY 4.0 |
 
 Перекрашено: Герань-2 и Герань-5 — в чёрный, «Корнет» — из песочного в армейский зелёный, Mavic — в тёмно-серый.
+
+# Звуки
+
+Моторы, двигатели, пушка и пуски — настоящие записи с [freesound.org](https://freesound.org) под лицензией CC0
+(общественное достояние). Скрипт `tools/real_sounds.py` их режет и закольцовывает; остальное синтезирует `gen_assets.py`.
+
+| Звук | Запись | Автор |
+|---|---|---|
+| fpv_motor | [Tiny Hawk 2 short flight](https://freesound.org/s/677833/) | Sadiquecat |
+| mavic_motor | [Dji Mavic Mini 2 take-off](https://freesound.org/s/683300/) | Sadiquecat |
+| shahed_engine | [two-stroke Trabant engine 01](https://freesound.org/s/412819/) | blukotek |
+| jet_engine | [Jet Constant Noise](https://freesound.org/s/437888/) | craigsmith |
+| truck_engine | [Truck Engine Idle Loops](https://freesound.org/s/187564/) | qubodup |
+| missile_motor | [Rocket Boost Engine Loop](https://freesound.org/s/146770/) | qubodup |
+| cannon_30 | [Autocannon Three Shot Burst](https://freesound.org/s/854186/) | qubodup |
+| atgm_launch | [Launching Anti-Tank Missiles](https://freesound.org/s/184274/) | qubodup |
+| shahed_launch | [Rocket Launch](https://freesound.org/s/521377/) | Jarusca |

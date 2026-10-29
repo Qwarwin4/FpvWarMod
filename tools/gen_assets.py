@@ -2742,6 +2742,8 @@ def main():
     recipe_doc()
     sounds_json()
     gen_sounds()
+    import real_sounds
+    real_sounds.main()
     apply_overrides()
     # icons of the things that have real 3D models are rendered from them
     import gen_meshes
