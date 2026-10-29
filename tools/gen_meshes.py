@@ -306,6 +306,15 @@ def build_jets():
     return ["shahed238", "geran5"]
 
 
+def clear_pet(img):
+    """the bottle's see-through plastic nearly colourless, the cap and handle stay blue"""
+    a = np.asarray(img.convert("RGBA")).astype(np.float64)
+    see = a[..., 3] < 128
+    a[see, :3] = a[see, :3] * 0.25 + np.array([226, 238, 244]) * 0.75
+    a[see, 3] = 60
+    return Image.fromarray(a.clip(0, 255).astype(np.uint8), "RGBA")
+
+
 def olive(img):
     """the export model's desert tan to Russian army green, darks kept"""
     a = np.asarray(img.convert("RGBA")).astype(np.float64)
@@ -532,11 +541,21 @@ def build_payloads():
     lo, hi = g.bounds()
     export("rgd5", g, {"tris": 3000}, mk.trans(8 - (lo[0] + hi[0]) / 2 * k, 4.0 - lo[1] * k, 8 - (lo[2] + hi[2]) / 2 * k) @ mk.scale(k))
 
-    can = load({"src": "canister_b", "rot": [("y", 90)]})
-    lo, hi = can.bounds()
-    k = 12.4 / (hi[1] - lo[1])
-    export("explosive_canister", can, {"tris": 1831},
-           mk.trans(8 - (lo[0] + hi[0]) / 2 * k, 2.0 - lo[1] * k, 8 - (lo[2] + hi[2]) / 2 * k) @ mk.scale(k))
+    # the 5-litre water bottle FPV crews fill with explosive (Annelida's model): the label goes, the water turns
+    # into the charge, real size (33 cm) at the drone's 0.5 scale
+    bot = load({"src": "bottle5l"})
+    bot = bot.subset(select(bot, lambda i: i["mat"] != "Logo"))
+    for m in bot.materials:
+        if m.name == "Water":
+            m.alpha_mode = "OPAQUE"
+    # the charge a little inside the walls, so the ribs don't poke through it
+    water = np.array([bot.materials[i].name == "Water" for i in bot.mat])
+    c = bot.P[water].reshape(-1, 3).mean(0)
+    bot.P[water] = c + (bot.P[water] - c) * np.array([0.93, 0.97, 0.93])
+    lo, hi = bot.bounds()
+    k = 10.6 / (hi[1] - lo[1])
+    export("explosive_canister", bot, {"tris": 6000, "recolor": {"Water": (148, 126, 92)}, "tint": clear_pet},
+           mk.trans(8 - (lo[0] + hi[0]) / 2 * k, 2.9 - lo[1] * k, 8 - (lo[2] + hi[2]) / 2 * k) @ mk.scale(k))
 
     flame = (255, 196, 96)
     jav = load({"src": "javelin_m"})

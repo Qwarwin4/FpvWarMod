@@ -2215,7 +2215,7 @@ EN = {
     "item.fpvdrones.launch_remote": "Remote Launch Controller",
     "item.fpvdrones.pg7vs": "PG-7VS",
     "item.fpvdrones.og7": "OG-7",
-    "item.fpvdrones.explosive_canister": "5L Explosive Canister",
+    "item.fpvdrones.explosive_canister": "5L Explosive Bottle",
     "item.fpvdrones.rgd5": "RGD-5",
     "item.fpvdrones.vog17m": "VOG-17M",
     "item.fpvdrones.propeller": "Propeller",

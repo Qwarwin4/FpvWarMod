@@ -77,6 +77,13 @@ def loop(x, a, length, xfade=0.25):
     return y[:n]
 
 
+def flatten(x, window=0.25):
+    """even out the level (a drone flying off gets quieter): divide by the moving RMS"""
+    n = max(1, int(window * SR))
+    env = np.sqrt(np.convolve(x * x, np.ones(n) / n, mode="same"))
+    return x / np.maximum(env, env.max() * 0.05)
+
+
 def highpass(x, hz):
     spec = np.fft.rfft(x)
     freqs = np.fft.rfftfreq(len(x), 1 / SR)
@@ -104,7 +111,8 @@ def write(name, sig):
 def main():
     try:
         write("fpv_motor", loop(highpass(load(677833), 120), 13.0, 2.0))
-        write("mavic_motor", loop(highpass(load(683300), 150), 2.2, 1.0))
+        # hovering after the take-off: three seconds, level evened out, a long crossfade so the seam can't be heard
+        write("mavic_motor", loop(flatten(highpass(load(683300), 150)), 3.25, 3.0, 0.75))
         write("shahed_engine", loop(load(412819), 12.0, 2.0))
         write("jet_engine", loop(load(437888), 12.0, 3.0, 0.4))
         write("truck_engine", loop(load(187564), 1.0, 2.0))
