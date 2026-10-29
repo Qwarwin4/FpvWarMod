@@ -284,13 +284,25 @@ def build_shahed():
 
 @builder
 def build_jets():
-    """Shahed-238 by Rudy27 (a 2M triangle scan, brought down to ~22k): the jet ones, grey 238 and black Geran-5"""
+    """Shahed-238 by Rudy27 (a 2M triangle scan, brought down to ~22k), grey; Geran-5 is its own airframe (D3buff's
+    model, all black), drawn 1.6x by StrikeType.sizeFactor to its real 6 m"""
     sc = load({"src": "shahed238", "rot": [("y", 180)]})
     lo, hi = sc.bounds()
-    for name, z0, z1, col in (("shahed238", -8.2, 29.2, (150, 152, 156)), ("geran5", -11.2, 28.6, (36, 37, 39))):
-        k = (z1 - z0) / (hi[2] - lo[2])
-        M = mk.trans(8 - (lo[0] + hi[0]) / 2 * k, 8.6 - (lo[1] + hi[1]) / 2 * k, z0 - lo[2] * k) @ mk.scale(k)
-        export(name, sc, {"tris": 14000, "recolor": {"material_0": col}}, M)
+    z0, z1 = -8.2, 29.2
+    k = (z1 - z0) / (hi[2] - lo[2])
+    M = mk.trans(8 - (lo[0] + hi[0]) / 2 * k, 8.6 - (lo[1] + hi[1]) / 2 * k, z0 - lo[2] * k) @ mk.scale(k)
+    export("shahed238", sc, {"tris": 14000, "recolor": {"material_0": (150, 152, 156)}}, M)
+
+    g = load({"src": "geran5_orig"})
+    g = g.subset(select(g, lambda i: i["name"] != "Object_11"))
+    lo, hi = g.bounds()
+    z0, z1 = -11.2, 28.6
+    k = (z1 - z0) / (hi[2] - lo[2])
+    M = mk.trans(8 - (lo[0] + hi[0]) / 2 * k, 8.6 - (lo[1] + hi[1]) / 2 * k, z0 - lo[2] * k) @ mk.scale(k)
+    recolor = {m.name: (30, 31, 33) for m in g.materials}
+    # the engine's intake and nozzle a shade darker so the nacelle still reads
+    recolor["P2M_P2M_Entity_7"] = (14, 14, 15)
+    export("geran5", g, {"tris": 12000, "recolor": recolor}, M)
     return ["shahed238", "geran5"]
 
 
