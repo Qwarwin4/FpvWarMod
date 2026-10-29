@@ -12,6 +12,8 @@ import com.qwarwin.fpvdrones.network.Network;
 import com.qwarwin.fpvdrones.network.SessionStatePacket;
 import com.qwarwin.fpvdrones.registry.ModEntities;
 import com.qwarwin.fpvdrones.registry.ModSounds;
+import com.qwarwin.fpvdrones.util.Jamming;
+import com.qwarwin.fpvdrones.util.Targeting;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
@@ -295,6 +297,17 @@ public final class SessionManager {
             if (quality <= 0F) {
                 end(p, "reason.fpvdrones.signal_lost");
                 return;
+            }
+            double jam = Jamming.level(world, t.position(), Targeting.ownerOf(t));
+            if (jam > 0) {
+                // the noise against the pilot's own signal: the further out the drone, the weaker that is
+                double j = jam * (0.35 + 0.65 * Math.min(1.0, dist / range));
+                quality -= (float) (j * 0.85);
+                if (s.ticks % 20 == 0 && world.random.nextDouble() < j * Config.EW_LINK_LOSS.get()) {
+                    end(p, "reason.fpvdrones.jammed");
+                    return;
+                }
+                quality = Math.max(0.02F, quality);
             }
             Network.sendTo(p, SessionStatePacket.signal(quality));
         }

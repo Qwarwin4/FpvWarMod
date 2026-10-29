@@ -1,0 +1,27 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "AAA",
+    "RBR",
+    " T "
+  ],
+  "key": {
+    "A": {
+      "item": "fpvdrones:antenna"
+    },
+    "R": {
+      "item": "fpvdrones:receiver"
+    },
+    "B": {
+      "item": "fpvdrones:battery"
+    },
+    "T": {
+      "item": "fpvdrones:launch_truck"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:ew_truck",
+    "count": 1
+  },
+  "soldering": true
+}

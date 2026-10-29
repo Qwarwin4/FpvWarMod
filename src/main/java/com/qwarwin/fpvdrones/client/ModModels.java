@@ -42,6 +42,10 @@ public final class ModModels {
     public static final ResourceLocation KORNET_SIGHT = FpvDrones.id("entity/kornet_sight");
     public static final ResourceLocation KORNET_TUBE = FpvDrones.id("entity/kornet_tube");
     public static final ResourceLocation TRACER = FpvDrones.id("entity/tracer");
+    /** mesh only: the jammer on a Ural, the jamming tower, the relay mast */
+    public static final ResourceLocation EW_TRUCK = FpvDrones.id("entity/ew_truck");
+    public static final ResourceLocation EW_STATION = FpvDrones.id("entity/ew_station");
+    public static final ResourceLocation RELAY = FpvDrones.id("entity/relay");
 
     private static final Random RANDOM = new Random();
 

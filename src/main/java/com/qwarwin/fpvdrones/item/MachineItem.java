@@ -2,6 +2,7 @@ package com.qwarwin.fpvdrones.item;
 
 import com.qwarwin.fpvdrones.entity.MachineEntity;
 import com.qwarwin.fpvdrones.entity.MountedWeaponEntity;
+import com.qwarwin.fpvdrones.entity.RadioMachineEntity;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
@@ -54,6 +55,9 @@ public class MachineItem extends Item {
             if (player != null && player.abilities.instabuild) {
                 w.fillAmmo();
             }
+        }
+        if (machine instanceof RadioMachineEntity) {
+            ((RadioMachineEntity) machine).setOwner(player != null ? player.getUUID() : null);
         }
         world.addFreshEntity(machine);
         if (player == null || !player.abilities.instabuild) {

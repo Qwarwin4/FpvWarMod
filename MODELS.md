@@ -11,6 +11,7 @@
 | Shahed-136, Герань-2 | [Shahed 136](https://sketchfab.com/3d-models/bc8754128c9d48c48baadeff1db8f0c7) | faintastic | CC BY 4.0 |
 | Shahed-238 | [Shahed 238 Drone](https://sketchfab.com/3d-models/10b7f80a149247748d8912bd0f59d517) | Rudy27 | CC BY 4.0 |
 | Герань-5 | [Geran5 \\ Drone](https://sketchfab.com/3d-models/3d33b44ab2da4aa493d0e3c5ba440b13) | D3buff | Sketchfab Standard |
+| РЭБ на «Урале» | [Ural 4320](https://sketchfab.com/3d-models/f953c51a5dbc4a15949f4dcc0905c4e8) | Brout | CC BY 4.0 |
 | ПТРК «Корнет» | [9M133 Kornet / AT-14 Spriggan](https://sketchfab.com/3d-models/8b1d8e081c9744598b2ec4127d1c72df) | XEPCOH_552 | CC BY 4.0 |
 | Пусковой грузовик (КамАЗ) | [KamAZ-5340](https://sketchfab.com/3d-models/326a0fc70fd1470085b85e2486ca32bc) | 42manako | CC BY 4.0 |
 | FPV-очки | [Rodin FPV Goggles DJI](https://sketchfab.com/3d-models/56197e46626341acb8b7924494f9e8c9) | line-o | CC BY 4.0 |
@@ -21,7 +22,7 @@
 | ВОГ-17М, снаряд 30 мм | [30mm shell 2A42](https://sketchfab.com/3d-models/ba1af848f8d847928ff29c0e46821d40) | dichevk | CC BY 4.0 |
 | Ракета Javelin | [FGM-148 Javelin Missile (Low-Poly)](https://sketchfab.com/3d-models/39b071dbbcbc4a5e9ca1646527b940ef) | GoldbergR | CC BY 4.0 |
 
-ЗАК-30 «Цитадель» собран из примитивов скриптом `tools/gen_citadel.py` (готовой модели нет). Ракета «Корнета» — из той же модели «Корнета». У сбрасываемых боеприпасов дорисованы печатные хвостовики.
+ЗАК-30 «Цитадель» собран из примитивов скриптом `tools/gen_citadel.py` (готовой модели нет), вышка РЭБ, ретранслятор и мачта РЭБ на «Урале» — так же, в `tools/gen_ew.py`. Ракета «Корнета» — из той же модели «Корнета». У сбрасываемых боеприпасов дорисованы печатные хвостовики.
 ПГ-7ВС перекрашен в оливковый. Перекрашено: Герань-2 и Герань-5 — в чёрный, «Корнет» — из песочного в армейский зелёный, Mavic — в тёмно-серый.
 
 # Звуки

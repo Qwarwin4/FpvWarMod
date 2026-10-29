@@ -1,0 +1,27 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "AAA",
+    "IRI",
+    "IBI"
+  ],
+  "key": {
+    "A": {
+      "item": "fpvdrones:antenna"
+    },
+    "I": {
+      "item": "minecraft:iron_bars"
+    },
+    "R": {
+      "item": "fpvdrones:receiver"
+    },
+    "B": {
+      "item": "fpvdrones:battery"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:ew_station",
+    "count": 1
+  },
+  "soldering": true
+}

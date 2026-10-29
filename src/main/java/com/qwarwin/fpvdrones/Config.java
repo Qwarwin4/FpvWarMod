@@ -39,6 +39,11 @@ public final class Config {
     public static final ForgeConfigSpec.DoubleValue ATGM_POWER;
     public static final ForgeConfigSpec.DoubleValue ATGM_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue ATGM_PENETRATION;
+    public static final ForgeConfigSpec.DoubleValue EW_TRUCK_RADIUS;
+    public static final ForgeConfigSpec.DoubleValue EW_STATION_RADIUS;
+    public static final ForgeConfigSpec.DoubleValue EW_LINK_LOSS;
+    public static final ForgeConfigSpec.DoubleValue EW_GNSS_LOSS;
+    public static final ForgeConfigSpec.DoubleValue RELAY_RANGE;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -94,6 +99,17 @@ public final class Config {
                 .defineInRange("atgmDamage", 250.0, 1.0, 2000.0);
         ATGM_PENETRATION = b.comment("How deep the shaped-charge jet bores through blocks, base value (same multipliers)")
                 .defineInRange("atgmPenetration", 5.0, 0.0, 30.0);
+        b.pop();
+
+        b.push("ew");
+        EW_TRUCK_RADIUS = b.comment("Reach of the jammer on the Ural, blocks").defineInRange("truckRadius", 160.0, 16.0, 2000.0);
+        EW_STATION_RADIUS = b.comment("Reach of the jamming tower, blocks").defineInRange("stationRadius", 240.0, 16.0, 3000.0);
+        EW_LINK_LOSS = b.comment("Chance per second that an FPV or Mavic deep in a jammer's reach loses its link (less at the edge and close to the pilot)")
+                .defineInRange("linkLoss", 0.12, 0.0, 1.0);
+        EW_GNSS_LOSS = b.comment("Chance per second that a Shahed deep in a jammer's reach has its satellite navigation spoofed and drifts off the target (less for Geran-2/-5 with anti-jam antennas and under a relay)")
+                .defineInRange("gnssLoss", 0.08, 0.0, 1.0);
+        RELAY_RANGE = b.comment("Reach of a relay mast: strike drones can be sent this far past it, and relays this far apart chain up")
+                .defineInRange("relayRange", 12000.0, 100.0, 100000.0);
         b.pop();
 
         SPEC = b.build();

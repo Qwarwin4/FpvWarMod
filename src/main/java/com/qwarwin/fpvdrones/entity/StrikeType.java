@@ -60,7 +60,20 @@ public enum StrikeType {
         return this == GERAN_5 ? 1.6F : 1F;
     }
 
-    public float power() {
+    /** How easily a jammer spoofs its navigation: Geran-2 and Geran-5 carry anti-jam (CRPA) antennas. */
+    public double ewSusceptibility() {
+        switch (this) {
+            case GERAN_2:
+            case GERAN_5:
+                return 0.45;
+            case SHAHED_238:
+                return 0.8;
+            default:
+                return 1.0;
+        }
+    }
+
+        public float power() {
         switch (this) {
             case GERAN_2:
                 return Config.GERAN2_POWER.get().floatValue();

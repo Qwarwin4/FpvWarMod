@@ -562,6 +562,13 @@ def build_citadel():
 
 
 @builder
+def build_ew():
+    """the jammer on a Ural, the jamming tower and the relay mast (gen_ew.py)"""
+    import gen_ew
+    return gen_ew.build(ASSETS, MODID, sys.modules[__name__])
+
+
+@builder
 def build_icons():
     """inventory icons rendered from the meshes; the drones' items were 3D box models, now flat icons like the rest"""
     fpv = _parts("fpv_drone")
@@ -600,6 +607,8 @@ def build_icons():
     cit = _parts("adgun_base") + _parts("adgun_turret", lambda Q: Q + np.array([0, 9.2, 0]))
     cit += _parts("adgun_gun", lambda Q: (Q - np.array([8, 0, 8])) @ up.T + np.array([7.6, 9.2 + 3.36, 9.2]))
     _icon(cit, "air_defense_gun", 35, 20)
+    for n, yaw, pitch in (("ew_truck", 35, 20), ("ew_station", 35, 12), ("relay", 35, 15)):
+        _icon(_parts(n), n, yaw, pitch)
     for n in ("pg7vs", "og7"):
         _icon(_parts(n), n, 135, 35)
     _icon(_parts("kornet_missile_flight", bare=True), "kornet_missile", 135, 35)

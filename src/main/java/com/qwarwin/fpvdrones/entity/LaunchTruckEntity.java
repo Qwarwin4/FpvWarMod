@@ -182,7 +182,7 @@ public class LaunchTruckEntity extends MachineEntity implements LaunchSite {
         if (salvoLeft > 0) {
             return Launches.Result.BUSY;
         }
-        Launches.Result r = Launches.check(this);
+        Launches.Result r = Launches.check(this, owner);
         if (r == Launches.Result.OK) {
             salvoLeft = countLoaded();
             salvoCooldown = 0;

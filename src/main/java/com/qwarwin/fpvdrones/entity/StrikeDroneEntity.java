@@ -6,6 +6,8 @@ import com.qwarwin.fpvdrones.item.TabletItem;
 import com.qwarwin.fpvdrones.session.SessionManager;
 import com.qwarwin.fpvdrones.util.ChunkTickets;
 import com.qwarwin.fpvdrones.util.Explosions;
+import com.qwarwin.fpvdrones.util.Jamming;
+import com.qwarwin.fpvdrones.util.RelayNetwork;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntitySize;
 import net.minecraft.entity.EntityType;
@@ -75,6 +77,8 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
     private double approachRadius = 60;
     private int beacon;
     private long blastShieldUntil;
+    /** satellite navigation spoofed by a jammer: it flies on to a false point */
+    private boolean spoofed;
 
     private static final Map<UUID, StrikeDroneEntity> FLYING = new HashMap<>();
 
@@ -244,6 +248,9 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
                 tz = b.z - 0.5;
             }
         }
+        if (life % 20 == 7 && !spoofed && getPhase() != BOOST) {
+            ewCheck(sw);
+        }
         Vector3d vel = getDeltaMovement();
         if (life % 4 == 1) {
             // generating fresh terrain takes a moment, so ask for it a few seconds before arriving
@@ -326,6 +333,38 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
             SessionManager.endAllFor(this, "reason.fpvdrones.target_lost");
             remove();
         }
+    }
+
+    /**
+     * Under a jammer the satellite fix can be spoofed: the drone believes it is somewhere else and flies on
+     * to a point off the real target. Geran-2 and -5 have anti-jam antennas, and under a friendly relay it
+     * checks its position against the relay, so they are far harder to lead astray.
+     */
+    private void ewCheck(ServerWorld sw) {
+        double j = Jamming.level(sw, position(), owner);
+        if (j <= 0) {
+            return;
+        }
+        j *= type.ewSusceptibility();
+        RelayNetwork relays = RelayNetwork.get(sw);
+        if (!relays.isEmpty() && relays.covers(sw, position(), owner)) {
+            j *= 0.3;
+        }
+        if (random.nextDouble() >= j * Config.EW_GNSS_LOSS.get()) {
+            return;
+        }
+        spoofed = true;
+        double a = random.nextDouble() * Math.PI * 2;
+        double off = 25 + random.nextDouble() * 70;
+        tx += Math.cos(a) * off;
+        tz += Math.sin(a) * off;
+        // the radio beacon is drowned out too
+        beacon = 0;
+        autoY = true;
+    }
+
+    public boolean isSpoofed() {
+        return spoofed;
     }
 
     private boolean hitsSomething() {
@@ -489,6 +528,7 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
         if (tag.contains("MaxLife")) {
             maxLife = tag.getInt("MaxLife");
         }
+        spoofed = tag.getBoolean("Spoofed");
         setPhase(tag.getInt("Phase"));
         if (tag.contains("Health")) {
             entityData.set(HEALTH, tag.getFloat("Health"));
@@ -512,6 +552,7 @@ public class StrikeDroneEntity extends Entity implements IEntityAdditionalSpawnD
         tag.putInt("Boost", boostTicks);
         tag.putInt("Life", life);
         tag.putInt("MaxLife", maxLife);
+        tag.putBoolean("Spoofed", spoofed);
         tag.putInt("Phase", getPhase());
         tag.putFloat("Health", entityData.get(HEALTH));
         if (owner != null) {

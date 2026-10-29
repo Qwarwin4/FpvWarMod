@@ -2,6 +2,8 @@ package com.qwarwin.fpvdrones.registry;
 
 import com.qwarwin.fpvdrones.FpvDrones;
 import com.qwarwin.fpvdrones.entity.AirDefenseGunEntity;
+import com.qwarwin.fpvdrones.entity.EwStationEntity;
+import com.qwarwin.fpvdrones.entity.EwTruckEntity;
 import com.qwarwin.fpvdrones.entity.FpvDroneEntity;
 import com.qwarwin.fpvdrones.entity.KornetEntity;
 import com.qwarwin.fpvdrones.entity.LaunchTruckEntity;
@@ -10,6 +12,7 @@ import com.qwarwin.fpvdrones.entity.MissileEntity;
 import com.qwarwin.fpvdrones.entity.MunitionEntity;
 import com.qwarwin.fpvdrones.entity.OperatorEntity;
 import com.qwarwin.fpvdrones.entity.RadioBeaconEntity;
+import com.qwarwin.fpvdrones.entity.RelayEntity;
 import com.qwarwin.fpvdrones.entity.ShellEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
 import net.minecraft.entity.Entity;
@@ -52,6 +55,18 @@ public final class ModEntities {
     public static final RegistryObject<EntityType<AirDefenseGunEntity>> AIR_DEFENSE_GUN = register("air_defense_gun",
             EntityType.Builder.<AirDefenseGunEntity>of(AirDefenseGunEntity::new, EntityClassification.MISC)
                     .sized(1.4F, 2.0F).setTrackingRange(16).setUpdateInterval(1));
+
+    public static final RegistryObject<EntityType<EwTruckEntity>> EW_TRUCK = register("ew_truck",
+            EntityType.Builder.<EwTruckEntity>of(EwTruckEntity::new, EntityClassification.MISC)
+                    .sized(2.6F, 3.0F).setTrackingRange(16).setUpdateInterval(1));
+
+    public static final RegistryObject<EntityType<EwStationEntity>> EW_STATION = register("ew_station",
+            EntityType.Builder.<EwStationEntity>of(EwStationEntity::new, EntityClassification.MISC)
+                    .sized(2.0F, 9.5F).setTrackingRange(16).setUpdateInterval(20));
+
+    public static final RegistryObject<EntityType<RelayEntity>> RELAY = register("relay",
+            EntityType.Builder.<RelayEntity>of(RelayEntity::new, EntityClassification.MISC)
+                    .sized(1.2F, 5.0F).setTrackingRange(16).setUpdateInterval(20));
 
     public static final RegistryObject<EntityType<KornetEntity>> KORNET = register("kornet",
             EntityType.Builder.<KornetEntity>of(KornetEntity::new, EntityClassification.MISC)

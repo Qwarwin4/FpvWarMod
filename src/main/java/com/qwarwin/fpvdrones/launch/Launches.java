@@ -11,6 +11,7 @@ import com.qwarwin.fpvdrones.network.OpenLauncherPacket;
 import com.qwarwin.fpvdrones.registry.ModEntities;
 import com.qwarwin.fpvdrones.registry.ModSounds;
 import com.qwarwin.fpvdrones.util.ReconData;
+import com.qwarwin.fpvdrones.util.RelayNetwork;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -51,6 +52,11 @@ public final class Launches {
     }
 
     public static Result check(LaunchSite site) {
+        return check(site, null);
+    }
+
+    /** Relay masts of {@code owner} (and his team) let it send the drones past their own range. */
+    public static Result check(LaunchSite site, @Nullable UUID owner) {
         int slot = site.firstLoaded();
         if (slot < 0) {
             return Result.EMPTY;
@@ -67,7 +73,11 @@ public final class Launches {
             return Result.TOO_CLOSE;
         }
         if (dist > Config.STRIKE_MAX_RANGE.get()) {
-            return Result.TOO_FAR;
+            World world = site.getSiteLevel();
+            if (!(world instanceof ServerWorld) || !RelayNetwork.get((ServerWorld) world).reaches(world, from,
+                    new Vector3d(target.x + 0.5, target.y, target.z + 0.5), Config.STRIKE_MAX_RANGE.get(), owner)) {
+                return Result.TOO_FAR;
+            }
         }
         return Result.OK;
     }
@@ -87,7 +97,7 @@ public final class Launches {
     }
 
     public static Result fireNext(LaunchSite site, @Nullable UUID owner) {
-        Result r = check(site);
+        Result r = check(site, owner);
         if (r == Result.OK) {
             fire(site, site.firstLoaded(), owner);
         }

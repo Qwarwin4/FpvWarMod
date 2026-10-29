@@ -58,6 +58,12 @@ public final class ModItems {
             () -> new MachineItem(ModEntities.LAUNCH_TRUCK, "tooltip.fpvdrones.truck", props().stacksTo(1).rarity(Rarity.RARE)));
     public static final RegistryObject<Item> AIR_DEFENSE_GUN = ITEMS.register("air_defense_gun",
             () -> new MachineItem(ModEntities.AIR_DEFENSE_GUN, "tooltip.fpvdrones.air_defense_gun", props().stacksTo(1).rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> EW_TRUCK = ITEMS.register("ew_truck",
+            () -> new MachineItem(ModEntities.EW_TRUCK, "tooltip.fpvdrones.ew_truck", props().stacksTo(1).rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> EW_STATION = ITEMS.register("ew_station",
+            () -> new MachineItem(ModEntities.EW_STATION, "tooltip.fpvdrones.ew_station", props().stacksTo(1).rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> RELAY = ITEMS.register("relay",
+            () -> new MachineItem(ModEntities.RELAY, "tooltip.fpvdrones.relay", props().stacksTo(4).rarity(Rarity.UNCOMMON)));
     public static final RegistryObject<Item> KORNET = ITEMS.register("kornet",
             () -> new MachineItem(ModEntities.KORNET, "tooltip.fpvdrones.kornet", props().stacksTo(1).rarity(Rarity.UNCOMMON)));
     public static final RegistryObject<Item> JAVELIN = ITEMS.register("javelin",
