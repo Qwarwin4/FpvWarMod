@@ -52,12 +52,12 @@ public class FpvDroneEntity extends AbstractDroneEntity {
 
     @Override
     protected float baseWidth() {
-        return 0.8F;
+        return 0.55F;
     }
 
     @Override
     protected float baseHeight() {
-        return 0.35F;
+        return 0.25F;
     }
 
     @Override

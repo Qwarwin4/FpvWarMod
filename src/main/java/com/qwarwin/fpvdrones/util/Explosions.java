@@ -46,15 +46,18 @@ public final class Explosions {
         ServerWorld sw = (ServerWorld) level;
         switch (type) {
             case PG7VS:
-                jet(level, attacker, pos, dir, 7.0, 45F);
+                // ~400 mm behind the armour: a tank through the roof, engine deck or stern, never through the glacis
+                jet(level, attacker, pos, dir, 7.0, 45F, 190F);
                 fragments(level, attacker, pos, 5.0, 8F);
                 sw.sendParticles(ParticleTypes.FLAME, pos.x, pos.y, pos.z, 40, dir.x * 0.6, dir.y * 0.6, dir.z * 0.6, 0.3);
                 break;
             case OG7:
                 fragments(level, attacker, pos, 11.0, 18F);
+                hull(level, attacker, pos, 2.5, 35F);
                 break;
             case CANISTER:
                 fragments(level, attacker, pos, 7.0, 8F);
+                hull(level, attacker, pos, 3.0, 70F);
                 sw.sendParticles(ParticleTypes.EXPLOSION_EMITTER, pos.x, pos.y, pos.z, 2, 1.0, 0.5, 1.0, 0);
                 sw.sendParticles(ParticleTypes.LARGE_SMOKE, pos.x, pos.y + 1, pos.z, 60, 2.0, 1.5, 2.0, 0.05);
                 break;
@@ -76,6 +79,8 @@ public final class Explosions {
         LivingEntity attacker = player(level, attackerId);
         explode(level, attacker, pos, power, fire);
         fragments(level, attacker, pos, power * 1.8, 16F);
+        // 50 kg of explosive on top of a vehicle: the roof caves in whatever it is
+        hull(level, attacker, pos, power * 0.35, power * 30F);
         ServerWorld sw = (ServerWorld) level;
         sw.sendParticles(ParticleTypes.EXPLOSION_EMITTER, pos.x, pos.y, pos.z, 4, 2.0, 1.0, 2.0, 0);
         sw.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, pos.x, pos.y + 1, pos.z, 40, 2.5, 1.0, 2.5, 0.03);
@@ -109,7 +114,59 @@ public final class Explosions {
         }
     }
 
+    /** Blast against vehicles right next to the burst: what a warhead lying on the hull does to it. */
+    private static void hull(World level, @Nullable Entity attacker, Vector3d pos, double radius, float damage) {
+        for (Entity e : level.getEntities((Entity) null, new AxisAlignedBB(pos, pos).inflate(radius + 4),
+                e -> e.isAlive() && !(e instanceof LivingEntity) && Targeting.isShootable(e) && !Targeting.isAirTarget(e))) {
+            double d = Math.sqrt(e.getBoundingBox().distanceToSqr(pos));
+            if (d > radius) {
+                continue;
+            }
+            e.invulnerableTime = 0;
+            e.hurt(ModDamageSources.cumulative(attacker), damage * (float) (1.0 - 0.7 * d / radius) * zone(e, pos));
+        }
+    }
+
+    /**
+     * How much of a hit gets through a vehicle's armour depending on where it lands: thinnest on the roof and
+     * engine deck, then the stern, the sides, and the front is what armour is built for.
+     */
+    private static float zone(Entity e, Vector3d from) {
+        Vector3d c = e.getBoundingBox().getCenter();
+        Vector3d to = c.subtract(from);
+        double above = from.y - (e.getY() + e.getBbHeight() * 0.7);
+        if (above > 0 && above > Math.sqrt(to.x * to.x + to.z * to.z) * 0.5) {
+            return 1F;
+        }
+        return zoneFacing(e, to);
+    }
+
+    /** By the direction the hit travels (the jet, the missile). */
+    private static float zoneFacing(Entity e, Vector3d travel) {
+        double h = Math.sqrt(travel.x * travel.x + travel.z * travel.z);
+        if (h < 1e-6 || -travel.y > h * 1.2) {
+            return 1F;
+        }
+        float yaw = e.yRot * ((float) Math.PI / 180F);
+        // the way the vehicle faces; a hit travelling against it lands on the front
+        double fx = -Math.sin(yaw), fz = Math.cos(yaw);
+        double dot = -(travel.x * fx + travel.z * fz) / h;
+        if (dot > 0.7) {
+            return 0.25F;
+        }
+        if (dot < -0.5) {
+            return 0.9F;
+        }
+        return 0.6F;
+    }
+
     private static void jet(World level, @Nullable Entity attacker, Vector3d pos, Vector3d dir, double length, float damage) {
+        jet(level, attacker, pos, dir, length, damage, damage);
+    }
+
+    /** The jet: {@code damage} to people and things, {@code armour} to vehicles, depending on where it lands. */
+    private static void jet(World level, @Nullable Entity attacker, Vector3d pos, Vector3d dir, double length, float damage,
+                            float armour) {
         Vector3d d = dir.normalize();
         Vector3d end = pos.add(d.scale(length));
         AxisAlignedBB box = new AxisAlignedBB(pos, end).inflate(1.0);
@@ -124,7 +181,8 @@ public final class Explosions {
             if (pos.add(d.scale(Math.max(0, t))).distanceTo(c) < reach) {
                 e.invulnerableTime = 0;
                 // armour is what the jet is for, so machines take it at full strength
-                e.hurt(ModDamageSources.cumulative(attacker), e instanceof LivingEntity ? damage * mul : damage);
+                e.hurt(ModDamageSources.cumulative(attacker), e instanceof LivingEntity ? damage * mul
+                        : Targeting.isAirTarget(e) ? damage : armour * zoneFacing(e, d));
             }
         }
     }

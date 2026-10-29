@@ -23,12 +23,12 @@ import net.minecraftforge.api.distmarker.OnlyIn;
  */
 @OnlyIn(Dist.CLIENT)
 public class DroneRenderer extends EntityRenderer<AbstractDroneEntity> {
-    private static final float FPV_SCALE = 0.9F;
+    private static final float FPV_SCALE = 0.62F;
     private static final float FPV_BOTTOM = 6.5F;
     // on the motors of the real models (tools/gen_meshes.py prints them)
     private static final float[][] FPV_PROPS = {{2, 8.25F, 2}, {14, 8.25F, 2}, {2, 8.25F, 14}, {14, 8.25F, 14}};
 
-    private static final float MAVIC_SCALE = 0.85F;
+    private static final float MAVIC_SCALE = 0.6F;
     private static final float MAVIC_BOTTOM = 6.0F;
     private static final float[][] MAVIC_PROPS = {
             {2.63F, 7.69F, 13.33F}, {13.37F, 7.69F, 13.33F}, {2.17F, 7.69F, 2.87F}, {13.83F, 7.69F, 2.87F}};

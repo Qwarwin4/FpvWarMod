@@ -38,6 +38,8 @@ public class StrikeDroneRenderer extends EntityRenderer<StrikeDroneEntity> {
     /** Airframe centred on the origin, nose to +Z. Also used for the launcher and the truck rack. */
     public static void renderBody(StrikeType type, MatrixStack ms, IRenderTypeBuffer buf, int light, float propAngle, boolean spinning) {
         ms.pushPose();
+        float k = type.sizeFactor();
+        ms.scale(k, k, k);
         ms.translate(0, 0, type.getModelOffset() / 16F);
         ModModels.render(type.model(), ms, buf, light);
         if (type.hasPropeller()) {

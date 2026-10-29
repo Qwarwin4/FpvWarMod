@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 /**
  * ZAK-30 "Tsitadel": automatic 30 mm anti-drone turret on a pedestal, with its own surveillance radar and TV/IR head.
  * The fire control works out where each round meets the target and programs the fuse to burst there in a cloud
- * of fragments, so small drones are hit out to about a kilometre (here: {@link #AUTO_RANGE} blocks).
+ * of fragments. Its radar sees a Shahed out to {@link #AUTO_RANGE} blocks, a quadcopter much closer.
  */
 public class AirDefenseGunEntity extends MountedWeaponEntity {
     public static final Vector3d PIVOT = new Vector3d(0, 1.15, 0);
@@ -221,7 +221,7 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
         // radar plus the TV/IR tracker: the error wanders more against small, jinking targets and settles as the
         // track matures
         double size = Math.max(0.3, target.getBbWidth());
-        float wander = (float) (0.45 / size) * (trackTicks < 40 ? 1.0F : 0.5F);
+        float wander = (float) (0.9 / size) * (trackTicks < 40 ? 1.0F : 0.6F);
         errYaw = MathHelper.clamp(errYaw * 0.9F + (random.nextFloat() - 0.5F) * wander, -3F * wander, 3F * wander);
         errPitch = MathHelper.clamp(errPitch * 0.9F + (random.nextFloat() - 0.5F) * wander, -3F * wander, 3F * wander);
         Vector3d muzzle = gunToWorld(TRUNNION, new Vector3d(0, 0, MUZZLE));
@@ -240,7 +240,8 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
     }
 
     private boolean isValidTarget(Entity e, Vector3d eye) {
-        if (!e.isAlive() || e.distanceToSqr(eye) > range() * range()) {
+        double r = Targeting.detectRange(level, e, range());
+        if (!e.isAlive() || e.distanceToSqr(eye) > r * r) {
             return false;
         }
         if (getMode() == ALL) {
@@ -272,7 +273,7 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
         for (Entity e : level.getEntities(this, new AxisAlignedBB(eye, eye).inflate(range()),
                 all ? Targeting::isAirborne : Targeting::isAirTarget)) {
             double score = e.distanceToSqr(eye) * priority(e);
-            if (score < bestScore && isValidTarget(e, eye)) {
+            if (score < bestScore && isValidTarget(e, eye) && random.nextDouble() < Targeting.scanChance(e)) {
                 bestScore = score;
                 best = e;
             }

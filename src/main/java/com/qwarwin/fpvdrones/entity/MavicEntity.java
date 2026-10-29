@@ -172,12 +172,12 @@ public class MavicEntity extends AbstractDroneEntity {
 
     @Override
     protected float baseWidth() {
-        return 0.7F;
+        return 0.5F;
     }
 
     @Override
     protected float baseHeight() {
-        return 0.3F;
+        return 0.22F;
     }
 
     @Override

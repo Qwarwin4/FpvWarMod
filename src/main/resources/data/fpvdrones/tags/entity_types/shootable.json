@@ -52,6 +52,22 @@
     {
       "id": "militarytech:zrk",
       "required": false
+    },
+    {
+      "id": "militarytech:pantsir",
+      "required": false
+    },
+    {
+      "id": "militarytech:msta",
+      "required": false
+    },
+    {
+      "id": "militarytech:mig23",
+      "required": false
+    },
+    {
+      "id": "militarytech:tu160",
+      "required": false
     }
   ]
 }

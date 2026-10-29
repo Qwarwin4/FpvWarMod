@@ -55,6 +55,11 @@ public enum StrikeType {
         return "item." + FpvDrones.MODID + "." + name;
     }
 
+    /** Geran-5 is a bigger airframe than the Shahed-238 model it's drawn with: about 6 m long, 5.5 m span. */
+    public float sizeFactor() {
+        return this == GERAN_5 ? 1.6F : 1F;
+    }
+
     public float power() {
         switch (this) {
             case GERAN_2:

@@ -26,11 +26,11 @@ public final class ModEntities {
 
     public static final RegistryObject<EntityType<FpvDroneEntity>> FPV_DRONE = register("fpv_drone",
             EntityType.Builder.<FpvDroneEntity>of(FpvDroneEntity::new, EntityClassification.MISC)
-                    .sized(0.8F, 0.35F).setTrackingRange(16).setUpdateInterval(1).setShouldReceiveVelocityUpdates(true));
+                    .sized(0.55F, 0.25F).setTrackingRange(16).setUpdateInterval(1).setShouldReceiveVelocityUpdates(true));
 
     public static final RegistryObject<EntityType<MavicEntity>> MAVIC = register("mavic3",
             EntityType.Builder.<MavicEntity>of(MavicEntity::new, EntityClassification.MISC)
-                    .sized(0.7F, 0.3F).setTrackingRange(16).setUpdateInterval(1).setShouldReceiveVelocityUpdates(true));
+                    .sized(0.5F, 0.22F).setTrackingRange(16).setUpdateInterval(1).setShouldReceiveVelocityUpdates(true));
 
     public static final RegistryObject<EntityType<StrikeDroneEntity>> STRIKE_DRONE = register("strike_drone",
             EntityType.Builder.<StrikeDroneEntity>of(StrikeDroneEntity::new, EntityClassification.MISC)

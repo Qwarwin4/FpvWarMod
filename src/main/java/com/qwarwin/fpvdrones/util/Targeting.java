@@ -24,7 +24,9 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.Heightmap;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -127,6 +129,24 @@ public final class Targeting {
         }
         Team ta = pa.getTeam();
         return ta != null && ta.isAlliedTo(pb.getTeam());
+    }
+
+    /**
+     * How far a search radar with {@code max} reach picks this up: a quadcopter is a few kilograms of plastic and
+     * shows at 230 blocks at best, half that hugging the ground (under 12 blocks) in the clutter.
+     */
+    public static double detectRange(World level, Entity e, double max) {
+        if (!(e instanceof AbstractDroneEntity)) {
+            return max;
+        }
+        double r = Math.min(max, 230.0);
+        int ground = level.getHeight(Heightmap.Type.MOTION_BLOCKING, MathHelper.floor(e.getX()), MathHelper.floor(e.getZ()));
+        return e.getY() - ground < 12 ? r * 0.5 : r;
+    }
+
+    /** Chance a scan picks a contact up at all: a quadcopter's echo comes and goes. */
+    public static double scanChance(Entity e) {
+        return e instanceof AbstractDroneEntity ? 0.4 : 1.0;
     }
 
     public static boolean canSee(World level, Vector3d from, Entity target) {

@@ -12,6 +12,14 @@
     {
       "id": "militarytech:mig25",
       "required": false
+    },
+    {
+      "id": "militarytech:mig23",
+      "required": false
+    },
+    {
+      "id": "militarytech:tu160",
+      "required": false
     }
   ]
 }
