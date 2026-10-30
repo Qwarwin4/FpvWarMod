@@ -84,6 +84,16 @@ def flatten(x, window=0.25):
     return x / np.maximum(env, env.max() * 0.05)
 
 
+def steady(x, a, b, seed=7):
+    """the spectrum of a..b with random phases: a seamless loop of b - a seconds (the inverse FFT is circular)
+    with no event in it to recognise each time it comes round, the rotors' tones are kept"""
+    y = x[int(a * SR):int(b * SR)]
+    spec = np.abs(np.fft.rfft(y))
+    phase = np.random.default_rng(seed).uniform(0, 2 * np.pi, len(spec))
+    phase[0] = 0
+    return np.fft.irfft(spec * np.exp(1j * phase), len(y))
+
+
 def highpass(x, hz):
     spec = np.fft.rfft(x)
     freqs = np.fft.rfftfreq(len(x), 1 / SR)
@@ -111,8 +121,8 @@ def write(name, sig):
 def main():
     try:
         write("fpv_motor", loop(highpass(load(677833), 120), 13.0, 2.0))
-        # hovering after the take-off: three seconds, level evened out, a long crossfade so the seam can't be heard
-        write("mavic_motor", loop(flatten(highpass(load(683300), 150)), 3.25, 3.0, 0.75))
+        # the hover after the take-off, 3..11 s, turned into a steady sound
+        write("mavic_motor", steady(flatten(highpass(load(683300), 150)), 3.0, 11.0))
         write("shahed_engine", loop(load(412819), 12.0, 2.0))
         write("jet_engine", loop(load(437888), 12.0, 3.0, 0.4))
         write("truck_engine", loop(load(187564), 1.0, 2.0))
