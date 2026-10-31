@@ -24,7 +24,13 @@ import javax.annotation.Nullable;
  * RMB gets in, Shift+RMB switches the jammer on and off.
  */
 public class EwTruckEntity extends RadioMachineEntity {
-    public static final Vector3d SEAT = new Vector3d(0.5, 1.45, 1.85);
+    // driver's seat in the cab, behind the bonnet (the cab spans z 0.7..1.95, roof at 2.8)
+    public static final Vector3d SEAT = new Vector3d(0.45, 1.2, 1.2);
+    public static final double[][] WHEELS = {
+            {-1.16, 2.23}, {1.16, 2.23}, {-1.16, -1.21}, {1.16, -1.21}, {-1.16, -2.57}, {1.16, -2.57}};
+    public static final double WHEEL_RADIUS = 0.581;
+
+    public float wheelAngle, wheelAngleO;
 
     private double speed;
     private int lerpSteps;
@@ -83,6 +89,7 @@ public class EwTruckEntity extends RadioMachineEntity {
 
     @Override
     public void tick() {
+        Vector3d before = position();
         super.tick();
         if (level.isClientSide) {
             tickLerp();
@@ -95,6 +102,20 @@ public class EwTruckEntity extends RadioMachineEntity {
                 turn = ((LivingEntity) driver).xxa;
             }
             drive(fwd, turn);
+        }
+        if (level.isClientSide) {
+            spinWheels(position().subtract(before));
+        }
+    }
+
+    private void spinWheels(Vector3d moved) {
+        wheelAngleO = wheelAngle;
+        double fwd = moved.x * -MathHelper.sin(yRot * DEG) + moved.z * MathHelper.cos(yRot * DEG);
+        wheelAngle += (float) (fwd / WHEEL_RADIUS) * (180F / (float) Math.PI);
+        if (Math.abs(wheelAngle) > 3600F) {
+            float wrap = Math.signum(wheelAngle) * 3600F;
+            wheelAngle -= wrap;
+            wheelAngleO -= wrap;
         }
     }
 

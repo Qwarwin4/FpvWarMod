@@ -162,17 +162,36 @@ def build(assets, modid, gm):
     ref = f"{modid}:entity/mesh/ew/atlas"
     out = []
 
-    # Ural-4320 7.37 m long, front to +z; the jammer kit goes on as its own section
+    # Ural-4320 7.37 m long, front to +z; the jammer kit goes on as its own section. The wheels come off
+    # the hull: one of them is ew_truck_wheel, EwTruckEntity puts it on the six hubs and spins it
     sc = gm.load({"src": "ural4320"})
     lo, hi = sc.bounds()
     k = 7.37 / (hi[2] - lo[2]) * 16
     M = mk.trans(8 - (lo[0] + hi[0]) / 2 * k, -lo[1] * k, 8 - (lo[2] + hi[2]) / 2 * k) @ mk.scale(k)
-    gm.export("ew_truck", sc, {"tris": 8500}, M)
+    tyres = [i for m, i in gm.comp_info(sc)
+             if abs(i["center"][0]) > 0.9 and i["max"][1] < 1.4 and min(i["max"][1:] - i["min"][1:]) > 1.0]
+    r = np.mean([(i["max"][1] - i["min"][1]) / 2 for i in tyres])
+    hubs = [i["center"] for i in tyres]
+
+    def on_hub(i, hub):
+        return (np.sign(i["center"][0]) == np.sign(hub[0]) and abs(i["center"][0] - hub[0]) < 0.45
+                and np.hypot(i["center"][1] - hub[1], i["center"][2] - hub[2]) < r * 0.9
+                and max(i["max"][1:] - i["min"][1:]) < r * 2.1)
+
+    wheels = gm.select(sc, lambda i: any(on_hub(i, h) for h in hubs))
+    gm.export("ew_truck", sc.subset(~wheels), {"tris": 8000}, M)
+    front_left = max(hubs, key=lambda c: (c[2], c[0]))
+    W = mk.trans(8, 0, 8) @ mk.scale(k) @ mk.trans(-front_left[0], -front_left[1], -front_left[2])
+    gm.export("ew_truck_wheel", sc.subset(gm.select(sc, lambda i: on_hub(i, front_left))),
+              {"tris": 700, "max_tex": 512}, W)
+    spots = sorted((tuple(((M @ np.append(c, 1))[:3] - [8, 0, 8]) / 16) for c in hubs), key=lambda s: (-s[2], s[0]))
+    print("  EwTruckEntity.WHEELS = {" + ", ".join("{%.2f, %.2f}" % (s[0], s[2]) for s in spots)
+          + "}; WHEEL_RADIUS = %.3f" % (r * k / 16))
     path = os.path.join(assets, "models", "entity", "ew_truck.mesh")
     secs = mk.read_mesh_sections(path)
     secs.append(ew_kit().section(ref))
     mk.write_mesh_sections(path, secs)
-    out.append("ew_truck")
+    out += ["ew_truck", "ew_truck_wheel"]
 
     for name, fn in (("ew_station", tower), ("relay", relay)):
         fn().write(os.path.join(assets, "models", "entity", name + ".mesh"), ref)

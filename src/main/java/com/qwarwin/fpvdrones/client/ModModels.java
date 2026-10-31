@@ -44,6 +44,7 @@ public final class ModModels {
     public static final ResourceLocation TRACER = FpvDrones.id("entity/tracer");
     /** mesh only: the jammer on a Ural, the jamming tower, the relay mast */
     public static final ResourceLocation EW_TRUCK = FpvDrones.id("entity/ew_truck");
+    public static final ResourceLocation EW_TRUCK_WHEEL = FpvDrones.id("entity/ew_truck_wheel");
     public static final ResourceLocation EW_STATION = FpvDrones.id("entity/ew_station");
     public static final ResourceLocation RELAY = FpvDrones.id("entity/relay");
 
