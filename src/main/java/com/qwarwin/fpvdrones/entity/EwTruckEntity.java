@@ -72,6 +72,9 @@ public class EwTruckEntity extends RadioMachineEntity {
 
     @Override
     protected boolean canAddPassenger(Entity passenger) {
+        if (isWrecked()) {
+            return false;
+        }
         return getPassengers().isEmpty();
     }
 
@@ -93,6 +96,9 @@ public class EwTruckEntity extends RadioMachineEntity {
         super.tick();
         if (level.isClientSide) {
             tickLerp();
+        }
+        if (isWrecked()) {
+            return;
         }
         if (isControlledByLocalInstance()) {
             Entity driver = getControllingPassenger();
@@ -176,7 +182,7 @@ public class EwTruckEntity extends RadioMachineEntity {
 
     @Override
     public ActionResultType interact(PlayerEntity player, Hand hand) {
-        if (hand != Hand.MAIN_HAND || !player.getItemInHand(hand).isEmpty()) {
+        if (isWrecked() || hand != Hand.MAIN_HAND || !player.getItemInHand(hand).isEmpty()) {
             return ActionResultType.PASS;
         }
         if (level.isClientSide) {

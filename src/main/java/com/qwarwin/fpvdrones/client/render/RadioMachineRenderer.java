@@ -5,6 +5,7 @@ import com.qwarwin.fpvdrones.client.ModModels;
 import com.qwarwin.fpvdrones.entity.EwTruckEntity;
 import com.qwarwin.fpvdrones.entity.RadioMachineEntity;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.client.renderer.texture.AtlasTexture;
@@ -26,6 +27,10 @@ public class RadioMachineRenderer<T extends RadioMachineEntity> extends EntityRe
 
     @Override
     public void render(T e, float entityYaw, float partial, MatrixStack ms, IRenderTypeBuffer buf, int light) {
+        if (e.isWrecked()) {
+            // burnt out: soot-black whatever the light
+            light = LightTexture.pack(1, Math.min(4, LightTexture.sky(light)));
+        }
         ms.pushPose();
         ms.mulPose(Vector3f.YP.rotationDegrees(-MathHelper.rotLerp(partial, e.yRotO, e.yRot)));
         Parts.draw(model, ms, buf, light, 1F);

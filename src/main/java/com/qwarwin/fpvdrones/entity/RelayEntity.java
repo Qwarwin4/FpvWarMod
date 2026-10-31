@@ -41,7 +41,10 @@ public class RelayEntity extends RadioMachineEntity {
     @Override
     public void tick() {
         super.tick();
-        if (!level.isClientSide && tickCount % 40 == 1) {
+        if (!level.isClientSide && isWrecked() && tickCount % 40 == 1) {
+            RelayNetwork.get((ServerWorld) level).remove(getUUID());
+        }
+        if (!level.isClientSide && !isWrecked() && tickCount % 40 == 1) {
             RelayNetwork net = RelayNetwork.get((ServerWorld) level);
             if (isActive()) {
                 net.put(getUUID(), position(), owner);
@@ -61,7 +64,7 @@ public class RelayEntity extends RadioMachineEntity {
 
     @Override
     public ActionResultType interact(PlayerEntity player, Hand hand) {
-        if (hand != Hand.MAIN_HAND || !player.getItemInHand(hand).isEmpty()) {
+        if (isWrecked() || hand != Hand.MAIN_HAND || !player.getItemInHand(hand).isEmpty()) {
             return ActionResultType.PASS;
         }
         if (!level.isClientSide) {

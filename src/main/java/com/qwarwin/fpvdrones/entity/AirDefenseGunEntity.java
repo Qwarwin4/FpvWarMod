@@ -285,6 +285,9 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
 
     @Override
     public ActionResultType interact(PlayerEntity player, Hand hand) {
+        if (isWrecked()) {
+            return ActionResultType.PASS;
+        }
         ItemStack stack = player.getItemInHand(hand);
         if (stack.isEmpty() && hand != Hand.MAIN_HAND) {
             return ActionResultType.PASS;
@@ -320,7 +323,7 @@ public class AirDefenseGunEntity extends MountedWeaponEntity {
     protected void destroy(@Nullable DamageSource cause) {
         Vector3d c = position().add(0, 1, 0);
         ejectPassengers();
-        remove();
+        removeOrWreck(cause);
         if (isDismantled(cause)) {
             spawnAtLocation(new ItemStack(ModItems.AIR_DEFENSE_GUN.get()));
             int belts = getAmmo() / ROUNDS_PER_BELT;

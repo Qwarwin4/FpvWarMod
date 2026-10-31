@@ -190,6 +190,9 @@ public abstract class MountedWeaponEntity extends MachineEntity {
 
     @Override
     protected boolean canAddPassenger(Entity passenger) {
+        if (isWrecked()) {
+            return false;
+        }
         return getPassengers().isEmpty();
     }
 
@@ -228,6 +231,9 @@ public abstract class MountedWeaponEntity extends MachineEntity {
     @Override
     public void tick() {
         super.tick();
+        if (isWrecked()) {
+            return;
+        }
         if (level.isClientSide) {
             if (!clientAimInit) {
                 clientAimInit = true;

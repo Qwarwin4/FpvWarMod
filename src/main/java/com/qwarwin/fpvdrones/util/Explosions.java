@@ -46,18 +46,20 @@ public final class Explosions {
         ServerWorld sw = (ServerWorld) level;
         switch (type) {
             case PG7VS:
-                // ~400 mm behind the armour: a tank through the roof, engine deck or stern, never through the glacis
-                jet(level, attacker, pos, dir, 7.0, 45F, 190F);
+                // a tandem round on top of the engine deck or into the side: the crew compartment or the ammunition
+                // goes, one or two of them finish a tank
+                jet(level, attacker, pos, dir, 7.0, 45F, 450F);
                 fragments(level, attacker, pos, 5.0, 8F);
                 sw.sendParticles(ParticleTypes.FLAME, pos.x, pos.y, pos.z, 40, dir.x * 0.6, dir.y * 0.6, dir.z * 0.6, 0.3);
                 break;
             case OG7:
                 fragments(level, attacker, pos, 11.0, 18F);
-                hull(level, attacker, pos, 2.5, 35F);
+                hull(level, attacker, pos, 2.5, 90F);
                 break;
             case CANISTER:
                 fragments(level, attacker, pos, 7.0, 8F);
-                hull(level, attacker, pos, 3.0, 70F);
+                // five litres of explosive on the roof: the hatches, optics, engine deck and whoever is inside
+                hull(level, attacker, pos, 3.0, 300F);
                 sw.sendParticles(ParticleTypes.EXPLOSION_EMITTER, pos.x, pos.y, pos.z, 2, 1.0, 0.5, 1.0, 0);
                 sw.sendParticles(ParticleTypes.LARGE_SMOKE, pos.x, pos.y + 1, pos.z, 60, 2.0, 1.5, 2.0, 0.05);
                 break;
@@ -80,7 +82,7 @@ public final class Explosions {
         explode(level, attacker, pos, power, fire);
         fragments(level, attacker, pos, power * 1.8, 16F);
         // 50 kg of explosive on top of a vehicle: the roof caves in whatever it is
-        hull(level, attacker, pos, power * 0.35, power * 30F);
+        hull(level, attacker, pos, power * 0.35, power * 45F);
         ServerWorld sw = (ServerWorld) level;
         sw.sendParticles(ParticleTypes.EXPLOSION_EMITTER, pos.x, pos.y, pos.z, 4, 2.0, 1.0, 2.0, 0);
         sw.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, pos.x, pos.y + 1, pos.z, 40, 2.5, 1.0, 2.5, 0.03);
@@ -160,12 +162,12 @@ public final class Explosions {
         double fx = -Math.sin(yaw), fz = Math.cos(yaw);
         double dot = -(travel.x * fx + travel.z * fz) / h;
         if (dot > 0.7) {
-            return 0.25F;
+            return 0.45F;
         }
         if (dot < -0.5) {
-            return 0.9F;
+            return 1F;
         }
-        return 0.6F;
+        return 0.75F;
     }
 
     private static void jet(World level, @Nullable Entity attacker, Vector3d pos, Vector3d dir, double length, float damage) {

@@ -75,6 +75,9 @@ public abstract class RadioMachineEntity extends MachineEntity {
     @Override
     public void tick() {
         super.tick();
+        if (isWrecked()) {
+            return;
+        }
         if (!level.isClientSide && isActive() && jamRadius() > 0) {
             Jamming.report(level, getUUID(), position().add(0, getBbHeight(), 0), jamRadius(), owner);
         }
@@ -84,7 +87,7 @@ public abstract class RadioMachineEntity extends MachineEntity {
     protected void destroy(@Nullable DamageSource cause) {
         Jamming.off(getUUID());
         ejectPassengers();
-        remove();
+        removeOrWreck(cause);
         if (cause == null) {
             return;
         }

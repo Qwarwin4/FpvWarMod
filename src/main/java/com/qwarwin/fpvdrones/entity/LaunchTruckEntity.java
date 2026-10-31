@@ -205,6 +205,9 @@ public class LaunchTruckEntity extends MachineEntity implements LaunchSite {
 
     @Override
     protected boolean canAddPassenger(Entity passenger) {
+        if (isWrecked()) {
+            return false;
+        }
         return getPassengers().isEmpty();
     }
 
@@ -223,6 +226,12 @@ public class LaunchTruckEntity extends MachineEntity implements LaunchSite {
     @Override
     public void tick() {
         super.tick();
+        if (isWrecked()) {
+            if (level.isClientSide) {
+                tickLerp();
+            }
+            return;
+        }
         if (level.isClientSide) {
             if (!soundStarted) {
                 soundStarted = true;
@@ -333,6 +342,9 @@ public class LaunchTruckEntity extends MachineEntity implements LaunchSite {
 
     @Override
     public ActionResultType interact(PlayerEntity player, Hand hand) {
+        if (isWrecked()) {
+            return ActionResultType.PASS;
+        }
         ItemStack stack = player.getItemInHand(hand);
         boolean empty = stack.isEmpty();
         if (empty && hand != Hand.MAIN_HAND) {
@@ -364,7 +376,7 @@ public class LaunchTruckEntity extends MachineEntity implements LaunchSite {
         int loaded = countLoaded();
         Vector3d center = position().add(0, 1.5, 0);
         ejectPassengers();
-        remove();
+        removeOrWreck(cause);
         if (isDismantled(cause)) {
             spawnAtLocation(new ItemStack(ModItems.LAUNCH_TRUCK.get()));
         } else if (cause != null) {

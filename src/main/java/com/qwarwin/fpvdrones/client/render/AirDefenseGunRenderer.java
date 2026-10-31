@@ -5,6 +5,7 @@ import com.qwarwin.fpvdrones.client.ModModels;
 import com.qwarwin.fpvdrones.entity.AirDefenseGunEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.client.renderer.texture.AtlasTexture;
@@ -25,6 +26,10 @@ public class AirDefenseGunRenderer extends EntityRenderer<AirDefenseGunEntity> {
 
     @Override
     public void render(AirDefenseGunEntity e, float entityYaw, float partial, MatrixStack ms, IRenderTypeBuffer buf, int light) {
+        if (e.isWrecked()) {
+            // burnt out: soot-black whatever the light
+            light = LightTexture.pack(1, Math.min(4, LightTexture.sky(light)));
+        }
         ms.pushPose();
         ms.mulPose(Vector3f.YP.rotationDegrees(-e.yRot));
         Parts.draw(ModModels.ADGUN_BASE, ms, buf, light, SCALE);

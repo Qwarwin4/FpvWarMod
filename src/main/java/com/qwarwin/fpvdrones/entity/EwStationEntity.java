@@ -39,7 +39,7 @@ public class EwStationEntity extends RadioMachineEntity {
 
     @Override
     public ActionResultType interact(PlayerEntity player, Hand hand) {
-        if (hand != Hand.MAIN_HAND || !player.getItemInHand(hand).isEmpty()) {
+        if (isWrecked() || hand != Hand.MAIN_HAND || !player.getItemInHand(hand).isEmpty()) {
             return ActionResultType.PASS;
         }
         if (!level.isClientSide) {

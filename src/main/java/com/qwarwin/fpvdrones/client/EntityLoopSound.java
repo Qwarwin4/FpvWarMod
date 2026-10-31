@@ -35,7 +35,8 @@ public class EntityLoopSound extends TickableSound {
 
     @Override
     public void tick() {
-        if (!entity.isAlive()) {
+        if (!entity.isAlive() || entity instanceof com.qwarwin.fpvdrones.entity.MachineEntity
+                && ((com.qwarwin.fpvdrones.entity.MachineEntity) entity).isWrecked()) {
             stop();
             return;
         }

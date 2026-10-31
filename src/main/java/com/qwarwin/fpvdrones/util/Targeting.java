@@ -74,6 +74,9 @@ public final class Targeting {
 
     /** Things worth shooting a gun or missile at. */
     public static boolean isShootable(Entity e) {
+        if (e instanceof MachineEntity && ((MachineEntity) e).isWrecked()) {
+            return false;
+        }
         return e instanceof LivingEntity || e instanceof MachineEntity || isAirTarget(e) || e.getType().is(SHOOTABLE);
     }
 

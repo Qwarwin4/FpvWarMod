@@ -5,6 +5,7 @@ import com.qwarwin.fpvdrones.client.ModModels;
 import com.qwarwin.fpvdrones.entity.LaunchTruckEntity;
 import com.qwarwin.fpvdrones.entity.StrikeType;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.client.renderer.texture.AtlasTexture;
@@ -24,6 +25,10 @@ public class TruckRenderer extends EntityRenderer<LaunchTruckEntity> {
 
     @Override
     public void render(LaunchTruckEntity e, float entityYaw, float partial, MatrixStack ms, IRenderTypeBuffer buf, int light) {
+        if (e.isWrecked()) {
+            // burnt out: soot-black whatever the light
+            light = LightTexture.pack(1, Math.min(4, LightTexture.sky(light)));
+        }
         ms.pushPose();
         ms.mulPose(Vector3f.YP.rotationDegrees(-MathHelper.rotLerp(partial, e.yRotO, e.yRot)));
 
@@ -53,7 +58,7 @@ public class TruckRenderer extends EntityRenderer<LaunchTruckEntity> {
         ModModels.render(ModModels.TRUCK_RACK, ms, buf, light);
         ms.popPose();
         for (int i = 0; i < LaunchTruckEntity.CAPACITY; i++) {
-            StrikeType t = e.getLoaded(i);
+            StrikeType t = e.isWrecked() ? null : e.getLoaded(i);
             if (t == null) {
                 continue;
             }

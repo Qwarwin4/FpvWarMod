@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  */
 public abstract class MachineEntity extends Entity {
     private static final DataParameter<Float> HEALTH = EntityDataManager.defineId(MachineEntity.class, DataSerializers.FLOAT);
+    private static final DataParameter<Boolean> WRECK = EntityDataManager.defineId(MachineEntity.class, DataSerializers.BOOLEAN);
     protected static final float DEG = (float) (Math.PI / 180.0);
 
     protected MachineEntity(EntityType<?> type, World world) {
@@ -46,13 +47,68 @@ public abstract class MachineEntity extends Entity {
      */
     protected abstract void destroy(@Nullable DamageSource cause);
 
+    /** Taken apart by a player's own hands (not his drone's jet or his shells, which are attacks like any). */
     protected static boolean isDismantled(@Nullable DamageSource cause) {
-        return cause != null && !cause.isExplosion() && cause.getDirectEntity() instanceof PlayerEntity;
+        return cause != null && isMelee(cause);
+    }
+
+    private static boolean isMelee(DamageSource source) {
+        return "player".equals(source.getMsgId()) && source.getDirectEntity() instanceof PlayerEntity
+                && source.getDirectEntity() == source.getEntity();
+    }
+
+    // ---- wrecks: what's left after it's blown up, dark and smoking, until someone clears it away by hand
+
+    public boolean isWrecked() {
+        return entityData.get(WRECK);
+    }
+
+    /** Instead of vanishing when blown up: stays where it is as a burnt-out wreck. */
+    protected void removeOrWreck(@Nullable DamageSource cause) {
+        if (cause == null || isDismantled(cause) || cause == DamageSource.OUT_OF_WORLD) {
+            remove();
+            return;
+        }
+        setHealth(0F);
+        entityData.set(WRECK, true);
+    }
+
+    private int wreckAge;
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (!isWrecked()) {
+            return;
+        }
+        wreckAge++;
+        if (level.isClientSide) {
+            if (wreckAge < 6000 && random.nextInt(wreckAge < 1200 ? 1 : 4) == 0) {
+                double r = getBbWidth() * 0.35;
+                level.addParticle(ParticleTypes.CAMPFIRE_COSY_SMOKE, getX() + (random.nextDouble() - 0.5) * r,
+                        getY() + getBbHeight() * 0.8, getZ() + (random.nextDouble() - 0.5) * r, 0, 0.05, 0);
+                if (wreckAge < 1200 && random.nextInt(3) == 0) {
+                    level.addParticle(ParticleTypes.FLAME, getX() + (random.nextDouble() - 0.5) * r,
+                            getY() + getBbHeight() * 0.5, getZ() + (random.nextDouble() - 0.5) * r, 0, 0.02, 0);
+                }
+            }
+            return;
+        }
+        Vector3d m = getDeltaMovement();
+        setDeltaMovement(m.x * 0.8, m.y - 0.08, m.z * 0.8);
+        move(net.minecraft.entity.MoverType.SELF, getDeltaMovement());
+        if (isOnGround()) {
+            setDeltaMovement(Vector3d.ZERO);
+        }
+        if (getY() < -64) {
+            remove();
+        }
     }
 
     @Override
     protected void defineSynchedData() {
         entityData.define(HEALTH, getMaxHealth());
+        entityData.define(WRECK, false);
     }
 
     public float getHealth() {
@@ -79,8 +135,19 @@ public abstract class MachineEntity extends Entity {
         if (isInvulnerableTo(source) || !isAlive()) {
             return false;
         }
-        if (source.getEntity() instanceof PlayerEntity && ((PlayerEntity) source.getEntity()).abilities.instabuild
-                && source.getDirectEntity() == source.getEntity()) {
+        if (isWrecked()) {
+            // a wreck only goes when someone clears it away by hand
+            if (isMelee(source)) {
+                level.playSound(null, getX(), getY(), getZ(), SoundEvents.ANVIL_DESTROY, SoundCategory.NEUTRAL, 0.7F, 0.8F);
+                if (!((PlayerEntity) source.getDirectEntity()).abilities.instabuild) {
+                    spawnAtLocation(new net.minecraft.item.ItemStack(net.minecraft.item.Items.IRON_INGOT, 1 + random.nextInt(3)));
+                }
+                remove();
+                return true;
+            }
+            return false;
+        }
+        if (isMelee(source) && ((PlayerEntity) source.getEntity()).abilities.instabuild) {
             destroy(null);
             return true;
         }
@@ -142,11 +209,13 @@ public abstract class MachineEntity extends Entity {
         if (tag.contains("Health")) {
             setHealth(tag.getFloat("Health"));
         }
+        entityData.set(WRECK, tag.getBoolean("Wreck"));
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundNBT tag) {
         tag.putFloat("Health", getHealth());
+        tag.putBoolean("Wreck", isWrecked());
     }
 
     @Override
