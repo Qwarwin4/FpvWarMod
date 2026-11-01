@@ -1,92 +1,187 @@
-# FPV Drones
+<p align="center"><img src="docs/images/banner.webp" width="900" alt="FPV Drones"></p>
 
-Мод для Minecraft 1.16.5 (Forge 36.2): FPV-дроны, Мавик-3, Шахеды и Герани, пусковые установки и пусковой КамАЗ, ЗАК-30 «Цитадель» против дронов, ПТРК «Корнет» и «Javelin».
+<p align="center"><b>English</b> | <a href="README.ru.md">Русский</a></p>
 
-## Предметы
+<p align="center">
+  <img src="https://img.shields.io/badge/Minecraft-1.16.5-62B47A?style=for-the-badge&labelColor=1b1f24" height="32" alt="Minecraft 1.16.5">
+  <img src="https://img.shields.io/badge/Forge-36.2-DFA86A?style=for-the-badge&labelColor=1b1f24" height="32" alt="Forge 36.2">
+  <img src="https://img.shields.io/badge/Version-1.1.0-7C9A46?style=for-the-badge&labelColor=1b1f24" height="32" alt="Version 1.1.0">
+  <img src="https://img.shields.io/badge/License-MIT-4B5563?style=for-the-badge&labelColor=1b1f24" height="32" alt="License MIT">
+  <img src="https://img.shields.io/badge/Java-17_to_build-E76F00?style=for-the-badge&labelColor=1b1f24&logo=openjdk&logoColor=white" height="32" alt="JDK 17 to build">
+</p>
 
-- **ФПВ-очки** — шлем. Надел — сразу картинка с дрона, к которому привязан пульт в инвентаре. Сам по себе ни к чему не привязывается.
-- **Пульт управления дроном** — Shift+ПКМ по FPV-дрону или Мавику. ПКМ с пультом в руке (в очках) тоже подключает видео.
-- **Пульт Мавика (DJI RC)** — со своим экраном: Shift+ПКМ по Мавику — привязать, ПКМ — лететь. Очки не нужны.
-- **FPV-дрон** — 7" камикадзе. Под раму вешается ПГ-7ВС, ОГ-7 или 5-литровка (все лёжа, носом вперёд), удар о блок или моба = подрыв. Без газа не висит, а падает. По технике (и этого мода, и Military Tech) важно, куда попал: ПГ-7ВС в крышу, моторное отделение или корму танка выводит его за два-три попадания, в борт — хуже, лобовую броню почти не берёт; БМП, грузовики, ЗРК и самолёты на земле — с одного. 5-литровка и ОГ-7, взорвавшись на корпусе, тоже его рвут, а Шахед/Герань при прямом попадании уничтожают любую технику.
-- **Мавик-3** — разведка, держит высоту сам, зум до 28×, в углу пишет координаты точки под прицелом. Два крюка под РГД-5 / ВОГ-17М / радиометку, сброс на **G**.
-  - **H** — домой (RTH): набирает 20 блоков над точкой взлёта, летит назад и садится туда, откуда взлетел (на площадку тоже). Точка, куда смотрела камера в момент нажатия, сохраняется и подставляется в меню пусковой кнопкой «← точка Мавика».
-  - При 20% заряда Мавик улетает домой сам. Отменить — снова **H**. Если просто выйти из камеры, он висит на месте.
-  - Севший АКБ меняется на ходу: ПКМ по дрону новым АКБ, старый возвращается как «севший» (заряжается на верстаке редстоуном).
-- **Радиометка** — вешается на Мавик и сбрасывается на **G**. Где упадёт (или к кому прилипнет — к мобу, игроку, грузовику), туда и наводятся Шахеды/Герани: код метки пишется в чат и сам подставляется в меню пусковой. Метка едет вместе с тем, к чему прилипла, и живёт 20 минут.
-- **Стартовая площадка** — ПКМ дроном по ней, дрон встаёт на рогатки, подвес висит между ног.
-- **Шахед-136, Шахед-238, Герань-2, Герань-5** — ударные БПЛА. Герань-5 реактивная: почти в два раза быстрее и с более тяжёлой БЧ. **Шахед-238** — тот же Шахед, но с малым реактивным двигателем вместо винта (можно собрать сразу или переделать готовый Шахед-136 + двигатель).
-- **Пусковая установка** — одна направляющая. Меню: цель (Y можно не писать — полетит по земле), частота.
-- **Пусковой грузовик** — КамАЗ 6×6 с пакетом на 5 БПЛА, водитель сидит в кабине. ПКМ — за руль, ПКМ БПЛА — зарядить, Shift+ПКМ — меню. Из кабины меню открывается на **G**: можно пускать по одному или залпом. В залпе каждый БПЛА заходит на цель со своего направления и на своей высоте, друг друга они не сбивают.
-- **Пульт удалённого запуска** — ПКМ по установке или грузовику, чтобы привязать (повторно — отвязать). Привязывается сколько угодно, но все на одной частоте. ПКМ в воздух — пуск со всех.
-- **Планшет** — ПКМ по установке/грузовику, показывает последний ушедший с неё БПЛА. Shift+ПКМ по летящему — привязка напрямую.
+<p align="center">
+  <a href="https://discord.gg/YOUR_INVITE"><img src="https://img.shields.io/badge/Discord-Join_server-5865F2?style=for-the-badge&labelColor=1b1f24&logo=discord&logoColor=white" height="40" alt="Discord: join the server"></a>
+  <a href="https://t.me/qwarwin4git"><img src="https://img.shields.io/badge/Telegram-Follow-26A5E4?style=for-the-badge&labelColor=1b1f24&logo=telegram&logoColor=white" height="40" alt="Telegram: follow the channel"></a>
+  <a href="mailto:qwarwin@gmail.com"><img src="https://img.shields.io/badge/Gmail-Contact-EA4335?style=for-the-badge&labelColor=1b1f24&logo=gmail&logoColor=white" height="40" alt="Gmail: contact"></a>
+</p>
 
-## Бронетехника и ПТРК
+FPV drones for Minecraft 1.16.5 on Forge 36: kamikaze quads with real goggles view, a Mavic 3 for recon and drops,
+Shahed and Geran strike UAVs with launchers and a launch truck, an anti-drone gun, electronic warfare and the Kornet and
+Javelin ATGMs. Built to play with friends, every item is crafted from parts on an assembly bench.
 
-- **ЗАК-30 «Цитадель»** — зенитный артиллерийский комплекс против дронов: 30-мм пушка, радар и ТВ/ИК-прицел на тумбе, бьёт до 450 блоков, 10 выстрелов в секунду. ПКМ — сесть за прицел, мышь — наведение, **ЛКМ** — огонь. Радар видит Шахеды на всю дальность, а квадрокоптер — только с 230 блоков, у самой земли вдвое ближе, и отметка от него то появляется, то пропадает. Система управления огнём считает, где снаряд встретит цель, и программирует взрыватель на подрыв в этой точке облаком осколков (в авто — по сопровождаемой цели, вручную — по цели под лазерным дальномером у перекрестия). Снаряды с программируемым подрывом могут разорваться рядом с целью, но взрыватель срабатывает не всегда (по умолчанию 45 %, `airburstReliability`), радиус подрыва зависит от размера цели, а осколки по маленькому квадрокоптеру часто проходят мимо. Попасть по шустрому FPV трудно: нужен плотный огонь и упреждение, Шахеды и самолёты сбиваются заметно легче. В авто наводчику нужно время построить трассу, наводка «гуляет». В прицеле все дроны в рамках, жёлтый крестик «УПР» — куда целиться с упреждением. **G** (или Shift+ПКМ снаружи) переключает режим: ручной → авто по чужим (дроны, Шахеды, ПТУРы; свои и командные не трогает) → авто по **всему в воздухе** (любые дроны и БПЛА, ракеты, фантомы, гасты, ифриты, визер, игроки на элитрах — кроме самого владельца). В авто ракеты сбиваются в первую очередь, потом Шахеды, потом дроны. Летящий ПТУР можно сбить и вручную. Заряжается лентами 30 мм (ПКМ лентой).
-- **РЭБ на «Урале»** — передвижная станция подавления: мачта с секторными антеннами над кузовом «Урала». ПКМ — за руль, **Shift+ПКМ** — включить/выключить. Глушит в радиусе 160 блоков.
-- **Вышка РЭБ** — стационарная, 240 блоков, ПКМ — включить/выключить. Как работает РЭБ (и та, и другая): чужой FPV или Мавик в зоне ловит помехи — картинка сыпется, и с умеренной вероятностью связь рвётся совсем (FPV без связи падает). Сильнее всего у самой станции и когда дрон далеко от пилота, слабее на краю зоны и рядом с пилотом. Шахедам РЭБ сбивает спутниковую навигацию: такой Шахед уходит мимо цели на 25–95 блоков, радиометку тоже теряет. Герань-2 и Герань-5 с антиджемминговыми антеннами сбиваются заметно реже. Свои и командные дроны станция не трогает. Сбить РЭБ можно чем угодно — у вышки решётка, её проще всего взять кумулятивом или взрывом. Радиусы и шансы — в конфиге, раздел `ew`.
-- **Ретранслятор для Шахедов** — необязательная мачта на треноге: без неё Шахеды и Герани летают как обычно. С включёнными ретрансляторами цель можно задавать дальше обычной дальности: пусковая должна доставать до ретранслятора, а цель должна быть в 12000 блоков от него; ретрансляторы цепляются друг за друга цепочкой. Под своим ретранслятором Шахед сверяет координаты и РЭБ почти не сбивает его с курса. ПКМ — включить/выключить, работают только свои и командные.
-- **БМПТ «Терминатор»** переехал в отдельный мод **Military Tech** (вместе с Т-72Б3, Т-80У, Т-90М, БМП-1, «Градом», «Орешником», Су-25, Су-34 и МиГ-25).
-- **ПТРК «Корнет»** — тренога. ПКМ — сесть. Зажми **ПКМ** — смотришь в прицел (8×, колесом 3–16×), **ЛКМ** — пуск, ракета летит по лучу: держи перекрестье на цели до попадания. Запасные ракеты в инвентаре заряжаются сами.
-- **ПТРК «Javelin»** — самонаведение, «выстрелил и забыл». Зажми **ПКМ** — прицел, держи цель в рамке ~2 с до захвата (тон станет высоким), **ЛКМ** — пуск. Ракета уходит горкой и бьёт сверху, цель можно больше не держать.
-- ПТУР — тандемная кумулятивная БЧ: взрыв на поверхности, струя прожигает тоннель до ~9 блоков (камень, бетон, стены; обсидиан и бедрок не берёт) и второй взрыв в конце тоннеля. Прямое попадание «Корнета» убивает танк из Military Tech.
-- Колесо мыши или `=` `-` в прицеле — зум. В любом прицеле с зумом (и в камере Мавика) мышь замедляется пропорционально увеличению.
+## Gallery
 
-## Вместе с Military Tech
+<table>
+  <tr>
+    <td width="50%" align="center"><img src="docs/images/fpv_drone.webp" alt="7&quot; FPV kamikaze drone"><br><sub><b>7" FPV kamikaze drone</b></sub></td>
+    <td width="50%" align="center"><img src="docs/images/mavic3.webp" alt="Mavic 3"><br><sub><b>Mavic 3</b></sub></td>
+  </tr>
+  <tr>
+    <td width="50%" align="center"><img src="docs/images/goggles.webp" alt="FPV goggles"><br><sub><b>FPV goggles</b></sub></td>
+    <td width="50%" align="center"><img src="docs/images/shahed136.webp" alt="Shahed-136"><br><sub><b>Shahed-136</b></sub></td>
+  </tr>
+  <tr>
+    <td width="50%" align="center"><img src="docs/images/geran2.webp" alt="Geran-2"><br><sub><b>Geran-2</b></sub></td>
+    <td width="50%" align="center"><img src="docs/images/shahed238.webp" alt="Shahed-238"><br><sub><b>Shahed-238</b></sub></td>
+  </tr>
+  <tr>
+    <td width="50%" align="center"><img src="docs/images/adgun.webp" alt="ZAK-30 Tsitadel"><br><sub><b>ZAK-30 Tsitadel</b></sub></td>
+    <td width="50%" align="center"><img src="docs/images/ew_truck.webp" alt="EW Ural"><br><sub><b>EW Ural</b></sub></td>
+  </tr>
+</table>
 
-Моды работают и по отдельности, и вместе. Если стоят оба:
-- танки, «Град», «Орешник» и самолёты из Military Tech поражаются зениткой, ПТУРами и сбросами с дронов;
-- самолёты в воздухе зенитка видит как воздушные цели;
-- дроны, Шахеды и ПТУРы отсюда — цели для Р-73/Р-40 оттуда.
+## Drones
 
-Связка сделана через теги сущностей (`data/fpvdrones/tags/entity_types/air_targets.json` и `shootable.json`) с
-необязательными записями, жёсткой зависимости нет.
+- **FPV goggles.** A helmet: put it on and you see from the drone your controller is bound to.
+- **Drone controller.** Shift+RMB an FPV drone or a Mavic to bind it. RMB with it in hand (goggles on) connects the video.
+- **Mavic controller (DJI RC).** Has its own screen, no goggles needed: Shift+RMB a Mavic to bind, RMB to fly.
+- **7" FPV drone.** A kamikaze. Hang a PG-7VS, OG-7 or a 5 L bottle under the frame; hitting a block or a mob sets it
+  off. With no throttle it falls instead of hovering. Against vehicles (this mod's and Military Tech's) the hit point
+  matters: a PG-7VS into the roof, the engine deck or the rear of a tank kills it in two or three hits, the side is
+  worse and the front armor barely notices. IFVs, trucks, SAMs and parked aircraft go down in one.
+- **Mavic 3.** Recon: holds altitude by itself, zoom up to 28×, shows the coordinates of the point under the
+  crosshair. Two hooks for an RGD-5, a VOG-17M or a radio beacon, dropped with **G**.
+  - **H** — return to home: climbs 20 blocks above the takeoff point, flies back and lands where it took off (pads
+    included). The point the camera was looking at is saved and offered in the launcher menu as "← Mavic point".
+  - At 20 % battery it heads home on its own; **H** again cancels. Leaving the camera just leaves it hovering.
+  - Swap a flat battery in the field: RMB the drone with a fresh one, the flat one comes back (charge it with redstone
+    on the bench).
+- **Radio beacon.** Hangs on the Mavic, dropped with **G**. Wherever it lands, or whatever it sticks to (a mob, a
+  player, a truck), Shaheds and Gerans home on it: its code goes to chat and fills the launcher menu by itself. The
+  beacon travels with what it stuck to and lives 20 minutes.
+- **Launch pad.** RMB it with a drone to stand the drone on the stand, the payload hangs between the legs.
 
-## Сборка в игре
+## Strike UAVs and launchers
 
-Всё собирается на **сборочном верстаке** (верстак + зелёный ковёр сверху + железо). Электронику без **паяльника** в слоте инструмента не собрать, каждая пайка тратит единицу прочности.
-Сначала делаются запчасти: рама, моторы, пропеллеры, регулятор, полётный контроллер, приёмник, полётный стек, АКБ, FPV-камера, антенна, видеопередатчик, камера на подвесе, модуль ГНСС, дисплей, планер, поршневой и малый реактивный двигатели, боевая часть, стартовый ускоритель, 30-мм пушка 2А42. Потом из них дроны, пульты, очки, планшет и БПЛА.
+- **Shahed-136, Shahed-238, Geran-2, Geran-5.** The Geran-5 is a jet, almost twice as fast with a heavier warhead.
+  The Shahed-238 is a Shahed with a small jet engine instead of the propeller (build it straight away or convert a
+  Shahed-136 with an engine).
+- **Launcher.** One rail; its menu takes the target (Y can be left out, then it flies along the ground) and a frequency.
+- **Launch truck.** A 6×6 KamAZ with a pack for five UAVs and a driver in the cab. RMB to drive, RMB with a UAV to load,
+  Shift+RMB for the menu, **G** from the cab. Launch one at a time or all at once: in a salvo every UAV comes in from
+  its own direction and altitude, they don't take each other out.
+- **Remote launch controller.** RMB a launcher or a truck to bind it (again to unbind). Bind as many as you like, all on
+  one frequency; RMB into the air launches from all of them.
+- **Operator tablet.** RMB a launcher or a truck to watch its last UAV in flight, Shift+RMB a flying one to bind it.
+- **Shahed relay.** An optional mast on a tripod. Without it Shaheds fly as usual; with relays switched on, targets can
+  sit further than the normal range: the launcher has to reach a relay, and the target has to be within 12000 blocks
+  of it, relays chain up. Under its own relay a Shahed checks its position and EW barely moves it off course.
 
-Все рецепты — в [RECIPES.md](RECIPES.md).
+## Air defense and EW
 
-## Управление камерой
+- **ZAK-30 Tsitadel.** An anti-drone gun: 30 mm cannon, radar and a TV/IR sight on a pedestal, up to 450 blocks,
+  10 rounds a second. RMB to take the sight, mouse to aim, **LMB** to fire.
+  - The radar sees Shaheds at full range, a quadcopter only from 230 blocks, half that close to the ground, and its
+    mark flickers in and out.
+  - The fire control computes where the shell meets the target and programs the fuze to burst there in a cloud of
+    fragments. The fuze doesn't always work (45 % by default, `airburstReliability`), and fragments often miss a small
+    quad. A nimble FPV takes dense fire and lead; Shaheds and aircraft go down much easier.
+  - **G** (or Shift+RMB from outside) switches the mode: manual → auto against others (drones, Shaheds, ATGMs; yours
+    and your team's are left alone) → auto against **everything in the air** except the owner. In auto it goes for
+    missiles first, then Shaheds, then drones. Fed with 30 mm belts (RMB with a belt).
+- **EW Ural.** A mobile jammer: a mast with sector antennas over a Ural's bed. RMB to drive, **Shift+RMB** to switch it
+  on or off. Jams within 160 blocks.
+- **EW tower.** Stationary, 240 blocks, RMB to switch on or off.
+- **How EW works.** A hostile FPV or Mavic in the zone gets interference: the picture breaks up, and with a fair chance
+  the link drops (an FPV without a link falls). Strongest near the station and far from the pilot, weakest at the edge
+  of the zone and close to the pilot. Shaheds lose satellite navigation and miss by 25–95 blocks, losing the beacon
+  too; the Geran-2 and Geran-5 with anti-jam antennas drift much less. Your own and your team's drones are left alone.
+  Anything can knock out EW, the tower's lattice goes down easiest to a shaped charge or a blast. Radii and chances are
+  in the config, section `ew`.
 
-| | FPV | Мавик |
+## ATGMs
+
+- **Kornet.** A tripod; RMB to sit. Hold **RMB** for the sight (8×, wheel 3–16×), **LMB** to launch. Beam riding: keep
+  the crosshair on the target until it hits. Spare missiles in the inventory load by themselves.
+- **Javelin.** Fire and forget. Hold **RMB** for the sight, keep the target in the box for ~2 s until it locks (the
+  tone goes high), **LMB** to launch. The missile climbs and hits from above.
+- The ATGM warhead is a tandem shaped charge: a blast on the surface, a jet that burns a tunnel up to ~9 blocks (stone,
+  concrete, walls; not obsidian or bedrock) and a second blast at its end. A direct Kornet hit kills a Military Tech tank.
+- In any sight with zoom (and the Mavic camera) the wheel or `=` `-` zooms, and the mouse slows down with the zoom.
+
+The BMPT Terminator moved to [Military Tech](https://github.com/Qwarwin4/MillitaryTechMod).
+
+## Controls
+
+| | FPV | Mavic |
 |---|---|---|
-| мышь | курс и наклон | курс и подвес камеры |
-| W / S | лететь туда, куда смотрит камера | вперёд / назад |
-| A / D | вбок | вбок |
-| пробел / shift | газ вверх / вниз | вверх / вниз |
-| ctrl | форсаж | спорт |
-| G | подрыв | сброс |
-| H | | домой |
-| колесо, `=` `-` | | зум |
-| V | выйти / подключиться | выйти |
+| Mouse | heading and pitch | heading and gimbal |
+| W / S | fly where the camera looks | forward / back |
+| A / D | sideways | sideways |
+| Space / Shift | throttle up / down | up / down |
+| Ctrl | boost | sport |
+| G | detonate | drop |
+| H | | return home |
+| Wheel, `=` `-` | | zoom |
+| V | leave / connect | leave |
 
-Пока смотришь в камеру, на твоём месте стоит «оператор». Ударят его — связь рвётся и урон прилетает тебе.
-Связь ограничена дальностью, стены между тобой и дроном её режут. Батарея заряжается редстоуном (ПКМ по дрону). Shift+ПКМ пустой рукой — забрать дрон.
+While you're in the camera an "operator" stands in your place. Hit him and the link breaks, the damage goes to you.
+The link has a range and walls between you and the drone cut it. Charge the battery with redstone (RMB the drone),
+Shift+RMB with an empty hand picks the drone up. **Shift** also leaves the tablet; if you watched it from the truck
+cab, you're back at the wheel.
 
-Из планшета можно выйти и на **Shift**. Если смотрел в планшет из кабины грузовика — после выхода окажешься обратно за рулём.
+## Crafting
 
-## Сборка
+Everything is built on the **assembly bench** (a crafting table with green carpet on top and iron). Electronics need a
+**soldering iron** in the tool slot, every solder costs a point of durability. Parts come first: frame, motors,
+propellers, ESC, flight controller, receiver, flight stack, battery, FPV camera, antenna, video transmitter, gimbal
+camera, GNSS module, display, airframe, piston and small jet engines, warhead, launch booster, the 2A42 30 mm cannon.
+Then drones, controllers, goggles, the tablet and the UAVs from them.
 
-Нужен JDK 17 (на более новой Java Gradle 7.6 не запустится).
+All recipes are in [RECIPES.md](RECIPES.md).
 
-- **Windows:** дважды кликни `build.bat`. Он сам найдёт JDK 17, соберёт мод и откроет папку с готовым jar.
+## Works with Military Tech
+
+Both mods work alone and together. With [Military Tech](https://github.com/Qwarwin4/MillitaryTechMod) installed:
+- its tanks, Grad, Oreshnik and aircraft can be hit by the AA gun, ATGMs and drone drops;
+- its aircraft in flight are air targets for the AA gun;
+- drones, Shaheds and ATGMs from here are targets for its R-73/R-40.
+
+It's wired through entity tags with optional entries (`data/fpvdrones/tags/entity_types/air_targets.json` and
+`shootable.json`), there's no hard dependency.
+
+## Config
+
+`world/serverconfig/fpvdrones-server.toml`: link range, speed, flight time, the power of every munition, fragment
+multiplier, strike UAV speed and range, truck speed, ATGM damage, power and penetration (`atgmDamage`, `atgmPower`,
+`atgmPenetration`), whether 30 mm shells break blocks, EW radii and chances.
+
+The truck has to be in loaded chunks for the controller to find it (a launcher is loaded by the controller itself).
+
+## Building
+
+JDK 17 (Gradle 7.6 won't start on newer Java).
+
+- **Windows:** double-click `build.bat`. It finds JDK 17, builds the mod and opens the folder with the jar.
 - **Linux:** `./build.sh`
 
-Готовый мод — `build/libs/fpvdrones-<версия>.jar`, его кладёшь в `mods`. Папка `build` появляется только после сборки.
+The mod is `build/libs/fpvdrones-<version>.jar`, drop it into `mods`.
 
-Дроны, «Корнет», грузовик и очки — настоящие 3D-модели (авторы и лицензии в [MODELS.md](MODELS.md)), их готовит `tools/gen_meshes.py`. Остальные модели, текстуры и звуки генерирует `tools/gen_assets.py` (Pillow + numpy, для звуков ещё ffmpeg). Для сборки мода он не нужен — всё уже сгенерировано и лежит в `src/main/resources`:
+## Models, textures and sounds
+
+The drones, the Kornet, the truck and the goggles are real 3D models, authors and licenses are in
+[MODELS.md](MODELS.md); `tools/gen_meshes.py` prepares them. The other models, textures and sounds come from
+`tools/gen_assets.py` (Pillow + numpy, ffmpeg for sounds). Everything is already generated in `src/main/resources`,
+the build doesn't need it:
 
 ```
 python3 tools/gen_assets.py src/main/resources
 ```
 
-Свои рисунки кладутся в `tools/textures/` с тем же путём, что в `assets/fpvdrones/textures/` (например `tools/textures/item/drone_remote.png`): генератор подменит ими сгенерированные.
+Your own drawings go to `tools/textures/` under the same path as in `assets/fpvdrones/textures/` (for example
+`tools/textures/item/drone_remote.png`), the generator uses them instead of its own.
 
-## Конфиг
+## License
 
-`world/serverconfig/fpvdrones-server.toml` — дальность связи, скорость, время полёта, мощность всех боеприпасов, множитель осколков, скорость и дальность ударных БПЛА, скорость грузовика, урон, мощность и пробитие ПТУР (`atgmDamage`, `atgmPower`, `atgmPenetration`), ломают ли 30-мм снаряды блоки.
-
-Грузовик должен быть в прогруженных чанках, чтобы пульт его нашёл (установку пульт прогружает сам).
+The code is MIT. The 3D models keep their own licenses (CC BY 4.0), see [MODELS.md](MODELS.md).
