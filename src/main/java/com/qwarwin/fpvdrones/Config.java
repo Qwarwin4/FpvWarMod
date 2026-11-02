@@ -39,6 +39,11 @@ public final class Config {
     public static final ForgeConfigSpec.DoubleValue ATGM_POWER;
     public static final ForgeConfigSpec.DoubleValue ATGM_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue ATGM_PENETRATION;
+    public static final ForgeConfigSpec.DoubleValue INTERCEPTOR_SPEED;
+    public static final ForgeConfigSpec.IntValue INTERCEPTOR_BATTERY;
+    public static final ForgeConfigSpec.DoubleValue INTERCEPTOR_REACH;
+    public static final ForgeConfigSpec.DoubleValue RADAR_RANGE;
+    public static final ForgeConfigSpec.DoubleValue RADAR_LINK;
     public static final ForgeConfigSpec.DoubleValue EW_TRUCK_RADIUS;
     public static final ForgeConfigSpec.DoubleValue EW_STATION_RADIUS;
     public static final ForgeConfigSpec.DoubleValue EW_LINK_LOSS;
@@ -110,6 +115,17 @@ public final class Config {
                 .defineInRange("gnssLoss", 0.08, 0.0, 1.0);
         RELAY_RANGE = b.comment("Reach of a relay mast: strike drones can be sent this far past it, and relays this far apart chain up")
                 .defineInRange("relayRange", 12000.0, 100.0, 100000.0);
+        b.pop();
+
+        b.push("airDefence");
+        INTERCEPTOR_SPEED = b.comment("Top speed of the interceptor drone, blocks per tick (4 = 290 km/h)")
+                .defineInRange("interceptorSpeed", 4.0, 1.0, 10.0);
+        INTERCEPTOR_BATTERY = b.comment("How long an interceptor stays up, seconds").defineInRange("interceptorBattery", 180, 20, 1800);
+        INTERCEPTOR_REACH = b.comment("How far from the target an interceptor can be and still be sent after it, blocks")
+                .defineInRange("interceptorReach", 2500.0, 50.0, 20000.0);
+        RADAR_RANGE = b.comment("Search radar reach for Shahed-size targets, blocks (quadcopters show at 230 at most)")
+                .defineInRange("radarRange", 2000.0, 100.0, 10000.0);
+        RADAR_LINK = b.comment("A radar console sees the radars of its side this far away").defineInRange("radarLink", 4000.0, 50.0, 50000.0);
         b.pop();
 
         SPEC = b.build();

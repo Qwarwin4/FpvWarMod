@@ -62,6 +62,14 @@ public final class ModItems {
             () -> new MachineItem(ModEntities.EW_TRUCK, "tooltip.fpvdrones.ew_truck", props().stacksTo(1).rarity(Rarity.RARE)));
     public static final RegistryObject<Item> EW_STATION = ITEMS.register("ew_station",
             () -> new MachineItem(ModEntities.EW_STATION, "tooltip.fpvdrones.ew_station", props().stacksTo(1).rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> RADAR = ITEMS.register("radar",
+            () -> new MachineItem(ModEntities.RADAR, "tooltip.fpvdrones.radar", props().stacksTo(1).rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> RADAR_CONSOLE = ITEMS.register("radar_console",
+            () -> new MachineItem(ModEntities.RADAR_CONSOLE, "tooltip.fpvdrones.radar_console", props().stacksTo(1).rarity(Rarity.UNCOMMON)));
+    public static final RegistryObject<Item> INTERCEPTOR = ITEMS.register("interceptor",
+            () -> new com.qwarwin.fpvdrones.item.InterceptorItem(props().stacksTo(4).rarity(Rarity.UNCOMMON)));
+    public static final RegistryObject<Item> INTERCEPTOR_REMOTE = ITEMS.register("interceptor_remote",
+            () -> new com.qwarwin.fpvdrones.item.InterceptorRemoteItem(props().stacksTo(1)));
     public static final RegistryObject<Item> RELAY = ITEMS.register("relay",
             () -> new MachineItem(ModEntities.RELAY, "tooltip.fpvdrones.relay", props().stacksTo(4).rarity(Rarity.UNCOMMON)));
     public static final RegistryObject<Item> KORNET = ITEMS.register("kornet",

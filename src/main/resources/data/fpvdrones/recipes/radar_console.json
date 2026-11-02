@@ -1,0 +1,27 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "DD ",
+    "RFR",
+    "I I"
+  ],
+  "key": {
+    "D": {
+      "item": "fpvdrones:display"
+    },
+    "R": {
+      "item": "fpvdrones:receiver"
+    },
+    "F": {
+      "item": "fpvdrones:flight_stack"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:radar_console",
+    "count": 1
+  },
+  "soldering": true
+}

@@ -89,6 +89,16 @@ public final class ClientPacketHandler {
         }
     }
 
+    public static void radarPicture(com.qwarwin.fpvdrones.network.RadarPicturePacket m) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof com.qwarwin.fpvdrones.client.screen.RadarScreen
+                && ((com.qwarwin.fpvdrones.client.screen.RadarScreen) mc.screen).console() == m.console) {
+            ((com.qwarwin.fpvdrones.client.screen.RadarScreen) mc.screen).update(m);
+        } else if (m.open) {
+            mc.setScreen(new com.qwarwin.fpvdrones.client.screen.RadarScreen(m));
+        }
+    }
+
     public static void openLauncher(OpenLauncherPacket m) {
         Minecraft.getInstance().setScreen(new LauncherScreen(m));
     }

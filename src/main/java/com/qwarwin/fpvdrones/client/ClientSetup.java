@@ -51,6 +51,11 @@ public final class ClientSetup {
                 m -> new RadioMachineRenderer<>(m, ModModels.EW_STATION));
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.RELAY.get(),
                 m -> new RadioMachineRenderer<>(m, ModModels.RELAY));
+        RenderingRegistry.registerEntityRenderingHandler(ModEntities.RADAR.get(), com.qwarwin.fpvdrones.client.render.RadarRenderer::new);
+        RenderingRegistry.registerEntityRenderingHandler(ModEntities.RADAR_CONSOLE.get(),
+                m -> new RadioMachineRenderer<>(m, ModModels.RADAR_CONSOLE));
+        RenderingRegistry.registerEntityRenderingHandler(ModEntities.INTERCEPTOR.get(),
+                com.qwarwin.fpvdrones.client.render.InterceptorRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.SHELL.get(), ShellRenderer::new);
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.MISSILE.get(), MissileRenderer::new);
         ClientRegistry.bindTileEntityRenderer(ModTileEntities.LAUNCHER.get(), LauncherRenderer::new);

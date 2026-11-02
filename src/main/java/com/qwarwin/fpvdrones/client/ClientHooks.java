@@ -32,6 +32,10 @@ public final class ClientHooks {
         Minecraft.getInstance().getSoundManager().play(new EntityLoopSound(truck, ModSounds.TRUCK_ENGINE.get(), 1.4F));
     }
 
+    public static void onInterceptorSeen(com.qwarwin.fpvdrones.entity.InterceptorEntity i) {
+        Minecraft.getInstance().getSoundManager().play(new EntityLoopSound(i, ModSounds.FPV_MOTOR.get(), 2.0F));
+    }
+
     public static void onMissileSeen(MissileEntity missile) {
         Minecraft.getInstance().getSoundManager().play(new EntityLoopSound(missile, ModSounds.MISSILE_MOTOR.get(), 3.0F));
     }

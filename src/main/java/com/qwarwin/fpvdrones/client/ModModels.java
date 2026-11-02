@@ -47,6 +47,11 @@ public final class ModModels {
     public static final ResourceLocation EW_TRUCK_WHEEL = FpvDrones.id("entity/ew_truck_wheel");
     public static final ResourceLocation EW_STATION = FpvDrones.id("entity/ew_station");
     public static final ResourceLocation RELAY = FpvDrones.id("entity/relay");
+    /** mesh only: the interceptor, the search radar (mast and turning array), the radar console */
+    public static final ResourceLocation INTERCEPTOR = FpvDrones.id("entity/interceptor");
+    public static final ResourceLocation RADAR = FpvDrones.id("entity/radar");
+    public static final ResourceLocation RADAR_ANTENNA = FpvDrones.id("entity/radar_antenna");
+    public static final ResourceLocation RADAR_CONSOLE = FpvDrones.id("entity/radar_console");
 
     private static final Random RANDOM = new Random();
 

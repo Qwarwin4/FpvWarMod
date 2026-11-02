@@ -4,6 +4,8 @@ import com.qwarwin.fpvdrones.FpvDrones;
 import com.qwarwin.fpvdrones.entity.AbstractDroneEntity;
 import com.qwarwin.fpvdrones.entity.MachineEntity;
 import com.qwarwin.fpvdrones.entity.MissileEntity;
+import com.qwarwin.fpvdrones.entity.RadioMachineEntity;
+import com.qwarwin.fpvdrones.entity.InterceptorEntity;
 import com.qwarwin.fpvdrones.entity.MountedWeaponEntity;
 import com.qwarwin.fpvdrones.entity.StrikeDroneEntity;
 import net.minecraft.entity.Entity;
@@ -82,6 +84,7 @@ public final class Targeting {
 
     public static boolean isAirTarget(Entity e) {
         return e instanceof StrikeDroneEntity || e instanceof AbstractDroneEntity || e instanceof MissileEntity
+                || e instanceof InterceptorEntity && ((InterceptorEntity) e).isFlying()
                 || e.getType().is(AIR_TARGETS) && !e.isOnGround();
     }
 
@@ -110,6 +113,12 @@ public final class Targeting {
         }
         if (e instanceof MountedWeaponEntity) {
             return ((MountedWeaponEntity) e).getOwner();
+        }
+        if (e instanceof InterceptorEntity) {
+            return ((InterceptorEntity) e).getOwner();
+        }
+        if (e instanceof RadioMachineEntity) {
+            return ((RadioMachineEntity) e).getOwner();
         }
         if (e instanceof PlayerEntity) {
             return e.getUUID();

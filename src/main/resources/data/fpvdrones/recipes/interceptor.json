@@ -1,0 +1,30 @@
+{
+  "type": "fpvdrones:assembly",
+  "pattern": [
+    "PMP",
+    "WFB",
+    "PMP"
+  ],
+  "key": {
+    "P": {
+      "item": "fpvdrones:propeller"
+    },
+    "M": {
+      "item": "fpvdrones:motor"
+    },
+    "W": {
+      "item": "fpvdrones:warhead"
+    },
+    "F": {
+      "item": "fpvdrones:flight_stack"
+    },
+    "B": {
+      "item": "fpvdrones:battery"
+    }
+  },
+  "result": {
+    "item": "fpvdrones:interceptor",
+    "count": 1
+  },
+  "soldering": true
+}

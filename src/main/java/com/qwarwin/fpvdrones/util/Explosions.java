@@ -89,6 +89,32 @@ public final class Explosions {
         sw.sendParticles(ParticleTypes.LAVA, pos.x, pos.y + 0.5, pos.z, 25, 1.5, 0.5, 1.5, 0.1);
     }
 
+    /**
+     * The interceptor's warhead: a fragmentation charge that bursts next to the target. What it was sent after
+     * takes the full cone; anything else in the air close by and people under it get the fragments.
+     */
+    public static void interceptor(World level, @Nullable UUID attackerId, Vector3d pos, @Nullable Entity hit) {
+        if (level.isClientSide) {
+            return;
+        }
+        LivingEntity attacker = player(level, attackerId);
+        level.explode(null, ModDamageSources.shrapnel(attacker), null, pos.x, pos.y, pos.z, 1.2F, false, Explosion.Mode.NONE);
+        if (hit != null && hit.isAlive()) {
+            hit.invulnerableTime = 0;
+            hit.hurt(ModDamageSources.shrapnel(attacker), 60F);
+        }
+        AxisAlignedBB box = new AxisAlignedBB(pos, pos).inflate(5.0);
+        for (Entity e : level.getEntities((Entity) null, box, e -> e.isAlive() && e != hit && Targeting.isAirborne(e))) {
+            double d = e.getBoundingBox().getCenter().distanceTo(pos);
+            if (d < 5.0) {
+                e.invulnerableTime = 0;
+                e.hurt(ModDamageSources.shrapnel(attacker), (float) (30.0 * (1.0 - d / 5.0)) + 2F);
+            }
+        }
+        fragments(level, attacker, pos, 5.0, 10F);
+        ((ServerWorld) level).sendParticles(ParticleTypes.SMOKE, pos.x, pos.y, pos.z, 25, 0.6, 0.6, 0.6, 0.05);
+    }
+
     private static void explode(World level, @Nullable LivingEntity attacker, Vector3d pos, float power, boolean fire) {
         DamageSource src = DamageSource.explosion(attacker);
         level.explode((Entity) null, src, null, pos.x, pos.y, pos.z, power, fire, mode());

@@ -37,6 +37,10 @@ public final class Network {
                 WeaponInputPacket::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(id++, OpenLauncherPacket.class, OpenLauncherPacket::encode, OpenLauncherPacket::decode,
                 OpenLauncherPacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, RadarPicturePacket.class, RadarPicturePacket::encode, RadarPicturePacket::decode,
+                RadarPicturePacket::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, RadarCommandPacket.class, RadarCommandPacket::encode, RadarCommandPacket::decode,
+                RadarCommandPacket::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
     public static void sendTo(ServerPlayerEntity player, Object msg) {

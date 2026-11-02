@@ -587,6 +587,26 @@ def build_ew():
     return gen_ew.build(ASSETS, MODID, sys.modules[__name__])
 
 
+def interceptor_remote_icon():
+    """the interceptor remote: gen_assets' FPV remote with its screen and caps turned blue-grey"""
+    im = Image.open(os.path.join(ASSETS, "textures", "item", "drone_remote.png")).convert("RGBA")
+    a = np.asarray(im).astype(int)
+    rgb = a[..., :3]
+    mask = (a[..., 3] > 0) & (rgb.mean(-1) > 60)
+    rgb[mask] = (rgb[mask] * 0.45 + np.array([70, 140, 200]) * 0.55).astype(int)
+    a[..., :3] = rgb.clip(0, 255)
+    Image.fromarray(a.astype(np.uint8), "RGBA").save(os.path.join(ASSETS, "textures", "item", "interceptor_remote.png"))
+    with open(os.path.join(ASSETS, "models", "item", "interceptor_remote.json"), "w") as f:
+        json.dump({"parent": "item/generated", "textures": {"layer0": f"{MODID}:item/interceptor_remote"}}, f, indent=2)
+
+
+@builder
+def build_air():
+    """the interceptor, the search radar and its console (gen_air.py)"""
+    import gen_air
+    return gen_air.build(ASSETS, MODID, sys.modules[__name__])
+
+
 @builder
 def build_icons():
     """inventory icons rendered from the meshes; the drones' items were 3D box models, now flat icons like the rest"""
@@ -628,6 +648,10 @@ def build_icons():
     _icon(cit, "air_defense_gun", 35, 20)
     for n, yaw, pitch in (("ew_truck", 35, 20), ("ew_station", 35, 12), ("relay", 35, 15)):
         _icon(_parts(n), n, yaw, pitch)
+    _icon(_parts("radar") + _parts("radar_antenna", lambda Q: Q + np.array([0, 4.15 * 16, 0])), "radar", 35, 12)
+    _icon(_parts("radar_console"), "radar_console", 25, 20)
+    _icon(_parts("interceptor"), "interceptor", 40, 25)
+    interceptor_remote_icon()
     for n in ("pg7vs", "og7"):
         _icon(_parts(n), n, 135, 35)
     _icon(_parts("kornet_missile_flight", bare=True), "kornet_missile", 135, 35)

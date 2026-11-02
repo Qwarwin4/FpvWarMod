@@ -49,6 +49,10 @@ public class EntityLoopSound extends TickableSound {
             float target = d.isPowered() ? baseVolume * (d.isLocallyControlled() ? 0.35F : 1F) : 0F;
             volume += (target - volume) * 0.2F;
             pitch = MathHelper.clamp(0.85F + speed * 0.4F, 0.7F, 1.7F);
+        } else if (entity instanceof com.qwarwin.fpvdrones.entity.InterceptorEntity) {
+            com.qwarwin.fpvdrones.entity.InterceptorEntity i = (com.qwarwin.fpvdrones.entity.InterceptorEntity) entity;
+            volume += ((i.isFlying() ? baseVolume : 0F) - volume) * 0.3F;
+            pitch = MathHelper.clamp(1.25F + speed * 0.12F, 1.2F, 1.9F);
         } else if (entity instanceof StrikeDroneEntity) {
             volume = baseVolume;
             pitch = ((StrikeDroneEntity) entity).getPhase() == StrikeDroneEntity.DIVE ? 1.18F : 1.0F;

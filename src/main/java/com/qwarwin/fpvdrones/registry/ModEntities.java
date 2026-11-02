@@ -6,6 +6,9 @@ import com.qwarwin.fpvdrones.entity.EwStationEntity;
 import com.qwarwin.fpvdrones.entity.EwTruckEntity;
 import com.qwarwin.fpvdrones.entity.FpvDroneEntity;
 import com.qwarwin.fpvdrones.entity.KornetEntity;
+import com.qwarwin.fpvdrones.entity.InterceptorEntity;
+import com.qwarwin.fpvdrones.entity.RadarConsoleEntity;
+import com.qwarwin.fpvdrones.entity.RadarEntity;
 import com.qwarwin.fpvdrones.entity.LaunchTruckEntity;
 import com.qwarwin.fpvdrones.entity.MavicEntity;
 import com.qwarwin.fpvdrones.entity.MissileEntity;
@@ -67,6 +70,18 @@ public final class ModEntities {
     public static final RegistryObject<EntityType<RelayEntity>> RELAY = register("relay",
             EntityType.Builder.<RelayEntity>of(RelayEntity::new, EntityClassification.MISC)
                     .sized(1.2F, 5.0F).setTrackingRange(16).setUpdateInterval(20));
+
+    public static final RegistryObject<EntityType<RadarEntity>> RADAR = register("radar",
+            EntityType.Builder.<RadarEntity>of(RadarEntity::new, EntityClassification.MISC)
+                    .sized(2.2F, 4.6F).setTrackingRange(16).setUpdateInterval(20));
+
+    public static final RegistryObject<EntityType<RadarConsoleEntity>> RADAR_CONSOLE = register("radar_console",
+            EntityType.Builder.<RadarConsoleEntity>of(RadarConsoleEntity::new, EntityClassification.MISC)
+                    .sized(1.6F, 1.3F).setTrackingRange(10).setUpdateInterval(20));
+
+    public static final RegistryObject<EntityType<InterceptorEntity>> INTERCEPTOR = register("interceptor",
+            EntityType.Builder.<InterceptorEntity>of(InterceptorEntity::new, EntityClassification.MISC)
+                    .sized(0.5F, 0.3F).setTrackingRange(16).setUpdateInterval(1));
 
     public static final RegistryObject<EntityType<KornetEntity>> KORNET = register("kornet",
             EntityType.Builder.<KornetEntity>of(KornetEntity::new, EntityClassification.MISC)
