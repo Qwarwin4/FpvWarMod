@@ -100,7 +100,7 @@ def radar_antenna():
 
 
 def radar_console():
-    """field table with two monitors showing the scope, a keyboard, a radio and a folding stool"""
+    """field table with two monitors showing the scope, a keyboard, a radio and the operator's chair"""
     k = Kit()
     top = 0.78
     k.box_b((-0.75, top - 0.05, -0.35), (0.75, top, 0.35), OLIVE)
@@ -118,10 +118,19 @@ def radar_console():
     k.box_b((-0.3, top, 0.05), (0.3, top + 0.025, 0.22), DARK)            # keyboard
     k.box_b((0.4, top, 0.0), (0.7, top + 0.14, 0.25), CAMO)               # radio set
     k.cyl_b("y", (0.62, 0.05), 0.008, 0.008, top + 0.14, top + 0.6, RUBBER, 4, caps=False)
-    k.cyl_b("y", (0.0, 0.75), 0.2, 0.2, 0.42, 0.47, OLIVE, 12)           # stool
-    for a in (45, 135, 225, 315):
-        r = np.radians(a)
-        k.beam((np.sin(r) * 0.18, 0.0, 0.75 + np.cos(r) * 0.18), (0.0, 0.43, 0.75), 0.025, STEEL)
+    # operator's chair facing the monitors: padded seat and back on a five-spoke base (RadarConsoleEntity.SEAT)
+    cz, seat = 0.8, 0.48
+    k.box_b((-0.24, seat - 0.07, cz - 0.24), (0.24, seat, cz + 0.22), RUBBER)
+    k.box_b((-0.22, seat + 0.08, cz + 0.2), (0.22, seat + 0.62, cz + 0.27), RUBBER)    # backrest
+    for sx in (1, -1):
+        k.box_b((0.17 * sx - 0.02, seat, cz + 0.2), (0.17 * sx + 0.02, seat + 0.1, cz + 0.24), STEEL)
+        k.box_b((0.24 * sx - 0.03, seat + 0.14, cz - 0.16), (0.24 * sx + 0.03, seat + 0.18, cz + 0.12), DARK)
+        k.box_b((0.24 * sx - 0.015, seat, cz + 0.06), (0.24 * sx + 0.015, seat + 0.14, cz + 0.09), STEEL)
+    k.cyl_b("y", (0.0, cz), 0.035, 0.035, 0.08, seat - 0.07, STEEL, 8)                 # gas lift
+    for a in range(0, 360, 72):
+        r = np.radians(a + 18)
+        k.beam((0.0, 0.08, cz), (np.sin(r) * 0.27, 0.05, cz + np.cos(r) * 0.27), 0.035, DARK)
+        k.cyl_b("y", (np.sin(r) * 0.27, cz + np.cos(r) * 0.27), 0.025, 0.025, 0.0, 0.05, RUBBER, 6)
     return k
 
 
